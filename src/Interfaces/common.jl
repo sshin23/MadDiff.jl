@@ -1,9 +1,9 @@
-get_num_variables(ex::Expression) = maximum(keys(der(ex)))
+get_num_variables(ex::Expression) = maximum(i for (i,d) in der(ex))
 get_num_variables(exs::Expression...) = maximum(get_num_variables(ex) for ex in exs)
 
 function fill!(f,dobj,x)
     for (i,d) in dobj
-        f[i] = d(x)
+        f[i] += d(x)
     end
 end
 
@@ -16,11 +16,12 @@ end
 
 get_derivative_pairss(dict) =[
     [(i,d) for (i,d) in dict if typeof(d)==type]
-    for type in union(typeof(d) for d in values(dict))
+    for type in union(typeof(d) for (i,d) in dict)
 ]
 
 function eval!(pairss)
     function (f,x)
+        f.=0
         for pairs in pairss
             fill!(f,pairs,x)
         end
@@ -82,10 +83,22 @@ end
 
 
 function get_nlp_functions(obj,cons,n,m)
-    obj_2nd = Dict(i=>der(d(Expression())) for (i,d) in der(obj))
-    con_2nds = [Dict(i=>der(d(Expression())) for (i,d) in der(con)) for con in cons]
+    obj_2nd = [i=>der(d(Expression())) for (i,d) in der(obj)]
+    con_2nds = [[i=>der(d(Expression())) for (i,d) in der(con)] for con in cons]
     
-    merged = Dict{Tuple{Int,Int},Function}((i,j) => (x,sig,lag)->d(x)*sig for (i,o) in obj_2nd for (j,d) in o if i>=j)
+    merged = Dict{Tuple{Int,Int},Function}()
+
+    for (i,dobj) in obj_2nd
+        for (j,d) in dobj
+            if haskey(merged,(i,j))
+                dold = merged[i,j]
+                merged[i,j] = (x,sig,lag)->dold(x,sig,lag)+d(x)*sig
+            else
+                i>=j && (merged[i,j] = (x,sig,lag)->d(x)*sig)
+            end
+        end
+    end
+
     for k=1:m 
         for (i,dcon) in con_2nds[k]
             for (j,d) in dcon
@@ -99,10 +112,23 @@ function get_nlp_functions(obj,cons,n,m)
         end
     end
     
+    
     _obj = obj.fun
     _grad! = eval!(get_derivative_pairss(der(obj)))
-    _con! = eval!(get_derivative_pairss(Dict(i=>fun(cons[i]) for i=1:length(cons))))
-    _jac!,_jac_sparsity!,nnz_jac = eval_jac!(get_derivative_pairss(Dict((i,j)=> d for i=1:length(cons) for (j,d) in der(cons[i]))))
+    _con! = eval!(get_derivative_pairss([i=>fun(cons[i]) for i=1:length(cons)]))
+
+    conjac = Dict{Tuple{Int,Int},Function}()
+    for i=1:length(cons)
+        for (j,d) in der(cons[i])
+            if haskey(conjac,(i,j))
+                dold = conjac[i,j]
+                conjac[i,j] = x->dold(x)+d(x)
+            else
+                conjac[i,j] = x->d(x)
+            end
+        end
+    end
+    _jac!,_jac_sparsity!,nnz_jac = eval_jac!(get_derivative_pairss(conjac))
     _hess!,_hess_sparsity!,nnz_hess = eval_hess!(get_derivative_pairss(merged))
     
     (_obj,_grad!,_con!,_jac!,_jac_sparsity!,nnz_jac,_hess!,_hess_sparsity!,nnz_hess)

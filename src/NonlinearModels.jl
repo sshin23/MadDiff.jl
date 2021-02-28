@@ -2,9 +2,8 @@ module NonlinearModels
 
 export Expression, PrintSymbol
 
-import Base: getindex,+,-,*,^,/,inv,add_sum,
-    exp,sin,cos,log,tan,asin,acos,atan,sinh,cosh,tanh,
-    string,show,print
+import Base: string,show,print, getindex, add_sum ,+,-,*,^,/,inv
+import DiffRules: diffrule, diffrules
 
 import MadNLP: NonlinearProgram, INITIAL
 import Ipopt: IpoptProblem, createProblem

@@ -96,21 +96,30 @@ end
 
 
 function nlm_luksan_vlcek_501(;N=1)
-    objective(x) = sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:N)
-    constraint(x) = [
-        3x[i+1]^3+2*x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3
-        for i=1:N-2
-    ]
-    x = [mod(i,2)==1 ? -1.2 : 1. for i=1:N]
-    IpoptProblem(objective,constraint;x=x)
+    m = NonlinearModels.Model()
+
+    x = [NonlinearModels.variable(m;start=mod(i,2)==1 ? -1.2 : 1.) for i=1:N]
+    NonlinearModels.objective(m,sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:N))
+    
+    [NonlinearModels.constraint(m,3x[i+1]^3+2*x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3) for i=1:N-2]
+
+    prob = IpoptProblem(m)
+    
+    return prob
+    # objective(x) = sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:N)
+    # constraint(x) = [
+    #     3x[i+1]^3+2*x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3
+    #     for i=1:N-2
+    # ]
+    # x = [mod(i,2)==1 ? -1.2 : 1. for i=1:N]
+    # IpoptProblem(objective,constraint;x=x)
 end
 
 
 function jump_luksan_vlcek_501(;N=1,optimizer=Ipopt.Optimizer)
     m=Model(optimizer)
     @variable(m,x[i=1:N], start= mod(i,2)==1 ? -1.2 : 1.)
-    @NLconstraint(m,[i=1:N-2], 3x[i+1]^3+2x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]
-                -x[i]exp(x[i]-x[i+1])-3==0.)
+    @NLconstraint(m,[i=1:N-2], 3x[i+1]^3+2x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3==0.)
     @NLobjective(m,Min,sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:N))
     return m
 end

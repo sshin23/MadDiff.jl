@@ -1,4 +1,4 @@
-name = "NonlinearModels"
+name = "SimpleNLModels"
 uuid = "f0d6f1f6-17c6-46e2-b3a9-6ef89a8ca0c6"
 authors = ["Sungho Shin"]
 version = "0.1.0"

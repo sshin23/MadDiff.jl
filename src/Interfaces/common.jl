@@ -1,25 +1,30 @@
 get_num_variables(ex::Expression) = maximum(i for (i,d) in der(ex))
 get_num_variables(exs::Expression...) = maximum(get_num_variables(ex) for ex in exs)
 
-function fill!(f,dobj,x)
-    for (i,d) in dobj
+function fill!(f,pairs,x)
+    for (i,d) in pairs
         f[i] += d(x)
     end
 end
 
-function fill!(J,dcon,x,offset)
-    for (j,d) in dcon
+function fill!(J,pairs,x,offset)
+    for (j,d) in pairs
         J[offset += 1] = d(x)
     end
     return offset
 end
 
-get_derivative_pairss(dict) =[
+get_pairss(dict) =  [
     [(i,d) for (i,d) in dict if typeof(d)==type]
     for type in union(typeof(d) for (i,d) in dict)
 ]
+get_con_pairss(cons) = [
+    [(i,fun(cons[i])) for i=1:length(cons) if typeof(fun(cons[i]))==type]
+    for type in union(typeof(fun(con)) for con in cons)
+]
 
-function eval!(pairss)
+function eval_grad!(obj)
+    pairss = get_pairss(der(obj))
     function (f,x)
         f.=0
         for pairs in pairss
@@ -27,7 +32,36 @@ function eval!(pairss)
         end
     end
 end
-function eval_jac!(pairss)
+
+function eval_con!(cons)
+    pairss = get_con_pairss(cons)
+    function (c,x)
+        c.= 0
+        for pairs in pairss
+            fill!(c,pairs,x)
+        end
+    end
+end
+
+function get_jac_dict(cons)
+    jac_dict = Dict{Tuple{Int,Int},Function}()
+    for i=1:length(cons)
+        for (j,d) in der(cons[i])
+            if haskey(jac_dict,(i,j))
+                dold = jac_dict[i,j]
+                jac_dict[i,j] = x->dold(x)+d(x)
+            else
+                jac_dict[i,j] = x->d(x)
+            end
+        end
+    end
+    return jac_dict
+end
+
+function eval_jac!(cons)
+    jac_dict = get_jac_dict(cons)
+    pairss = get_pairss(jac_dict)
+    
     function jac!(J,x)
         offset = 0
         for pairs in pairss
@@ -45,18 +79,56 @@ function eval_jac!(pairss)
     (jac!,jac_sparsity!,nnz_jac)
 end
 
-function eval_hess!(pairss)
+function get_hess_dict(obj_2nd,con_2nds)
+    hess_dict = Dict{Tuple{Int,Int},Function}()
+
+    for (i,dobj) in obj_2nd
+        for (j,d) in dobj
+            if haskey(hess_dict,(i,j))
+                dold = hess_dict[i,j]
+                hess_dict[i,j] = (x,sig,lag)->dold(x,sig,lag)+d(x)*sig
+            else
+                i>=j && (hess_dict[i,j] = (x,sig,lag)->d(x)*sig)
+            end
+        end
+    end
+
+    for k=1:length(con_2nds)
+        for (i,dcon) in con_2nds[k]
+            for (j,d) in dcon
+                if haskey(hess_dict,(i,j))
+                    dold = hess_dict[i,j]
+                    hess_dict[i,j] = (x,sig,lag)->dold(x,sig,lag)+d(x)*lag[k]
+                else
+                    i>=j && (hess_dict[i,j] = (x,sig,lag)->d(x)*lag[k])
+                end
+            end
+        end
+    end
+    return hess_dict
+end
+
+get_obj_2nd(obj) = [(i,der(d(Variable()))) for (i,d) in der(obj)]
+get_con_2nds(cons) = [[(i,der(d(Variable()))) for (i,d) in der(con)] for con in cons]
+
+function eval_hess!(obj,cons)
+    obj_2nd = get_obj_2nd(obj)
+    con_2nds = get_con_2nds(cons)
+    
+    hess_dict = get_hess_dict(obj_2nd,con_2nds)
+    pairss = get_pairss(hess_dict)
+    
     function hess!(H,x,lag,sig)
         offset = 0
-        for obj_pairs in pairss
-            offset = fill_hessian!(H,obj_pairs,x,sig,lag,offset)
+        for pairs in pairss
+            offset = fill_hessian!(H,pairs,x,sig,lag,offset)
         end
     end
 
     function hess_sparsity!(I,J)
         offset = 0
-        for obj_pairs in pairss
-            offset = sparsity!(I,J,obj_pairs,offset)
+        for pairs in pairss
+            offset = sparsity!(I,J,pairs,offset)
         end
     end
 
@@ -65,15 +137,15 @@ function eval_hess!(pairss)
     (hess!,hess_sparsity!,nnz_hess)
 end
 
-function fill_hessian!(H,dict,x,sig,lag,offset)
-    for ((i,j),d) in dict
+function fill_hessian!(H,pairs,x,sig,lag,offset)
+    for ((i,j),d) in pairs
         H[offset += 1] = d(x,sig,lag)
     end
     return offset
 end
 
-function sparsity!(I,J,dict,offset)
-    for ((i,j),d) in dict
+function sparsity!(I,J,pairs,offset)
+    for ((i,j),d) in pairs
         offset += 1
         I[offset] = i
         J[offset] = j
@@ -83,53 +155,12 @@ end
 
 
 function get_nlp_functions(obj,cons,n,m)
-    obj_2nd = [i=>der(d(Expression())) for (i,d) in der(obj)]
-    con_2nds = [[i=>der(d(Expression())) for (i,d) in der(con)] for con in cons]
-    
-    merged = Dict{Tuple{Int,Int},Function}()
 
-    for (i,dobj) in obj_2nd
-        for (j,d) in dobj
-            if haskey(merged,(i,j))
-                dold = merged[i,j]
-                merged[i,j] = (x,sig,lag)->dold(x,sig,lag)+d(x)*sig
-            else
-                i>=j && (merged[i,j] = (x,sig,lag)->d(x)*sig)
-            end
-        end
-    end
-
-    for k=1:m 
-        for (i,dcon) in con_2nds[k]
-            for (j,d) in dcon
-                if haskey(merged,(i,j))
-                    dold = merged[i,j]
-                    merged[i,j] = (x,sig,lag)->dold(x,sig,lag)+d(x)*lag[k]
-                else
-                    i>=j && (merged[i,j] = (x,sig,lag)->d(x)*lag[k])
-                end
-            end
-        end
-    end
-    
-    
     _obj = obj.fun
-    _grad! = eval!(get_derivative_pairss(der(obj)))
-    _con! = eval!(get_derivative_pairss([i=>fun(cons[i]) for i=1:length(cons)]))
-
-    conjac = Dict{Tuple{Int,Int},Function}()
-    for i=1:length(cons)
-        for (j,d) in der(cons[i])
-            if haskey(conjac,(i,j))
-                dold = conjac[i,j]
-                conjac[i,j] = x->dold(x)+d(x)
-            else
-                conjac[i,j] = x->d(x)
-            end
-        end
-    end
-    _jac!,_jac_sparsity!,nnz_jac = eval_jac!(get_derivative_pairss(conjac))
-    _hess!,_hess_sparsity!,nnz_hess = eval_hess!(get_derivative_pairss(merged))
+    _grad! = eval_grad!(obj)
+    _con! = eval_con!(cons)
+    _jac!,_jac_sparsity!,nnz_jac = eval_jac!(cons)
+    _hess!,_hess_sparsity!,nnz_hess = eval_hess!(obj,cons)
     
     (_obj,_grad!,_con!,_jac!,_jac_sparsity!,nnz_jac,_hess!,_hess_sparsity!,nnz_hess)
 end

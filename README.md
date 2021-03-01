@@ -1,1 +1,1 @@
-# NonlinearModels.jl
+# SimpleNLModels.jl

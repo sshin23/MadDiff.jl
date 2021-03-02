@@ -11,7 +11,7 @@ pkg> add https://github.com/sshin23/SimpleNLModels.jl.git
 
 ## Usage
 ### Nonlinear Expressions
-SimpleNLModels provides a convenient interface for writing nonlinear expressions and evaluating the expressions and functions. For example,
+SimpleNLModels provides a flexible user-interface for writing nonlinear expressions and evaluating the expressions and functions. For example,
 ```julia
 using SimpleNLModels
 
@@ -29,7 +29,7 @@ print("d_2(x0) = $(d_2(x0))") # d_2(x0) = 0.6420127083438707
 ```
 
 ### Nonlinear Programming
-SimpleNLModels provide a simple interface for creating nonlinear prgogramming models and allows solving the created models with optimization solvers (Ipopt and MadNLP.jl). The syntax is as follows:
+SimpleNLModels provide a simple user-interface for creating nonlinear prgogramming models and allows solving the created models with optimization solvers (Ipopt and MadNLP.jl). The syntax is as follows:
 ```julia
 N = 10000
 m = SimpleNLModels.Model(SimpleNLModels.IpoptOptimizer;linear_solver="ma57")

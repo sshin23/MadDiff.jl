@@ -1,1 +1,44 @@
 # SimpleNLModels.jl
+
+SimpleNLModels is a simple algebraic modeling language for nonlinear programgs.
+
+## Installation
+```julia
+pkg> add https://github.com/sshin23/SimpleNLModels.jl.git
+```
+
+## Usage
+### Nonlinear Expressions
+SimpleNLModels provides a convenient interface for writing nonlinear expressions and evaluating the expressions and functions. For example,
+```julia
+using SimpleNLModels
+
+x = Source("x")
+expr = x[1]^2 + exp(x[2]^2)/2 + log(x[3]+0.5)
+show(expr) # x[1]^2 + exp(x[2]^2)*0.5 + log(x[3] + 0.5)
+
+x0 = [0.,0.5,1.5]
+
+f = func(expr)
+print("f(x0) = $(f(x0))") # f(x0) = 1.3351598889038159
+
+d_2 = deriv(expr)[2]
+print("d_2(x0) = $(d_2(x0))") # d_2(x0) = 0.6420127083438707
+```
+
+### Nonlinear Programming
+SimpleNLModels provide a simple interface for creating nonlinear prgogramming models and allows solving the created models with optimization solvers (Ipopt and MadNLP.jl). The syntax is as follows:
+```julia
+N = 10000
+m = SimpleNLModels.Model(SimpleNLModels.IpoptOptimizer;linear_solver="ma57")
+
+x = [variable(m;start=mod(i,2)==1 ? -1.2 : 1.) for i=1:N]   
+objective(m,sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:N))
+
+for i=1:N-2
+    constraint(m,3x[i+1]^3+2*x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3)
+end
+optimize!(m)
+```
+
+## How it works?

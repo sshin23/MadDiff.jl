@@ -1,22 +1,21 @@
-import NonlinearModels: IpoptProblem
-using NonlinearModels, MadNLP, Ipopt, JuMP, AmplNLWriter
+using SimpleNLModels, Ipopt, JuMP, AmplNLWriter
 
-if !(@isdefined included)
+# if !(@isdefined included)
     include("benchmark_include.jl")
     included = true
-end
+# end
 
 for (N,nlm,jump) in [
     (10000,nlm_luksan_vlcek_501,jump_luksan_vlcek_501),
-    # (10000,nlm_ocp,jump_ocp),
-    # (1,nlm_eigmina,jump_eigmina),
+    (10000,nlm_ocp,jump_ocp)
 ]
-    @time iprob = nlm(;N=N)
-    @time Ipopt.solveProblem(iprob)
+    @time m = nlm(;N=N)
+    @time instantiate!(m)
+    @time optimize!(m)
 
-    # @time m = jump(;N=N,optimizer=() -> AmplNLWriter.Optimizer("ipopt"))
-    # @time optimize!(m)
+    @time m = jump(;N=N,optimizer=() -> AmplNLWriter.Optimizer("ipopt"))
+    @time optimize!(m)
 
-    # @time m = jump(;N=N,optimizer=Ipopt.Optimizer)
-    # @time optimize!(m)
+    @time m = jump(;N=N,optimizer=Ipopt.Optimizer)
+    @time optimize!(m)
 end

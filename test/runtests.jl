@@ -1,4 +1,4 @@
-using Test, NonlinearModels
+using Test, SimpleNLModels
 import Random: seed!
 import LinearAlgebra: norm
 seed!(0)
@@ -20,4 +20,4 @@ end
     @testset "NLP Test" begin
         include("nlp_test.jl")
     end
-end # @testset
+end 

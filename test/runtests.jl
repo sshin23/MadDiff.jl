@@ -10,7 +10,7 @@ function compare(f1,f2,points)
     return true
 end
 
-@testset "MadNLP test" begin
+@testset "SimpleNLModels test" begin
     @testset "Function Test" begin
         include("function_test.jl")
     end
@@ -19,5 +19,11 @@ end
     end
     @testset "NLP Test" begin
         include("nlp_test.jl")
+    end
+    @testset "Ipopt Test" begin
+        include("ipopt_test.jl")
+    end
+    @testset "Madnlp Test" begin
+        include("madnlp_test.jl")
     end
 end 

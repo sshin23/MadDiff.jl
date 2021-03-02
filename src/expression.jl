@@ -142,7 +142,7 @@ for T in Reals
         *(e::Expression,a::$T) = Term!(e,fmul(func(e),a),derivmul!(deriv(e),a))
         *(a::$T,e::Expression) = Term!(e,fmul(a,func(e)),derivmul!(deriv(e),a))
         ^(e::Expression,a::$T) = Term!(e,fpow(func(e),a),deriv!(deriv(e),d->fmul(a,fmul(fpow(func(e),a-1),d))))
-        ^(a::$T,e::Expression) = Term!(e,fpow(a,func(e)),deriv!(deriv(e),d->fmul(fmul(a,fpow(func(e)-1),d),log(a))))
+        ^(a::$T,e::Expression) = Term!(e,fpow(a,func(e)),deriv!(deriv(e),d->fmul(fmul(fpow(a,fsub(func(e),1)),d),log(a))))
     end
 end
 for (T1,T2) in [(Expression,Expression),[(Expression,T) for T in Reals]...,[(T,Expression) for T in Reals]...]

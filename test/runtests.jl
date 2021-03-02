@@ -14,9 +14,6 @@ end
     @testset "Function Test" begin
         include("function_test.jl")
     end
-    @testset "Derivative Test" begin
-        include("derivative_test.jl")
-    end
     @testset "Print Test" begin
         include("print_test.jl")
     end

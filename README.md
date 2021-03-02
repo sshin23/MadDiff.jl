@@ -47,4 +47,4 @@ optimize!(m)
 SimpleNLModels constructs first and second derivative functions off-line (i.e., prior to calling the optimization solver) by using simple functions such as `+`, `*`, `^`, `exp`, `sin`, etc. as building blocks. This off-line process is typically more expensive than the model creation in other AD-based algebraic modeling languages such as `JuMP` and `Ampl`, but enables faster first and second order derivative evaluations. A benchmark code is included in `example`.
 
 ## Bug reports and support
-Please report issues and feature requests via the [Github issue tracker](https://github.com/sshin23/MadNLP/issues).
+Please report issues and feature requests via the [Github issue tracker](https://github.com/sshin23/SimpleNLModels.jl/issues).

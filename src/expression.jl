@@ -147,7 +147,6 @@ for T in Reals
 end
 for (T1,T2) in [(Expression,Expression),[(Expression,T) for T in Reals]...,[(T,Expression) for T in Reals]...]
     @eval begin
-        -(e1::$T1,e2::$T2) = e1+(-e2)
         /(e1::$T1,e2::$T2) = e1*inv(e2)
     end
 end

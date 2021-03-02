@@ -1,4 +1,4 @@
-function nlm_ocp(;N=1)
+function nlm_ocp(;N=1,optimizer=SimpleNLModels.IpoptOptimizer,opt...)
     q = 1
     b = 1
     n = 9
@@ -12,7 +12,7 @@ function nlm_ocp(;N=1)
     
     d(i,j) = (j==1 ? 1*sin(2*pi/N*i) : 0) + (j==3 ? 2*sin(4*pi/N*i) : 0) + (j==5 ? 2*i/N : 0)
 
-    m = SimpleNLModels.Model()
+    m = SimpleNLModels.Model(optimizer;opt...)
     
     x=[variable(m,start = 0) for i=1:N+1,j=1:n]
     u=[variable(m,start = 0) for i=1:N,j=1:p]
@@ -101,8 +101,8 @@ function jump_ocp(;N=1,optimizer=Ipopt.Optimizer)
 end
 
 
-function nlm_luksan_vlcek_501(;N=1)
-    m = SimpleNLModels.Model()
+function nlm_luksan_vlcek_501(;N=1,optimizer=SimpleNLModels.IpoptOptimizer,opt...)
+    m = SimpleNLModels.Model(optimizer;opt...)
 
     x = [variable(m;start=mod(i,2)==1 ? -1.2 : 1.) for i=1:N]
     
@@ -122,4 +122,17 @@ function jump_luksan_vlcek_501(;N=1,optimizer=Ipopt.Optimizer)
     @NLconstraint(m,[i=1:N-2], 3x[i+1]^3+2x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3==0.)
     @NLobjective(m,Min,sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:N))
     return m
+end
+
+function parse_ipopt_output(filename)
+    output = read(filename,String);
+    i = match(r"Total CPU secs in IPOPT",output).offset
+    j = match(r"Total CPU secs in NLP function evaluations",output).offset;
+    k = match(r"EXIT:",output).offset
+
+    cpu_time_ipopt = parse(Float64,output[i+54:j-3])
+    cpu_time_nlp_function = parse(Float64,output[j+54:k-3])
+    cpu_time_total = cpu_time_ipopt + cpu_time_nlp_function
+
+    return cpu_time_total, cpu_time_nlp_function
 end

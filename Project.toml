@@ -16,6 +16,8 @@ julia = "1"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 AmplNLWriter = "7c4d4715-977e-5154-bfe0-e096adeac482"
+StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 
 [targets]
-test = ["Test","LinearAlgebra","Random"]
+test = ["Test","Random"]
+example = ["JuMP","MadNLP","Ipopt","AmplNLWriter","StatsPlots"]

@@ -20,7 +20,7 @@ function createProblem(obj::Expression,cons::Vector{Expression},;
     prob.x .= x
 
     for (name,option) in opt
-        addOption(prob,name,option)
+        addOption(prob,string(name),option)
     end
 
     return prob

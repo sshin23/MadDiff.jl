@@ -49,17 +49,17 @@ end
 for (M,f,nargs) in diffrules
     if nargs == 1
         @eval begin
-            $f(p::PrintExpression) = PrintVariable(string($f)*"("*string(p)*")")
+            $f(p::PrintExpression) = PrintVariable(string($f)*"("*raw(p)*")")
         end
     elseif nargs == 2
         for T in Reals
             @eval begin
-                $f(a::$T,p::PrintExpression) = PrintVariable(string($f)*"("*string(a)*" , "*string(pa)*")")
-                $f(p::PrintExpression,a::$T) = PrintVariable(string($f)*"("*string(p)*" , "*string(a)*")")
+                $f(a::$T,p::PrintExpression) = PrintVariable(string($f)*"("*raw(a)*" , "*raw(p)*")")
+                $f(p::PrintExpression,a::$T) = PrintVariable(string($f)*"("*raw(p)*" , "*raw(a)*")")
             end
         end
         @eval begin
-            $f(p1::PrintExpression,p2::PrintExpression) = PrintVariable(string($f)*"("*string(p1)*" , "*string(p2)*")")
+            $f(p1::PrintExpression,p2::PrintExpression) = PrintVariable(string($f)*"("*raw(p1)*" , "*raw(p2)*")")
         end
     end
 end

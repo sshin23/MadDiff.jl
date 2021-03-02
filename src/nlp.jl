@@ -18,7 +18,7 @@ mutable struct Model
     opt::Dict{Symbol,Any}
 end
 
-Model(optimizer::Module,opt...) = Model(
+Model(optimizer::Module;opt...) = Model(
     Expression[],Term(),0,0,Float64[],Float64[],Float64[],Float64[],Float64[],nothing,optimizer,
     Dict{Symbol,Any}(),Dict{Symbol,Any}(name=>option for (name,option) in opt))
 Model() = Model(IpoptOptimizer)

@@ -15,7 +15,7 @@ mutable struct Term <: Expression
 end
 
 Source() = Source("")
-Variable(n;name=nothing) = Variable(name ==nothing ? x->x[n] : x->x isa Number ? x[n] : PrintVariable(name),n)
+Variable(n;name=nothing) = Variable(name ==nothing ? x->x[n] : x->x isa PrintSource ? PrintVariable(name) : x[n],n)
 Term() = Term(con_zero,Dict{Int,Function}())
 Term!(e::Variable,f,d) = Term(f,d)
 Term!(e::Term,f,d) = begin

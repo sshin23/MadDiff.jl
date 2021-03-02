@@ -42,3 +42,4 @@ optimize!(m)
 ```
 
 ## How it works?
+SimpleNLModels construct derivative functions off-line by using simple functions such as `+`, `*`, `^`, `exp`, `sin`, etc. as building blocks. This off-line process is typically more expensive than the model creation in other algebraic modeling languages such as `JuMP` and `Ampl`, but enables fast first and second order derivative evaluations. A benchmark code is included in `example`.

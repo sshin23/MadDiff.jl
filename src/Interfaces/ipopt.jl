@@ -1,3 +1,5 @@
+getmodule(optimizer) = optimizer.name.module
+
 module IpoptOptimizer
 
 import ..SimpleNLModels: get_nlp_functions, Model, Expression

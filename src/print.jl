@@ -1,4 +1,3 @@
-PrintSource() = PrintSource("_x")
 string(p::PrintVariable) = p.str
 raw(p::PrintVariable) = p.str
 raw(p::PrintTerm) = p.str

@@ -1,4 +1,5 @@
 using Test, SimpleNLModels, MadNLP
+import SpecialFunctions: erf, beta, digamma
 import Random: seed!
 const eps = 1e-6
 seed!(0)

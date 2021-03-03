@@ -4,6 +4,7 @@ import Base: string,show,print,getindex,add_sum,+,-,*,^,/,==,<=,>=
 import DiffRules: diffrule
 import MadNLP, Ipopt
 import JuMP: optimize!, value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, lower_bound, upper_bound # to avoid conflict
+import SpecialFunctions
 
 const diffrules = [
     (:Base,:inv,1),(:Base,:abs2,1),
@@ -15,7 +16,17 @@ const diffrules = [
     (:Base,:asind,1),(:Base,:acosd,1),(:Base,:atand,1),(:Base,:acscd,1),(:Base,:asecd,1),(:Base,:acotd,1),
     (:Base,:sinh,1),(:Base,:cosh,1),(:Base,:tanh,1),(:Base,:csch,1),(:Base,:sech,1),(:Base,:coth,1),
     (:Base,:asinh,1),(:Base,:acosh,1),(:Base,:atanh,1),(:Base,:acsch,1),(:Base,:asech,1),(:Base,:acoth,1),
-    (:Base,:^,2)
+    (:Base,:^,2),
+    (:SpecialFunctions,:erfi,1),(:SpecialFunctions,:loggamma,1),(:SpecialFunctions,:erfcinv,1),
+    (:SpecialFunctions,:erfcx,1),(:SpecialFunctions,:invdigamma,1),(:SpecialFunctions,:bessely1,1),
+    (:SpecialFunctions,:besselj1,1),(:SpecialFunctions,:dawson,1),(:SpecialFunctions,:airyaiprime,1),
+    (:SpecialFunctions,:erf,1),(:SpecialFunctions,:digamma,1),(:SpecialFunctions,:gamma,1),
+    (:SpecialFunctions,:airyai,1),(:SpecialFunctions,:airybi,1),(:SpecialFunctions,:erfinv,1),
+    (:SpecialFunctions,:bessely0,1),(:SpecialFunctions,:erfc,1),(:SpecialFunctions,:trigamma,1),
+    (:SpecialFunctions,:airybiprime,1),(:SpecialFunctions,:besselj0,1),
+    (:SpecialFunctions,:bessely,2),(:SpecialFunctions,:besselj,2),(:SpecialFunctions,:hankelh2,2),
+    (:SpecialFunctions,:hankelh1,2),(:SpecialFunctions,:besselk,2),(:SpecialFunctions,:beta,2),
+    (:SpecialFunctions,:besseli,2),(:SpecialFunctions,:polygamma,2),(:SpecialFunctions,:logbeta,2)
 ]
 
 for (M,f,nargs) in diffrules

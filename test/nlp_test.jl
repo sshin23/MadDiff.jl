@@ -17,7 +17,8 @@ nlp_test[2] = function (optimizer;opt...)
     m = SimpleNLModels.Model(optimizer;opt...)
 
     x = variable(m)
-    constraint(m,x+1,lb=-1,ub=-1)
+    constraint(m,x+1<= -1)
+    constraint(m,x+1>= -1)
 
     optimize!(m)
     
@@ -30,13 +31,33 @@ nlp_test[3] = function (optimizer;opt...)
 
     x = [variable(m,name="s[$i]",start = .1) for i=1:3]
     
-    constraint(m,x[1]+sin(x[2])-x[3]/2 + 1.)
+    constraint(m,x[1]+sin(x[2])-x[3]/2 + 1. )
     objective(m,x[2]^2)
 
     optimize!(m)
     
     return compare(value.(x), [-0.74,0,.52])
 end
+
+nlp_test[4] = function (optimizer;opt...)
+    
+    m = SimpleNLModels.Model(optimizer;opt...)
+
+    x = [variable(m;start=mod(i,2)==1 ? -1.2 : 1.) for i=1:10];
+    p = [parameter(m,2) for i=1:10];
+    setvalue.(p,2)
+    
+    objective(m,sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:10))
+
+    for i=1:8
+        constraint(m,3x[i+1]^3+p[i]*x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3 == 0)
+    end
+
+    optimize!(m)
+    
+    return compare(value.(x), [-0.95055636, 0.91390082, 0.98909052, 0.99855924, 0.99980874, 0.99997459, 0.99999662, 0.99999955, 0.99999994, 0.99999993])
+end
+
 
 for (optimizer,opt) in [(SimpleNLModels.IpoptOptimizer,[:print_level=>0]),
                         (SimpleNLModels.MadNLPOptimizer,[:print_level=>MadNLP.ERROR])]

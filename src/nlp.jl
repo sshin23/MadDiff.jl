@@ -40,8 +40,8 @@ struct Inequality e::Expression end
 <=(e1::Expression,e2) = Inequality(e2-e1)
 <=(e1,e2::Expression) = Inequality(e2-e1)
 
-constraint(eq::Equality) = constraint(eq.e)
-constraint(eq::Inequality) = constraint(eq.e;ub=Inf)
+constraint(m,eq::Equality) = constraint(m,eq.e)
+constraint(m,eq::Inequality) = constraint(m,eq.e;ub=Inf)
 
 parent(c::Constraint) = c.parent
 index(c::Constraint) = c.index
@@ -80,10 +80,10 @@ function variable(m::Model;lb=-Inf,ub=Inf,start=0.,name="$DEFAULT_VAR_STRING[$(m
     Variable(m.n;parent=m)
 end
 
-function parameter(m::Model;value=0.,name="$DEFAULT_PAR_STRING[$(m.q+1)]")
+function parameter(m::Model,val=0.;name="$DEFAULT_PAR_STRING[$(m.q+1)]")
     m.q += 1
     push!(m.pars,PrintVariable("$name"))
-    push!(m.p,value)
+    push!(m.p,val)
     Parameter(m.q;parent=m)
 end
 

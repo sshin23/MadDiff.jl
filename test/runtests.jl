@@ -16,13 +16,10 @@ end
     @testset "Function Test" begin
         include("function_test.jl")
     end
+    @testset "Print Test" begin
+        include("print_test.jl")
+    end
     @testset "NLP Test" begin
         include("nlp_test.jl")
-    end
-    @testset "Ipopt Test" begin
-        include("ipopt_test.jl")
-    end
-    @testset "Madnlp Test" begin
-        include("madnlp_test.jl")
     end
 end 

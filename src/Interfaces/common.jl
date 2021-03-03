@@ -1,6 +1,3 @@
-get_num_variables(ex::Expression) = maximum(i for (i,d) in deriv(ex))
-get_num_variables(exs::Expression...) = maximum(get_num_variables(ex) for ex in exs)
-
 sum_init_0(itr) = isempty(itr) ? 0 : sum(itr)
     
 

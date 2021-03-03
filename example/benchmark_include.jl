@@ -75,7 +75,7 @@ function nlm_luksan_vlcek_501(;N=1,optimizer=SimpleNLModels.IpoptOptimizer,opt..
     m = SimpleNLModels.Model(optimizer;opt...)
 
     x = [variable(m;start=mod(i,2)==1 ? -1.2 : 1.) for i=1:N];
-    p = [parameter(m;value=2) for i=1:N];
+    p = [parameter(m,2) for i=1:N];
     
     objective(m,sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:N))
 

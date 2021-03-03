@@ -158,7 +158,7 @@ for T in Reals
         +(e::Expression,a::$T) = Term(parent(e),fadd(func(e),a),deriv(e))
         +(a::$T,e::Expression) = Term(parent(e),fadd(a,func(e)),deriv(e))
         -(e::Expression,a::$T) = Term(parent(e),fsub(func(e),a),deriv(e))
-        -(a::$T,e::Expression) = Term(parent(e),fsub(a,func(e)),deriv!(e,d->fsub(d)))
+        -(a::$T,e::Expression) = Term(parent(e),fsub(a,func(e)),deriv!(deriv(e),d->fsub(d)))
         *(e::Expression,a::$T) = Term(parent(e),fmul(func(e),a),derivmul!(deriv(e),a))
         *(a::$T,e::Expression) = Term(parent(e),fmul(a,func(e)),derivmul!(deriv(e),a))
         ^(e::Expression,a::$T) = Term(parent(e),fpow(func(e),a),deriv!(deriv(e),d->fmul(a,fmul(fpow(func(e),a-1),d))))

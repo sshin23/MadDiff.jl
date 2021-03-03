@@ -55,12 +55,12 @@ function get_jac_dict(cons)
     jac_dict = Dict{Tuple{Int,Int},Function}()
     for i=1:length(cons)
         for (j,d) in deriv(cons[i])
-            if haskey(jac_dict,(i,j))
-                dold = jac_dict[i,j]
-                jac_dict[i,j] = (x,p)->dold(x,p)+d(x,p)
-            else
-                jac_dict[i,j] = (x,p)->d(x,p)
-            end
+            # if haskey(jac_dict,(i,j))
+            #     dold = jac_dict[i,j]
+            #     jac_dict[i,j] = (x,p)->dold(x,p)+d(x,p)
+            # else
+            jac_dict[i,j] = (x,p)->d(x,p)
+            # end
         end
     end
     return jac_dict
@@ -92,12 +92,12 @@ function get_hess_dict(obj_2nd,con_2nds)
 
     for (i,dobj) in obj_2nd
         for (j,d) in dobj
-            if haskey(hess_dict,(i,j))
-                dold = hess_dict[i,j]
-                hess_dict[i,j] = (x,p,sig,lag)->dold(x,p,sig,lag)+d(x,p)*sig
-            else
-                i>=j && (hess_dict[i,j] = (x,p,sig,lag)->d(x,p)*sig)
-            end
+            # if haskey(hess_dict,(i,j))
+            #     dold = hess_dict[i,j]
+            #     hess_dict[i,j] = (x,p,sig,lag)->dold(x,p,sig,lag)+d(x,p)*sig
+            # else
+            i>=j && (hess_dict[i,j] = (x,p,sig,lag)->d(x,p)*sig)
+            # end
         end
     end
 

@@ -3,7 +3,7 @@ module SimpleNLModels
 import Base: string,show,print,getindex,add_sum,+,-,*,^,/,==,<=,>=
 import DiffRules: diffrule
 import MadNLP, Ipopt
-import JuMP: optimize!, value, dual, getobjectivevalue, setvalue, set_lower_bound, set_upper_bound # to avoid conflict
+import JuMP: optimize!, value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, get_lower_bound, get_upper_bound # to avoid conflict
 
 const diffrules = [
     (:Base,:inv,1),(:Base,:abs2,1),
@@ -26,13 +26,14 @@ const DEFAULT_PAR_STRING = "p"
 
 export Source, Variable, Parameter, Term, func, deriv,
     variable, parameter, constraint, objective, instantiate!, optimize!,
-    value, dual, getobjectivevalue, setvalue, set_lower_bound, set_upper_bound
+    value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, get_lower_bound, get_upper_bound
 
 const Reals = [Int,Float64]
 
-include("print.jl")
 include("expression.jl")
+include("printexpression.jl")
 include("nlp.jl")
+include("print.jl")
 include("Interfaces/common.jl")
 include("Interfaces/madnlp.jl")
 include("Interfaces/ipopt.jl")

@@ -11,6 +11,7 @@ mutable struct Model
 
     x::Vector{Float64}
     p::Vector{Float64}
+    g::Vector{Float64}
     l::Vector{Float64}
     zl::Vector{Float64}
     zu::Vector{Float64}
@@ -47,27 +48,10 @@ parent(c::Constraint) = c.parent
 index(c::Constraint) = c.index
 func(c::Constraint) = func(parent(c).cons[index(c)])
 
-string(c::Constraint) = begin
-    gl = parent(c).gl[index(c)]
-    gu = parent(c).gu[index(c)]
-    str = string(parent(c).cons[index(c)])
-    return gl==gu ? str * " == $gl" : (gl > -Inf ? "$gl <= " : "") * str * (gl < Inf ? " <= $gu" : "")
-end
-print(io::IO,e::Constraint) = print(io, string(e))
-show(io::IO,::MIME"text/plain",e::Constraint) = print(io,e)
-
-
-string(m::Model) = "NLP model with $(m.n) variables and $(m.m) constraints"
-print(io::IO,e::Model) = print(io, string(e))
-show(io::IO,::MIME"text/plain",e::Model) = print(io,e)
-
-
-Model(optimizer::Module;opt...) = Model(
-    PrintVariable[],PrintVariable[],Expression[],Term(),0,0,0,Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],nothing,optimizer,
+Model(optimizer::Module;opt...) =Model(
+    PrintVariable[],PrintVariable[],Expression[],Term(),0,0,0,Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],nothing,optimizer,
     Dict{Symbol,Any}(),Dict{Symbol,Any}(name=>option for (name,option) in opt))
 Model() = Model(IpoptOptimizer)
-
-PrintSource(m::Model) = (m.vars,m.pars)
 
 function variable(m::Model;lb=-Inf,ub=Inf,start=0.,name="$DEFAULT_VAR_STRING[$(m.n+1)]")
     m.n += 1
@@ -91,6 +75,7 @@ function constraint(m::Model,e::Expression;lb=0.,ub=0.,name=nothing)
     m.m += 1
     push!(m.cons,e)
     push!(m.l,0.)
+    push!(m.g,0.)
     push!(m.gl,lb)
     push!(m.gu,ub)
     Constraint(m,m.m)
@@ -114,14 +99,16 @@ end
 value(e::Term{Model}) = func(e)(parent(e).x,parent(e).p)
 for (T,var) in [(Variable{Model},:x), (Parameter{Model},:p), (Constraint,:g)]
     @eval value(e::$T) = func(e)(parent(e).x,parent(e).p)
-    @eval setvalue(e::$T,val) = parent(e).$var[e.n] = val
+    @eval setvalue(e::$T,val) = parent(e).$var[e.index] = val
 end
 
 for (T,ub,lb) in [(Variable{Model},:xl,:xu), (Constraint,:gl,:gu)]
-    @eval set_lower_bound(e::$T,val) = parent(e).$lb[e.n] = val
-    @eval set_upper_bound(e::$T,val) = parent(e).$ub[e.n] = val
+    @eval set_lower_bound(e::$T,val) = parent(e).$lb[e.index] = val
+    @eval set_upper_bound(e::$T,val) = parent(e).$ub[e.index] = val
+    @eval get_lower_bound(e::$T) = parent(e).$lb[e.index]
+    @eval get_upper_bound(e::$T) = parent(e).$ub[e.index]
 end
 
 dual(c::Constraint) = parent(c).l[index(c)]
-getobjectivevalue(m::Model) = value(m.obj)
+objective_value(m::Model) = parent(m.obj) isa Nothing ? 0. : value(m.obj)
 

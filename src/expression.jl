@@ -7,13 +7,13 @@ end
 struct Variable{T} <: Expression
     parent::T
     func::Function
-    n::Int
+    index::Int
 end
 
 struct Parameter{T} <: Expression
     parent::T
     func::Function
-    n::Int
+    index::Int
 end
 
 mutable struct Term{T} <: Expression
@@ -41,25 +41,10 @@ marry(p1,p2::Tuple) = p1 in p2 ? p2 : error("Parents of the expressions are not 
 marry(p1,p2) = p1 == p2 ? p1 : error("Parents of the expressions are not compatible")
 
 
-PrintSource(::Nothing) = (PrintSource(DEFAULT_VAR_STRING),PrintSource(DEFAULT_PAR_STRING))
-PrintSource(e::Source{Variable}) = (PrintSource(e.str),nothing)
-PrintSource(e::Source{Parameter}) = (nothing,PrintSource(e.str))
-PrintSource(e::Tuple) = (PrintSource(e[1].str),PrintSource(e[2].str))
-
-string(e::Variable) = string(func(e)(PrintSource(parent(e))...))
-string(e::Parameter) = string(func(e)(PrintSource(parent(e))...))
-string(e::Term) = raw(func(e)(PrintSource(parent(e))...))
-print(io::IO,e::Expression) = print(io, string(e))
-string(e::Source) = e.str
-print(io::IO,e::Source) = print(io, string(e))
-
-show(io::IO,::MIME"text/plain",e::Expression) = print(io,e)
-show(io::IO,::MIME"text/plain",e::Source) = print(io,e)
-
 parent(e::Expression) = e.parent
 func(e::Expression) = e.func
 deriv(e::Term) = e.deriv
-deriv(e::Variable) = Dict{Int,Function}(e.n=>con_one)
+deriv(e::Variable) = Dict{Int,Function}(e.index=>con_one)
 deriv(e::Parameter) = Dict{Int,Function}()
 deriv(e::Real) = Dict{Int,Function}()
 
@@ -89,7 +74,7 @@ for T in Reals
         fadd(f1::Function,f2::$T) = f2 == 0 ? f1 : (x,p=nothing)->f1(x,p)+f2
         fadd(f1::$T,f2::Function) = f1 == 0 ? f2 : (x,p=nothing)->f1+f2(x,p)
         fsub(f1::Function,f2::$T) = f2 == 0 ? f1 : (x,p=nothing)->f1(x,p)-f2
-        fsub(f1::$T,f2::Function) = f1 == 0 ? -f2 : (x,p=nothing)->f1-f2(x,p)
+        fsub(f1::$T,f2::Function) = f1 == 0 ? fsub(f2) : (x,p=nothing)->f1-f2(x,p)
         fmul(f1::Function,f2::$T) = f2 == 1 ? f1 : f2 == 0 ? con_zero : (x,p=nothing)->f1(x,p)*f2
         fmul(f1::$T,f2::Function) = f1 == 1 ? f2 : f1 == 0 ? con_zero : (x,p=nothing)->f1*f2(x,p)
         fpow(f1::Function,f2::$T) = f2 == 1 ? f1 : f2 == 0 ? con_one  : (x,p=nothing)->f1(x,p)^f2

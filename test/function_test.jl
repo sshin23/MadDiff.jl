@@ -50,7 +50,7 @@ end
 
 for (forig,xpoints,ppoints) in [
     ((x,p)->sum(1 +beta(sin(x[1]+erf(p[2])/p[1])^2,cos(p[1]*x[4])/x[5]^2-x[3])+sin(x[i]) for i=1:7),[randn(7) for i=1:3], [randn(2) for i=1:3]),
-    ((x,p)->sum(1 - p[1] -sin(sin(sin(cos(beta(1,x[2])+p[2])-1.)+4)^9)/abs2(x[3]) for i=1:7),[randn(3) for i=1:3], [randn(2) for i=1:3]),
+    ((x,p)->1 - p[1] - sum(sin(sin(sin(cos(beta(1,x[i])+p[2])-1.)+4)^9)/abs2(x[3]) for i=1:7),[randn(7) for i=1:3], [randn(2) for i=1:3]),
 ]
     expr = forig(Variable("xx"),Parameter("pp"))
     f = func(expr)

@@ -46,8 +46,8 @@ for (M,f,nargs) in diffrules
         elseif nargs == 2
             for T in Reals
                 @eval begin
-                    $f(a::$T,p::PrintExpression) = PrintVariable(string($f)*"("*raw(a)*" , "*raw(p)*")")
-                    $f(p::PrintExpression,a::$T) = PrintVariable(string($f)*"("*raw(p)*" , "*raw(a)*")")
+                    $f(a::$T,p::PrintExpression) = PrintVariable(string($f)*"("*string(a)*" , "*raw(p)*")")
+                    $f(p::PrintExpression,a::$T) = PrintVariable(string($f)*"("*raw(p)*" , "*string(a)*")")
                 end
             end
             @eval begin

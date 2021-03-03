@@ -3,7 +3,7 @@ module SimpleNLModels
 import Base: string,show,print,getindex,add_sum,+,-,*,^,/
 import DiffRules: diffrule
 import MadNLP, Ipopt
-import JuMP: optimize! # to avoid conflict
+import JuMP: optimize!, value, dual, getobjectivevalue # to avoid conflict
 
 const diffrules = [
     (:Base,:inv,1),(:Base,:abs2,1),

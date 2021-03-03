@@ -26,6 +26,15 @@ function createProblem(obj::Expression,cons::Vector{Expression},;
     return prob
 end
 
-createProblem(m::Model) = createProblem(m.obj,m.cons;n=m.n,m=m.m,x=m.x,xl=m.xl,xu=m.xu,gl=m.gl,gu=m.gu,m.opt...)
+function createProblem(m::Model) 
+    prob = createProblem(m.obj,m.cons;n=m.n,m=m.m,x=m.x,xl=m.xl,xu=m.xu,gl=m.gl,gu=m.gu,m.opt...)
+
+    m.x = prob.x
+    m.l = prob.mult_g
+    m.zl= prob.mult_x_L
+    m.zu= prob.mult_x_U
+
+    return prob
+end
 
 end

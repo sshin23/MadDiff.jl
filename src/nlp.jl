@@ -105,8 +105,8 @@ end
 for (T,ub,lb) in [(Variable{Model},:xl,:xu), (Constraint,:gl,:gu)]
     @eval set_lower_bound(e::$T,val) = parent(e).$lb[e.index] = val
     @eval set_upper_bound(e::$T,val) = parent(e).$ub[e.index] = val
-    @eval get_lower_bound(e::$T) = parent(e).$lb[e.index]
-    @eval get_upper_bound(e::$T) = parent(e).$ub[e.index]
+    @eval lower_bound(e::$T) = parent(e).$lb[e.index]
+    @eval upper_bound(e::$T) = parent(e).$ub[e.index]
 end
 
 dual(c::Constraint) = parent(c).l[index(c)]

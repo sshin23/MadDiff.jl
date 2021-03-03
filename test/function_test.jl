@@ -26,3 +26,17 @@ for (forig,dorig,points) in [
         @test compare(dorig[i],d,points)
     end
 end
+
+for (forig,dorig,xpoints,ppoints) in [
+    ((x,p)->x[1]+p[1], Dict(1=>(x,p)->1.), [randn(1) for i=1:3],[randn(1) for i=1:3]),
+    ((x,p)->x[1]^p[1], Dict(1=>(x,p)->p[1]*x[1]^(p[1]-1)), [rand(1) for i=1:3],[randn(1) for i=1:3]),
+    ((x,p)->x[1]/p[1], Dict(1=>(x,p)->1/p[1]),[randn(1) for i=1:3],[randn(1) for i=1:3]),
+]
+    expr = forig(Variable(),Parameter())
+    f = func(expr)
+    @test compare(forig,f, xpoints,ppoints)
+    
+    for (i,d) in deriv(expr)
+        @test compare(dorig[i],d,xpoints,ppoints)
+    end
+end

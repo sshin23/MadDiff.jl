@@ -170,28 +170,30 @@ for (M,f,nargs) in diffrules
             )
         end
     elseif nargs == 2
-        dfsym,~ = diffrule(M,f,:x,:a)
-        df = :((x,a,p=nothing)->$dfsym)
-        for T in Reals
-            @eval begin
-                $f(e::Expression,a::$T) = Term(
-                    parent(e),
-                    fcom($f,func(e),a),
-                    deriv!(deriv(e),d->fmul(fcom($df,func(e),a),d))
-                )
+        if f != :^
+            dfsym,~ = diffrule(M,f,:x,:a)
+            df = :((x,a,p=nothing)->$dfsym)
+            for T in Reals
+                @eval begin
+                    $f(e::Expression,a::$T) = Term(
+                        parent(e),
+                        fcom($f,func(e),a),
+                        deriv!(deriv(e),d->fmul(fcom($df,func(e),a),d))
+                    )
+                end
             end
-        end
 
-        ~,dfsym = diffrule(M,f,:a,:x)
-        df = :((a,x,p=nothing)->$dfsym)
+            ~,dfsym = diffrule(M,f,:a,:x)
+            df = :((a,x,p=nothing)->$dfsym)
 
-        for T in Reals
-            @eval begin
-                $f(a::$T,e::Expression) = Term(
-                    parent(e),
-                    fcom($f,a,func(e)),
-                    deriv!(deriv(e),d->fmul(fcom($df,a,func(e)),d))
-                )
+            for T in Reals
+                @eval begin
+                    $f(a::$T,e::Expression) = Term(
+                        parent(e),
+                        fcom($f,a,func(e)),
+                        deriv!(deriv(e),d->fmul(fcom($df,a,func(e)),d))
+                    )
+                end
             end
         end
 

@@ -3,7 +3,7 @@ module SimpleNLModels
 import Base: string,show,print,getindex,add_sum,+,-,*,^,/,==,<=,>=
 import DiffRules: diffrule
 import MadNLP, Ipopt
-import JuMP: optimize!, value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, get_lower_bound, get_upper_bound # to avoid conflict
+import JuMP: optimize!, value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, lower_bound, upper_bound # to avoid conflict
 
 const diffrules = [
     (:Base,:inv,1),(:Base,:abs2,1),
@@ -14,7 +14,8 @@ const diffrules = [
     (:Base,:sind,1),(:Base,:cosd,1),(:Base,:tand,1),(:Base,:cscd,1),(:Base,:secd,1),(:Base,:cotd,1),
     (:Base,:asind,1),(:Base,:acosd,1),(:Base,:atand,1),(:Base,:acscd,1),(:Base,:asecd,1),(:Base,:acotd,1),
     (:Base,:sinh,1),(:Base,:cosh,1),(:Base,:tanh,1),(:Base,:csch,1),(:Base,:sech,1),(:Base,:coth,1),
-    (:Base,:asinh,1),(:Base,:acosh,1),(:Base,:atanh,1),(:Base,:acsch,1),(:Base,:asech,1),(:Base,:acoth,1)
+    (:Base,:asinh,1),(:Base,:acosh,1),(:Base,:atanh,1),(:Base,:acsch,1),(:Base,:asech,1),(:Base,:acoth,1),
+    (:Base,:^,2)
 ]
 
 for (M,f,nargs) in diffrules
@@ -26,7 +27,7 @@ const DEFAULT_PAR_STRING = "p"
 
 export Source, Variable, Parameter, Term, func, deriv,
     variable, parameter, constraint, objective, instantiate!, optimize!,
-    value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, get_lower_bound, get_upper_bound
+    value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, lower_bound, upper_bound
 
 const Reals = [Int,Float64]
 

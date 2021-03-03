@@ -66,16 +66,16 @@ setvalue(x,3)
 set_lower_bound(x,-1)
 set_upper_bound(x,1)
 @test value(x) == 3 
-@test get_lower_bound(x) == -1 
-@test get_upper_bound(x) == 1
+@test lower_bound(x) == -1 
+@test upper_bound(x) == 1
 
 c = constraint(m,x==1.)
 setvalue(c,2)
 set_lower_bound(c,-1)
 set_upper_bound(c,1)
 @test value(c) == 2
-@test get_lower_bound(c) == -1 
-@test get_upper_bound(c) == 1
+@test lower_bound(c) == -1 
+@test upper_bound(c) == 1
 
 p = parameter(m,1.)
 setvalue(p,4)

@@ -1,10 +1,13 @@
-using Test, SimpleNLModels
+using Test, SimpleNLModels, MadNLP
 import Random: seed!
+const eps = 1e-6
 seed!(0)
+
+compare(p1,p2) = maximum(abs.(p1 .- p2)) <= eps
 
 function compare(f1,f2,points)
     for point in points
-        abs(f1(point) - f2(point)) <= 1e-8 || return false
+        compare(f1(point),f2(point)) || return false
     end
     return true
 end
@@ -12,9 +15,6 @@ end
 @testset "SimpleNLModels test" begin
     @testset "Function Test" begin
         include("function_test.jl")
-    end
-    @testset "Print Test" begin
-        include("print_test.jl")
     end
     @testset "NLP Test" begin
         include("nlp_test.jl")

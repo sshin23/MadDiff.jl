@@ -21,7 +21,8 @@ for (M,f,nargs) in diffrules
     @eval import $M.$f
 end
 
-export Source, Variable, Term, variable, constraint, objective, instantiate!, optimize!, func, deriv
+export Source, Variable, Term, variable, constraint, objective, instantiate!, optimize!, func, deriv,
+    value, dual, getobjectivevalue
 
 const Reals = [Int,Float64]
 

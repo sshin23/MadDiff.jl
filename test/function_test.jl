@@ -1,5 +1,3 @@
-const eps = 1e-8
-
 for (forig,dorig,points) in [
     (x->x[1], Dict(1=>x->1.), [randn(1) for i=1:3]),
     (x->x[1]+1., Dict(1=>x->1.), [randn(1) for i=1:3]),

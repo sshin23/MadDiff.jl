@@ -3,12 +3,12 @@ module IpoptOptimizer
 import ..SimpleNLModels: get_nlp_functions, Model, Expression
 import Ipopt: createProblem, solveProblem, addOption
 
-function createProblem(obj::Expression,cons::Vector{Expression},;
-                       n = get_num_variables(obj,cons...),m = length(cons),
-                       x = zeros(n), xl = -ones(n) * Inf, xu = ones(n) * Inf, gl = zeros(m), gu = zeros(m),
-                       opt...)
+function create_problem(obj::Expression,cons::Vector{Expression};
+                        n = get_num_variables(obj,cons...),m = length(cons), q = 0,
+                        x = zeros(n), p = Float64[], xl = -ones(n) * Inf, xu = ones(n) * Inf, gl = zeros(m), gu = zeros(m),
+                        opt...)
     
-    _obj,_grad!,_con!,_jac!,_jac_sparsity!,nnz_jac,_hess!,_hess_sparsity!,nnz_hess = get_nlp_functions(obj,cons)
+    _obj,_grad!,_con!,_jac!,_jac_sparsity!,nnz_jac,_hess!,_hess_sparsity!,nnz_hess = get_nlp_functions(obj,cons,p)
 
     prob =  createProblem(
         n,xl,xu,m,gl,gu,nnz_jac,nnz_hess,
@@ -26,8 +26,8 @@ function createProblem(obj::Expression,cons::Vector{Expression},;
     return prob
 end
 
-function createProblem(m::Model) 
-    prob = createProblem(m.obj,m.cons;n=m.n,m=m.m,x=m.x,xl=m.xl,xu=m.xu,gl=m.gl,gu=m.gu,m.opt...)
+function create_problem(m::Model;opt...) 
+    prob = create_problem(m.obj,m.cons;n=m.n,q=m.q,m=m.m,x=m.x,p=m.p,xl=m.xl,xu=m.xu,gl=m.gl,gu=m.gu,m.opt...)
 
     m.x = prob.x
     m.l = prob.mult_g
@@ -37,4 +37,5 @@ function createProblem(m::Model)
     return prob
 end
 
+solve_problem(m;opt...) = solveProblem(m)
 end

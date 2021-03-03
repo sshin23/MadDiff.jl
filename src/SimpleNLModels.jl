@@ -1,9 +1,9 @@
 module SimpleNLModels
 
-import Base: string,show,print,getindex,add_sum,+,-,*,^,/
+import Base: string,show,print,getindex,add_sum,+,-,*,^,/,==,<=,>=
 import DiffRules: diffrule
 import MadNLP, Ipopt
-import JuMP: optimize!, value, dual, getobjectivevalue # to avoid conflict
+import JuMP: optimize!, value, dual, getobjectivevalue, setvalue, set_lower_bound, set_upper_bound # to avoid conflict
 
 const diffrules = [
     (:Base,:inv,1),(:Base,:abs2,1),
@@ -21,8 +21,12 @@ for (M,f,nargs) in diffrules
     @eval import $M.$f
 end
 
-export Source, Variable, Term, variable, constraint, objective, instantiate!, optimize!, func, deriv,
-    value, dual, getobjectivevalue
+const DEFAULT_VAR_STRING = "x"
+const DEFAULT_PAR_STRING = "p"
+
+export Source, Variable, Parameter, Term, func, deriv,
+    variable, parameter, constraint, objective, instantiate!, optimize!,
+    value, dual, getobjectivevalue, setvalue, set_lower_bound, set_upper_bound
 
 const Reals = [Int,Float64]
 

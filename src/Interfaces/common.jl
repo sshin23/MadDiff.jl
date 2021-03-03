@@ -1,18 +1,29 @@
 get_num_variables(ex::Expression) = maximum(i for (i,d) in deriv(ex))
 get_num_variables(exs::Expression...) = maximum(get_num_variables(ex) for ex in exs)
 
-function fill!(f,pairs,x)
+sum_init_0(itr) = isempty(itr) ? 0 : sum(itr)
+    
+
+function fill!(f,pairs,x,p)
     for (i,d) in pairs
-        f[i] += d(x)
+        f[i] += d(x,p)
     end
 end
 
-function fill!(J,pairs,x,offset)
+function fill!(J,pairs,x,p,offset)
     for (j,d) in pairs
-        J[offset += 1] = d(x)
+        J[offset += 1] = d(x,p)
     end
     return offset
 end
+
+function fill_hessian!(H,pairs,x,p,sig,lag,offset)
+    for ((i,j),d) in pairs
+        H[offset += 1] = d(x,p,sig,lag)
+    end
+    return offset
+end
+
 
 get_pairss(dict) =  [
     [(i,d) for (i,d) in dict if typeof(d)==type]
@@ -23,22 +34,22 @@ get_con_pairss(cons) = [
     for type in union(typeof(func(con)) for con in cons)
 ]
 
-function eval_grad!(obj)
+function eval_grad!(obj,p)
     pairss = get_pairss(deriv(obj))
     function (f,x)
         f.=0
         for pairs in pairss
-            fill!(f,pairs,x)
+            fill!(f,pairs,x,p)
         end
     end
 end
 
-function eval_con!(cons)
+function eval_con!(cons,p)
     pairss = get_con_pairss(cons)
     function (c,x)
         c.= 0
         for pairs in pairss
-            fill!(c,pairs,x)
+            fill!(c,pairs,x,p)
         end
     end
 end
@@ -49,23 +60,23 @@ function get_jac_dict(cons)
         for (j,d) in deriv(cons[i])
             if haskey(jac_dict,(i,j))
                 dold = jac_dict[i,j]
-                jac_dict[i,j] = x->dold(x)+d(x)
+                jac_dict[i,j] = (x,p)->dold(x,p)+d(x,p)
             else
-                jac_dict[i,j] = x->d(x)
+                jac_dict[i,j] = (x,p)->d(x,p)
             end
         end
     end
     return jac_dict
 end
 
-function eval_jac!(cons)
+function eval_jac!(cons,p)
     jac_dict = get_jac_dict(cons)
     pairss = get_pairss(jac_dict)
     
     function jac!(J,x)
         offset = 0
         for pairs in pairss
-            offset = fill!(J,pairs,x,offset)
+            offset = fill!(J,pairs,x,p,offset)
         end
     end
     function jac_sparsity!(I,J)
@@ -74,7 +85,7 @@ function eval_jac!(cons)
             offset = sparsity!(I,J,pairs,offset)
         end
     end
-    nnz_jac = sum(length(pairs) for pairs in pairss; init = 0)
+    nnz_jac = sum_init_0(length(pairs) for pairs in pairss)
     
     (jac!,jac_sparsity!,nnz_jac)
 end
@@ -86,9 +97,9 @@ function get_hess_dict(obj_2nd,con_2nds)
         for (j,d) in dobj
             if haskey(hess_dict,(i,j))
                 dold = hess_dict[i,j]
-                hess_dict[i,j] = (x,sig,lag)->dold(x,sig,lag)+d(x)*sig
+                hess_dict[i,j] = (x,p,sig,lag)->dold(x,p,sig,lag)+d(x,p)*sig
             else
-                i>=j && (hess_dict[i,j] = (x,sig,lag)->d(x)*sig)
+                i>=j && (hess_dict[i,j] = (x,p,sig,lag)->d(x,p)*sig)
             end
         end
     end
@@ -98,9 +109,9 @@ function get_hess_dict(obj_2nd,con_2nds)
             for (j,d) in dcon
                 if haskey(hess_dict,(i,j))
                     dold = hess_dict[i,j]
-                    hess_dict[i,j] = (x,sig,lag)->dold(x,sig,lag)+d(x)*lag[k]
+                    hess_dict[i,j] = (x,p,sig,lag)->dold(x,p,sig,lag)+d(x,p)*lag[k]
                 else
-                    i>=j && (hess_dict[i,j] = (x,sig,lag)->d(x)*lag[k])
+                    i>=j && (hess_dict[i,j] = (x,p,sig,lag)->d(x,p)*lag[k])
                 end
             end
         end
@@ -108,10 +119,10 @@ function get_hess_dict(obj_2nd,con_2nds)
     return hess_dict
 end
 
-get_obj_2nd(obj) = [(i,deriv(d(Source()))) for (i,d) in deriv(obj)]
-get_con_2nds(cons) = [[(i,deriv(d(Source()))) for (i,d) in deriv(con)] for con in cons]
+get_obj_2nd(obj) = [(i,deriv(d(Variable(),Parameter()))) for (i,d) in deriv(obj)]
+get_con_2nds(cons) = [[(i,deriv(d(Variable(),Parameter()))) for (i,d) in deriv(con)] for con in cons]
 
-function eval_hess!(obj,cons)
+function eval_hess!(obj,cons,p)
     obj_2nd = get_obj_2nd(obj)
     con_2nds = get_con_2nds(cons)
     
@@ -121,7 +132,7 @@ function eval_hess!(obj,cons)
     function hess!(H,x,lag,sig)
         offset = 0
         for pairs in pairss
-            offset = fill_hessian!(H,pairs,x,sig,lag,offset)
+            offset = fill_hessian!(H,pairs,x,p,sig,lag,offset)
         end
     end
 
@@ -132,16 +143,9 @@ function eval_hess!(obj,cons)
         end
     end
 
-    nnz_hess = sum(length(pairs) for pairs in pairss; init = 0) 
+    nnz_hess = sum_init_0(length(pairs) for pairs in pairss) 
 
     (hess!,hess_sparsity!,nnz_hess)
-end
-
-function fill_hessian!(H,pairs,x,sig,lag,offset)
-    for ((i,j),d) in pairs
-        H[offset += 1] = d(x,sig,lag)
-    end
-    return offset
 end
 
 function sparsity!(I,J,pairs,offset)
@@ -154,13 +158,13 @@ function sparsity!(I,J,pairs,offset)
 end
 
 
-function get_nlp_functions(obj,cons)
+function get_nlp_functions(obj,cons,p)
 
-    _obj = func(obj)
-    _grad! = eval_grad!(obj)
-    _con! = eval_con!(cons)
-    _jac!,_jac_sparsity!,nnz_jac = eval_jac!(cons)
-    _hess!,_hess_sparsity!,nnz_hess = eval_hess!(obj,cons)
+    _obj = x->func(obj)(x,p)
+    _grad! = eval_grad!(obj,p)
+    _con! = eval_con!(cons,p)
+    _jac!,_jac_sparsity!,nnz_jac = eval_jac!(cons,p)
+    _hess!,_hess_sparsity!,nnz_hess = eval_hess!(obj,cons,p)
     
     (_obj,_grad!,_con!,_jac!,_jac_sparsity!,nnz_jac,_hess!,_hess_sparsity!,nnz_hess)
 end

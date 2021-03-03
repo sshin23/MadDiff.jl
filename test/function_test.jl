@@ -20,6 +20,8 @@ for (forig,dorig,points) in [
     (x->exp(2^x[1]+x[2]^3), Dict(1=>x->exp(2^x[1]+x[2]^3)*2^(x[1]-1)*log(2) ,2=>x->exp(2^x[1]+x[2]^3)*3*x[2]^2), [randn(2) for i=1:3]),
     (x->x[1]/log(x[2]^2+9.), Dict(1=>x->1/log(x[2]^2+9.), 2=>x->-2x[2]x[1]/(x[2]^2+9.)/log(x[2]^2+9.)^2), [randn(2) for i=1:3]),
     (x->sum(cos(x[i]) for i=1:4), Dict(i=>x->-sin(x[i]) for i=1:4), [randn(4) for i=1:3]),
+    (x->beta(x[1],1), Dict(1=>x->beta(x[1],1)*(digamma(x[1])-digamma(x[1]+1))), [randn(1) for i=1:3]),
+    (x->beta(1,x[1]), Dict(1=>x->beta(1,x[1])*(digamma(x[1])-digamma(1+x[1]))), [randn(1) for i=1:3]),
 ]
     expr = forig(Variable())
     f = func(expr)
@@ -44,4 +46,13 @@ for (forig,dorig,xpoints,ppoints) in [
     for (i,d) in deriv(expr)
         @test compare(dorig[i],d,xpoints,ppoints)
     end
+end
+
+for (forig,xpoints,ppoints) in [
+    ((x,p)->sum(1 +beta(sin(x[1]+erf(p[2])/p[1])^2,cos(p[1]*x[4])/x[5]^2-x[3])+sin(x[i]) for i=1:7),[randn(7) for i=1:3], [randn(2) for i=1:3]),
+    ((x,p)->sum(1 - p[1] -sin(sin(sin(cos(beta(1,x[2])+p[2])-1.)+4)^9)/abs2(x[3]) for i=1:7),[randn(3) for i=1:3], [randn(2) for i=1:3]),
+]
+    expr = forig(Variable("xx"),Parameter("pp"))
+    f = func(expr)
+    @test compare(forig,f, xpoints,ppoints)
 end

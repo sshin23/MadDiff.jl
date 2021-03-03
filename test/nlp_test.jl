@@ -38,8 +38,8 @@ nlp_test[3] = function (optimizer;opt...)
     return compare(value.(x), [-0.74,0,.52])
 end
 
-for (optimizer,opt) in [(IpoptOptimizer,[:print_level=>0]),
-                        (MadNLPOptimizer,[:print_level=>MadNLP.ERROR])]
+for (optimizer,opt) in [(SimpleNLModels.IpoptOptimizer,[:print_level=>0]),
+                        (SimpleNLModels.MadNLPOptimizer,[:print_level=>MadNLP.ERROR])]
     for f in values(nlp_test)
         @test f(optimizer;opt...)
     end

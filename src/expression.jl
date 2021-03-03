@@ -4,38 +4,39 @@ struct Source
     str::String
 end
 
-struct Variable <: Expression
+struct Variable{T} <: Expression
+    parent::T
     func::Function
     n::Int
 end
 
-mutable struct Term <: Expression
+mutable struct Term{T} <: Expression
+    parent::T
     func::Function
     deriv::Dict{Int,Function}
 end
 
 Source() = Source("")
-Variable(n;name=nothing) = Variable(name ==nothing ? x->x[n] : x->x isa PrintSource ? PrintVariable(name) : x[n],n)
-Term() = Term(con_zero,Dict{Int,Function}())
-Term!(e::Variable,f,d) = Term(f,d)
+Variable(n;parent=nothing) = Variable(parent,x->x[n],n)
+Term(;parent=nothing) = Term(parent,con_zero,Dict{Int,Function}())
+Term!(e::Variable,f,d) = Term(parent(e),f,d)
 Term!(e::Term,f,d) = begin
     e.func = f
     e.deriv = d
     return e
 end
 
-string(e::Variable) = string(func(e)(PrintSource()))
-print(io::IO,e::Variable) = print(io, string(e))
-
-string(e::Term) = raw(func(e)(PrintSource()))
-print(io::IO,e::Term) = print(io, string(e))
-
+PrintSource(e::Source) = PrintSource(e.str)
+string(e::Variable) = string(func(e)(PrintSource(parent(e))))
+string(e::Term) = raw(func(e)(PrintSource(parent(e))))
+print(io::IO,e::Expression) = print(io, string(e))
 string(e::Source) = e.str
 print(io::IO,e::Source) = print(io, string(e))
 
 show(io::IO,::MIME"text/plain",e::Expression) = print(io,e)
 show(io::IO,::MIME"text/plain",e::Source) = print(io,e)
 
+parent(e::Expression) = e.parent
 func(e::Expression) = e.func
 deriv(e::Term) = e.deriv
 deriv(e::Variable) = Dict{Int,Function}(e.n=>con_one)
@@ -45,7 +46,7 @@ con(a) = x->a
 con_one(x) = 1.
 con_zero(x) = 0.
     
-getindex(e::Source,n) = Variable(n;name = e.str == "" ? nothing : e.str*"[$n]")
+getindex(e::Source,n) = Variable(n;parent=e)
 
 fsub(f::Function) = x->-f(x)
 fadd(f1::Function,f2::Function) = x->f1(x)+f2(x)

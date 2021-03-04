@@ -31,7 +31,7 @@ print("d_2(x0) = $(d_2(x0))") # d_2(x0) = 0.6420127083438707
 ### Nonlinear Programming
 SimpleNLModels provide a simple user-interface for creating nonlinear prgogramming models and allows solving the created models with optimization solvers (Ipopt and MadNLP.jl). The syntax is as follows:
 ```julia
-using Ipopt
+using SimpleNLModels, Ipopt
 
 m = SimpleNLModels.Model(Ipopt.Optimizer;print_level=3) # SimpleModel( ... ) works as well
 

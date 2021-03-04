@@ -16,16 +16,18 @@ SimpleNLModels provides a flexible user-interface for writing nonlinear expressi
 using SimpleNLModels
 
 x = Variable("x")
-expr = x[1]^2 + exp(x[2]^2)/2 + log(x[3]+0.5)
+p = Parameter("p")
+expr = x[1]^2 + exp(x[2]^p[1])/2 + log(x[3]+p[2])
 print(expr) # x[1]^2 + exp(x[2]^2)*0.5 + log(x[3] + 0.5)
 
 x0 = [0.,0.5,1.5]
+p0 = [2,0.5]
 
 f = func(expr)
-print("f(x0) = $(f(x0))") # f(x0) = 1.3351598889038159
+print("f(x0,p0) = $(f(x0,p0))") # f(x0,p0) = 1.3351598889038159
 
 d_2 = deriv(expr)[2]
-print("d_2(x0) = $(d_2(x0))") # d_2(x0) = 0.6420127083438707
+print("d_2(x0,p0) = $(d_2(x0,p0))") # d_2(x0,p0) = 0.6420127083438707
 ```
 
 ### Nonlinear Programming

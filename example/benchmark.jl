@@ -1,4 +1,4 @@
-using SimpleNLModels, Ipopt, JuMP, AmplNLWriter, StatsPlots, CPUTime
+using SimpleNLModels, Ipopt, JuMP, AmplNLWriter, StatsPlots
 
 include("benchmark_include.jl")
 
@@ -9,7 +9,7 @@ for (N,nlm,jump,name) in [
     (10000,nlm_ocp,jump_ocp,"hehnandrea")
 ]
     for i=1:2
-        t1 = @CPUelapsed begin
+        t1 = @elapsed begin
             m = nlm(;N=N,optimizer=Ipopt.Optimizer,output_file="output/$name-simplenlmodels.out")
             instantiate!(m)
             optimize!(m)
@@ -21,7 +21,7 @@ for (N,nlm,jump,name) in [
         t4 = m.moi_backend.optimizer.model.ext[:MPBModel].inner.solve_time
         t5,t6 = parse_ipopt_output("output/$name-ampl.out")
 
-        t7 = @CPUelapsed begin
+        t7 = @elapsed begin
             m = jump(;N=N,optimizer=()->Ipopt.Optimizer(output_file="output/$name-jump.out"))
             optimize!(m)
             t8,t9 = parse_ipopt_output("output/$name-jump.out")
@@ -32,7 +32,7 @@ for (N,nlm,jump,name) in [
 end
 
 ticklabel = ["SimpleNLModels","AMPL","JuMP"]
-barlabel = ["Model Creation + Solution Time (CPU)" "Solution Time (CPU)" "NLP Function Evaluation Time (CPU)"]
+barlabel = ["Model Creation + Solution Time (Wall)" "Solution Time (CPU)" "NLP Function Evaluation Time (CPU)"]
 
 plt1 = groupedbar([result[1][1] result[1][2] result[1][3]], title="Luksan & Vlcek (1999)", bar_position = :dodge,
                   bar_width=0.7, xticks=(1:3, ticklabel), label=barlabel, ylabel="Time (sec)", framestyle=:box, ylim = (0,1.1*maximum(vcat(result[1]...))),dpi = 300)

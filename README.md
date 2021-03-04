@@ -39,7 +39,7 @@ x = [variable(m;start=mod(i,2)==1 ? -1.2 : 1.) for i=1:1000]
 objective(m,sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:1000))
 
 for i=1:998
-    constraint(m,3x[i+1]^3+2*x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3)
+    constraint(m, 3x[i+1]^3+2*x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3 == 0)
 end
 optimize!(m)
 ```

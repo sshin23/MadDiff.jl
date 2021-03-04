@@ -119,6 +119,25 @@ end
 get_obj_2nd(obj) = [(i,deriv(d(Variable(),Parameter()))) for (i,d) in deriv(obj)]
 get_con_2nds(cons) = [[(i,deriv(d(Variable(),Parameter()))) for (i,d) in deriv(con)] for con in cons]
 
+# TODO: need to think about multi-threading in model creation
+
+# function get_obj_2nd(obj)
+#     ids = [(i,d) for (i,d) in deriv(obj)]
+#     result = Vector{Tuple{Int,Dict{Int,Function}}}(undef,length(ids))
+#     Threads.@threads for j=1:length(ids)
+#         (i,d) = ids[j]
+#         result[j] = (i, deriv(d(Variable(),Parameter())))
+#     end
+#     return result
+# end
+# function get_con_2nds(cons)
+#     result = Vector{Vector{Tuple{Int,Dict{Int,Function}}}}(undef,length(cons))
+#     Threads.@threads for j=1:length(cons)
+#         [(i,deriv(d(Variable(),Parameter()))) for (i,d) in deriv(cons[j])]
+#     end
+#     return result
+# end
+
 function eval_hess!(obj,cons,p)
     obj_2nd = get_obj_2nd(obj)
     con_2nds = get_con_2nds(cons)

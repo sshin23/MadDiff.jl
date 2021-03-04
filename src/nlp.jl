@@ -21,7 +21,7 @@ mutable struct Model
     gu::Vector{Float64}
 
     prob
-    optimizer::Module
+    optimizer
     ext::Dict{Symbol,Any}
     opt::Dict{Symbol,Any}
 end
@@ -48,10 +48,9 @@ parent(c::Constraint) = c.parent
 index(c::Constraint) = c.index
 func(c::Constraint) = func(parent(c).cons[index(c)])
 
-Model(optimizer::Module;opt...) =Model(
+Model(optimizer;opt...) =Model(
     PrintVariable[],PrintVariable[],Expression[],Term(),0,0,0,Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],nothing,optimizer,
     Dict{Symbol,Any}(),Dict{Symbol,Any}(name=>option for (name,option) in opt))
-Model() = Model(IpoptOptimizer)
 
 function variable(m::Model;lb=-Inf,ub=Inf,start=0.,name="$DEFAULT_VAR_STRING[$(m.n+1)]")
     m.n += 1
@@ -87,13 +86,13 @@ function objective(m::Model,e::Expression)
 end
 
 function instantiate!(m::Model)
-    m.prob = m.optimizer.create_problem(m;m.opt...)
+    m.prob = create_problem(m,m.optimizer;m.opt...)
     m
 end
 
 function optimize!(m::Model)
     m.prob == nothing && instantiate!(m)
-    m.optimizer.solve_problem(m.prob;m.opt...)
+    solve_problem(m.prob,m.optimizer;m.opt...)
 end
 
 value(e::Term{Model}) = func(e)(parent(e).x,parent(e).p)

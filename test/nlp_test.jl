@@ -59,7 +59,7 @@ end
 
 
 
-m = SimpleNLModels.Model()
+m = SimpleNLModels.Model(Ipopt.Optimizer)
 
 x = variable(m)
 setvalue(x,3)
@@ -85,8 +85,8 @@ objective(m,p*x)
 @test objective_value(m) == 12
 
 
-for (optimizer,opt) in [(SimpleNLModels.IpoptOptimizer,[:print_level=>0]),
-                        (SimpleNLModels.MadNLPOptimizer,[:print_level=>MadNLP.ERROR])]
+for (optimizer,opt) in [(SimpleNLModels.Ipopt.Optimizer,[:print_level=>0]),
+                        (SimpleNLModels.MadNLP.Optimizer,[:print_level=>MadNLP.ERROR])]
     for f in values(nlp_test)
         @test f(optimizer;opt...)
     end

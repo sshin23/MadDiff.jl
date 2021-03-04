@@ -2,9 +2,9 @@ module SimpleNLModels
 
 import Base: string,show,print,getindex,add_sum,+,-,*,^,/,==,<=,>=
 import DiffRules: diffrule
-import MadNLP, Ipopt
 import JuMP: optimize!, value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, lower_bound, upper_bound # to avoid conflict
 import SpecialFunctions
+import Requires: @require
 
 const diffrules = [
     (:Base,:inv,1),(:Base,:abs2,1),
@@ -35,19 +35,26 @@ end
 
 const DEFAULT_VAR_STRING = "x"
 const DEFAULT_PAR_STRING = "p"
+const Reals = [Int,Float64]
 
 export Source, Variable, Parameter, Term, func, deriv,
     variable, parameter, constraint, objective, instantiate!, optimize!,
     value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, lower_bound, upper_bound
 
-const Reals = [Int,Float64]
 
 include("expression.jl")
 include("printexpression.jl")
 include("nlp.jl")
 include("print.jl")
 include("Interfaces/common.jl")
-include("Interfaces/madnlp.jl")
-include("Interfaces/ipopt.jl")
+
+function __init__()
+    @require Ipopt="b6b21f68-93f8-5de0-b562-5493be1d77c9" @eval begin
+        include("Interfaces/ipopt.jl")
+    end
+    @require MadNLP = "2621e9c9-9eb4-46b1-8089-e8c72242dfb6" @eval begin
+        include("Interfaces/madnlp.jl")
+    end
+end
 
 end # module

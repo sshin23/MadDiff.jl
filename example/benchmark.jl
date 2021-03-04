@@ -1,4 +1,4 @@
-using SimpleNLModels, Ipopt, JuMP, AmplNLWriter, StatsPlots
+using SimpleNLModels, Ipopt, MadNLP, JuMP, AmplNLWriter, StatsPlots
 
 include("benchmark_include.jl")
 
@@ -10,7 +10,7 @@ for (N,nlm,jump,name) in [
 ]
     for i=1:2
         t1 = @elapsed begin
-            m = nlm(;N=N,optimizer=SimpleNLModels.IpoptOptimizer,output_file="output/$name-simplenlmodels.out")
+            m = nlm(;N=N,optimizer=Ipopt.Optimizer,output_file="output/$name-simplenlmodels.out")
             instantiate!(m)
             optimize!(m)
         end

@@ -4,7 +4,7 @@
 
     xx= Variable("xx")
     pp= Parameter("pp")
-    m = SimpleNLModels.Model()
+    m = SimpleNLModels.Model(Ipopt.Optimizer)
     u = [variable(m;name = "u[$i]") for i=1:10]
     v = [parameter(m;name = "v[$i]") for i=1:10]
     c = constraint(m,u[1]+u[2]==0)

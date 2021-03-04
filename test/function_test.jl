@@ -24,6 +24,7 @@ for (forig,dorig,points) in [
     (x->sum(cos(x[i]) for i=1:4), Dict(i=>x->-sin(x[i]) for i=1:4), [randn(4) for i=1:3]),
     (x->beta(x[1],1), Dict(1=>x->beta(x[1],1)*(digamma(x[1])-digamma(x[1]+1))), [randn(1) for i=1:3]),
     (x->beta(1,x[1]), Dict(1=>x->beta(1,x[1])*(digamma(x[1])-digamma(1+x[1]))), [randn(1) for i=1:3]),
+    (x->sum(f(x[1]) for f in [sin, cos, exp]), Dict(1=>x->cos(x[1])-sin(x[1])+exp(x[1])), [randn(1) for i=1:3]),
 ]
     expr = forig(Variable())
     f = func(expr)

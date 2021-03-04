@@ -52,7 +52,6 @@ deriv(e::Parameter) = Dict{Int,Function}()
 func(a::Real) = @inline (x,p=nothing)->a
 deriv(e::Real) = Dict{Int,Function}()
 
-con(a) = @inline (x,p=nothing)->a
 con_one(x,p=nothing) = 1.
 con_zero(x,p=nothing) = 0.
 zero(e::Expression) = 0.
@@ -61,8 +60,6 @@ one(e::Expression) = 1.
 fsub(f::Function) = @inline (x,p=nothing)->-f(x,p)
 fadd(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(x,p)+f2(x,p)
 fmul(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(x,p)*f2(x,p)
-fmul(f1::Function,f2::typeof(con_one)) = f1
-fmul(f1::typeof(con_one),f2::Function) = f2
 fpow(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(x,p)^f2(x,p)
 fdiv(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(x,p)/f2(x,p)
 fsub(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(x,p)-f2(x,p)
@@ -70,7 +67,9 @@ fcom(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(f2(x,p))
 fcom(f1::Function,f2::Function,f3::Function) = @inline (x,p=nothing)->f1(f2(x,p),f3(x,p))
 flog(f::Function) = @inline (x,p=nothing)->log(f(x,p))
 
-for T in [typeof(con_one),typeof(con_zero),typeof(con(0)),typeof(con(0.))]
+fmul(f1::Function,f2::typeof(con_one)) = f1
+fmul(f1::typeof(con_one),f2::Function) = f2
+for T in [typeof(con_one),typeof(con_zero)]
     @eval begin
         fcom(f1::$T,f2::Function) = f1
         fcom(f1::$T,f2::Function,f3::Function) = f1
@@ -134,13 +133,7 @@ function derivsub!(deriv1,deriv2)
     end
     return deriv1
 end
-function derivmul!(deriv,f)
-    for (i,d) in deriv
-        deriv[i] = fmul(d,f)
-    end
-    return deriv
-end
-derivmul!(deriv1,deriv2,f1,f2) = derivadd!(derivmul!(deriv1,f2),derivmul!(deriv2,f1))
+
 
 +(e::Expression) = e
 -(e::Expression) = Term(parent(e),fsub(func(e)),deriv!(deriv(e),fsub))
@@ -156,8 +149,8 @@ for T in Reals
         +(a::$T,e::Expression) = Term(parent(e),fadd(a,func(e)),deriv(e))
         -(e::Expression,a::$T) = Term(parent(e),fsub(func(e),a),deriv(e))
         -(a::$T,e::Expression) = Term(parent(e),fsub(a,func(e)),deriv!(deriv(e),d->fsub(d)))
-        *(e::Expression,a::$T) = Term(parent(e),fmul(func(e),a),derivmul!(deriv(e),a))
-        *(a::$T,e::Expression) = Term(parent(e),fmul(a,func(e)),derivmul!(deriv(e),a))
+        *(e::Expression,a::$T) = Term(parent(e),fmul(func(e),a),deriv!(deriv(e),d->fmul(d,a)))
+        *(a::$T,e::Expression) = Term(parent(e),fmul(a,func(e)),deriv!(deriv(e),d->fmul(a,d)))
         ^(e::Expression,a::$T) = Term(parent(e),fpow(func(e),a),deriv!(deriv(e),d->fmul(a,fmul(fpow(func(e),a-1),d))))
         ^(a::$T,e::Expression) = Term(parent(e),fpow(a,func(e)),deriv!(deriv(e),d->fmul(fmul(fpow(a,func(e)),d),log(a))))
         /(e::Expression,a::$T) = Term(parent(e),fdiv(func(e),a),deriv!(deriv(e),d->fdiv(d,a)))

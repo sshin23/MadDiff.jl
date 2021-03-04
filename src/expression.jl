@@ -69,12 +69,6 @@ flog(f::Function) = @inline (x,p=nothing)->log(f(x,p))
 
 fmul(f1::Function,f2::typeof(con_one)) = f1
 fmul(f1::typeof(con_one),f2::Function) = f2
-for T in [typeof(con_one),typeof(con_zero)]
-    @eval begin
-        fcom(f1::$T,f2::Function) = f1
-        fcom(f1::$T,f2::Function,f3::Function) = f1
-    end
-end
 
 for T in Reals
     @eval begin 

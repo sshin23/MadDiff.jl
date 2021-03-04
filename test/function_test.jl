@@ -19,7 +19,7 @@ for (forig,dorig,points) in [
     (x->x[1]^x[2], Dict(1=>x->1/x[2],1=>x->x[2]*x[1]^(x[2]-1),2=>x->x[1]^x[2]*log(x[1])),[rand(2) for i=1:3]),
     (x->sin(x[1]/x[2]), Dict(1=>x->cos(x[1]/x[2])/x[2],2=>x->-cos(x[1]/x[2])*x[1]/x[2]^2), [randn(2) for i=1:3]),
     (x->cos(x[1]-x[2])^2, Dict(1=>x->-2cos(x[1]-x[2])sin(x[1]-x[2]),2=>x->2cos(x[1]-x[2])sin(x[1]-x[2])), [randn(2) for i=1:3]),
-    (x->exp(2^x[1]+x[2]^3), Dict(1=>x->exp(2^x[1]+x[2]^3)*2^(x[1]-1)*log(2) ,2=>x->exp(2^x[1]+x[2]^3)*3*x[2]^2), [randn(2) for i=1:3]),
+    (x->exp(2^x[1]+x[2]^3), Dict(1=>x->exp(2^x[1]+x[2]^3)*2^x[1]*log(2) ,2=>x->exp(2^x[1]+x[2]^3)*3*x[2]^2), [randn(2) for i=1:3]),
     (x->x[1]/log(x[2]^2+9.), Dict(1=>x->1/log(x[2]^2+9.), 2=>x->-2x[2]x[1]/(x[2]^2+9.)/log(x[2]^2+9.)^2), [randn(2) for i=1:3]),
     (x->sum(cos(x[i]) for i=1:4), Dict(i=>x->-sin(x[i]) for i=1:4), [randn(4) for i=1:3]),
     (x->beta(x[1],1), Dict(1=>x->beta(x[1],1)*(digamma(x[1])-digamma(x[1]+1))), [randn(1) for i=1:3]),

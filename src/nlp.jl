@@ -48,7 +48,7 @@ parent(c::Constraint) = c.parent
 index(c::Constraint) = c.index
 func(c::Constraint) = func(parent(c).cons[index(c)])
 
-SimpleModel(optimizer=nothing) = Model(optimizer)
+SimpleModel(optimizer=nothing;opt...) = Model(optimizer;opt...)
 Model(optimizer=nothing;opt...) =Model(
     PrintVariable[],PrintVariable[],Expression[],Term(),0,0,0,Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],nothing,optimizer,
     Dict{Symbol,Any}(),Dict{Symbol,Any}(name=>option for (name,option) in opt))

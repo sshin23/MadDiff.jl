@@ -38,21 +38,19 @@ for o in [:*,:/,:^]
 end
 
 for (M,f,nargs) in diffrules
-    if f != :^
-        if nargs == 1
+    if nargs == 1
+        @eval begin
+            $f(p::PrintExpression) = PrintVariable(string($f)*"("*raw(p)*")")
+        end
+    elseif nargs == 2
+        for T in Reals
             @eval begin
-                $f(p::PrintExpression) = PrintVariable(string($f)*"("*raw(p)*")")
+                $f(a::$T,p::PrintExpression) = PrintVariable(string($f)*"("*string(a)*" , "*raw(p)*")")
+                $f(p::PrintExpression,a::$T) = PrintVariable(string($f)*"("*raw(p)*" , "*string(a)*")")
             end
-        elseif nargs == 2
-            for T in Reals
-                @eval begin
-                    $f(a::$T,p::PrintExpression) = PrintVariable(string($f)*"("*string(a)*" , "*raw(p)*")")
-                    $f(p::PrintExpression,a::$T) = PrintVariable(string($f)*"("*raw(p)*" , "*string(a)*")")
-                end
-            end
-            @eval begin
-                $f(p1::PrintExpression,p2::PrintExpression) = PrintVariable(string($f)*"("*raw(p1)*" , "*raw(p2)*")")
-            end
+        end
+        @eval begin
+            $f(p1::PrintExpression,p2::PrintExpression) = PrintVariable(string($f)*"("*raw(p1)*" , "*raw(p2)*")")
         end
     end
 end

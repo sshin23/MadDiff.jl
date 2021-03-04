@@ -16,7 +16,6 @@ const diffrules = [
     (:Base,:asind,1),(:Base,:acosd,1),(:Base,:atand,1),(:Base,:acscd,1),(:Base,:asecd,1),(:Base,:acotd,1),
     (:Base,:sinh,1),(:Base,:cosh,1),(:Base,:tanh,1),(:Base,:csch,1),(:Base,:sech,1),(:Base,:coth,1),
     (:Base,:asinh,1),(:Base,:acosh,1),(:Base,:atanh,1),(:Base,:acsch,1),(:Base,:asech,1),(:Base,:acoth,1),
-    (:Base,:^,2),(:Base,:/,2),
     (:SpecialFunctions,:erfi,1),(:SpecialFunctions,:loggamma,1),(:SpecialFunctions,:erfcinv,1),
     (:SpecialFunctions,:erfcx,1),(:SpecialFunctions,:invdigamma,1),(:SpecialFunctions,:bessely1,1),
     (:SpecialFunctions,:besselj1,1),(:SpecialFunctions,:dawson,1),(:SpecialFunctions,:airyaiprime,1),

@@ -2,7 +2,7 @@ nlp_test = Dict()
 
 nlp_test[1] = function (optimizer;opt...)
 
-    m = SimpleNLModels.Model(optimizer;opt...)
+    m = SimpleModel(optimizer;opt...)
 
     x = variable(m;lb=2,ub=4)
     objective(m,(x-1)^2)
@@ -14,7 +14,7 @@ end
 
 nlp_test[2] = function (optimizer;opt...)
 
-    m = SimpleNLModels.Model(optimizer;opt...)
+    m = SimpleModel(optimizer;opt...)
 
     x = variable(m)
     constraint(m,x+1<= -1)
@@ -29,7 +29,7 @@ end
 
 nlp_test[3] = function (optimizer;opt...)
 
-    m = SimpleNLModels.Model(optimizer;opt...)
+    m = SimpleModel(optimizer;opt...)
 
     x = [variable(m,name="s[$i]",start = .1) for i=1:3]
     
@@ -43,7 +43,7 @@ end
 
 nlp_test[4] = function (optimizer;opt...)
     
-    m = SimpleNLModels.Model(optimizer;opt...)
+    m = SimpleModel(optimizer;opt...)
 
     x = [variable(m;start=mod(i,2)==1 ? -1.2 : 1.) for i=1:10];
     p = [parameter(m,2) for i=1:10];
@@ -59,7 +59,7 @@ end
 
 
 
-m = SimpleNLModels.Model()
+m = SimpleModel()
 
 @test set_optimizer(m,Ipopt.Optimizer) == Ipopt.Optimizer
 

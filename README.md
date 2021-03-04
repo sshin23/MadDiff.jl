@@ -17,7 +17,7 @@ using SimpleNLModels
 
 x = Variable("x")
 expr = x[1]^2 + exp(x[2]^2)/2 + log(x[3]+0.5)
-show(expr) # x[1]^2 + exp(x[2]^2)*0.5 + log(x[3] + 0.5)
+print(expr) # x[1]^2 + exp(x[2]^2)*0.5 + log(x[3] + 0.5)
 
 x0 = [0.,0.5,1.5]
 
@@ -31,7 +31,9 @@ print("d_2(x0) = $(d_2(x0))") # d_2(x0) = 0.6420127083438707
 ### Nonlinear Programming
 SimpleNLModels provide a simple user-interface for creating nonlinear prgogramming models and allows solving the created models with optimization solvers (Ipopt and MadNLP.jl). The syntax is as follows:
 ```julia
-m = SimpleNLModels.Model(SimpleNLModels.IpoptOptimizer;linear_solver="ma57")
+using Ipopt
+
+m = SimpleNLModels.Model(Ipopt.Optimizer;print_level=3) # SimpleModel( ... ) works as well
 
 x = [variable(m;start=mod(i,2)==1 ? -1.2 : 1.) for i=1:1000]   
 objective(m,sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:1000))

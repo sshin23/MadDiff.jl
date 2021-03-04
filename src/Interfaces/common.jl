@@ -1,39 +1,43 @@
 sum_init_0(itr) = isempty(itr) ? 0 : sum(itr)
     
 
-function fill!(f,pairs,x,p)
-    for (i,d) in pairs
-        f[i] += d(x,p)
+@inline function fill!(f,pairs,x,p)
+    @simd for l in eachindex(pairs)
+        (i,k,d) = pairs[l]
+        @inbounds f[i] += d(x,p)
     end
 end
 
-function fill!(J,pairs,x,p,offset)
-    for (j,d) in pairs
-        J[offset += 1] = d(x,p)
+@inline function fill_jacobian!(J,pairs,x,p)
+    @simd for l in eachindex(pairs)
+        (i,k,d) = pairs[l]
+        @inbounds J[k] = d(x,p)
     end
-    return offset
 end
 
-function fill_hessian!(H,pairs,x,p,sig,lag,offset)
-    for ((i,j),d) in pairs
-        H[offset += 1] = d(x,p,sig,lag)
+@inline function fill_hessian!(H,pairs,x,p,sig,lag)
+    @simd for l in eachindex(pairs)
+        ((i,j),k,d) = pairs[l]
+        @inbounds H[k] = d(x,p,sig,lag)
     end
-    return offset
 end
 
 
-get_pairss(dict) =  [
-    [(i,d) for (i,d) in dict if typeof(d)==type]
-    for type in union(typeof(d) for (i,d) in dict)
-]
+get_pairss(dict) =  begin
+    k = 0
+    [
+        [(i,k+=1,d) for (i,d) in dict if typeof(d)==type]
+        for type in union(typeof(d) for (i,d) in dict)
+    ]
+end
 get_con_pairss(cons) = [
-    [(i,func(cons[i])) for i=1:length(cons) if typeof(func(cons[i]))==type]
+    [(i,nothing,func(cons[i])) for i=1:length(cons) if typeof(func(cons[i]))==type]
     for type in union(typeof(func(con)) for con in cons)
 ]
 
 function eval_grad!(obj,p)
     pairss = get_pairss(deriv(obj))
-    function (f,x)
+    @inline function (f,x)
         f.=0
         for pairs in pairss
             fill!(f,pairs,x,p)
@@ -43,7 +47,7 @@ end
 
 function eval_con!(cons,p)
     pairss = get_con_pairss(cons)
-    function (c,x)
+    @inline function (c,x)
         c.= 0
         for pairs in pairss
             fill!(c,pairs,x,p)
@@ -51,35 +55,21 @@ function eval_con!(cons,p)
     end
 end
 
-function get_jac_dict(cons)
-    jac_dict = Dict{Tuple{Int,Int},Function}()
-    for i=1:length(cons)
-        for (j,d) in deriv(cons[i])
-            # if haskey(jac_dict,(i,j))
-            #     dold = jac_dict[i,j]
-            #     jac_dict[i,j] = (x,p)->dold(x,p)+d(x,p)
-            # else
-            jac_dict[i,j] = (x,p)->d(x,p)
-            # end
-        end
-    end
-    return jac_dict
-end
+get_jac_dict(cons)= [((i,j),d) for i=1:length(cons) for (j,d) in deriv(cons[i])]
 
 function eval_jac!(cons,p)
     jac_dict = get_jac_dict(cons)
     pairss = get_pairss(jac_dict)
     
-    function jac!(J,x)
-        offset = 0
+    @inline function jac!(J,x)
         for pairs in pairss
-            offset = fill!(J,pairs,x,p,offset)
+            fill_jacobian!(J,pairs,x,p)
         end
     end
-    function jac_sparsity!(I,J)
+    @inline function jac_sparsity!(I,J)
         offset = 0
         for pairs in pairss
-            offset = sparsity!(I,J,pairs,offset)
+            sparsity!(I,J,pairs)
         end
     end
     nnz_jac = sum_init_0(length(pairs) for pairs in pairss)
@@ -89,7 +79,7 @@ end
 
 function get_hess_dict(obj_2nd,con_2nds)
     hess_dict = Dict{Tuple{Int,Int},Function}()
-
+    
     for (i,dobj) in obj_2nd
         for (j,d) in dobj
             # if haskey(hess_dict,(i,j))
@@ -145,17 +135,15 @@ function eval_hess!(obj,cons,p)
     hess_dict = get_hess_dict(obj_2nd,con_2nds)
     pairss = get_pairss(hess_dict)
     
-    function hess!(H,x,lag,sig)
-        offset = 0
+    @inline function hess!(H,x,lag,sig)
         for pairs in pairss
-            offset = fill_hessian!(H,pairs,x,p,sig,lag,offset)
+            fill_hessian!(H,pairs,x,p,sig,lag)
         end
     end
 
-    function hess_sparsity!(I,J)
-        offset = 0
+    @inline function hess_sparsity!(I,J)
         for pairs in pairss
-            offset = sparsity!(I,J,pairs,offset)
+            sparsity!(I,J,pairs)
         end
     end
 
@@ -164,13 +152,11 @@ function eval_hess!(obj,cons,p)
     (hess!,hess_sparsity!,nnz_hess)
 end
 
-function sparsity!(I,J,pairs,offset)
-    for ((i,j),d) in pairs
-        offset += 1
-        I[offset] = i
-        J[offset] = j
+function sparsity!(I,J,pairs)
+    for ((i,j),k,d) in pairs
+        I[k] = i
+        J[k] = j
     end
-    return offset
 end
 
 

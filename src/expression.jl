@@ -26,10 +26,13 @@ Variable() = Source{Variable}(DEFAULT_VAR_STRING)
 Parameter() = Source{Parameter}(DEFAULT_PAR_STRING)
 Variable(str::String) = Source{Variable}(str)
 Parameter(str::String) = Source{Parameter}(str)
-Variable(n::Int;parent=nothing) = Variable(parent,(x,p=nothing)->x[n],n)
-Parameter(n::Int;parent=nothing) = Parameter(parent,(x,p=nothing)->p[n],n)
+Variable(n::Int;parent=nothing) = Variable(parent,fxentry(n),n)
+Parameter(n::Int;parent=nothing) = Parameter(parent,fpentry(n),n)
 getindex(e::Source{Variable},n) = Variable(n;parent=e)
 getindex(e::Source{Parameter},n) = Parameter(n;parent=e)
+
+fxentry(n) = @inline (x,p=nothing)->x[n]
+fpentry(n) = @inline (x,p=nothing)->p[n]
 
 Term(;parent=nothing) = Term(parent,con_zero,Dict{Int,Function}())
 parent(e1,e2) = marry(parent(e1),parent(e2))
@@ -48,19 +51,19 @@ deriv(e::Variable) = Dict{Int,Function}(e.index=>con_one)
 deriv(e::Parameter) = Dict{Int,Function}()
 deriv(e::Real) = Dict{Int,Function}()
 
-con(a) = (x,p=nothing)->a
+con(a) = @inline (x,p=nothing)->a
 con_one(x,p=nothing) = 1.
 con_zero(x,p=nothing) = 0.
     
-fsub(f::Function) = (x,p=nothing)->-f(x,p)
-fadd(f1::Function,f2::Function) = (x,p=nothing)->f1(x,p)+f2(x,p)
-fmul(f1::Function,f2::Function) = (x,p=nothing)->f1(x,p)*f2(x,p)
+fsub(f::Function) = @inline (x,p=nothing)->-f(x,p)
+fadd(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(x,p)+f2(x,p)
+fmul(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(x,p)*f2(x,p)
 fmul(f1::Function,f2::typeof(con_one)) = f1
 fmul(f1::typeof(con_one),f2::Function) = f2
-fsub(f1::Function,f2::Function) = (x,p=nothing)->f1(x,p)-f2(x,p)
-fpow(f1::Function,f2::Function) = (x,p=nothing)->f1(x,p)^f2(x,p)
-fcom(f1::Function,f2::Function) = (x,p=nothing)->f1(f2(x,p))
-fcom(f1::Function,f2::Function,f3::Function) = (x,p=nothing)->f1(f2(x,p),f3(x,p))
+fsub(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(x,p)-f2(x,p)
+fpow(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(x,p)^f2(x,p)
+fcom(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(f2(x,p))
+fcom(f1::Function,f2::Function,f3::Function) = @inline (x,p=nothing)->f1(f2(x,p),f3(x,p))
 
 for T in [typeof(con_one),typeof(con_zero),typeof(con(0)),typeof(con(0.))]
     @eval begin
@@ -71,21 +74,21 @@ end
 
 for T in Reals
     @eval begin 
-        fadd(f1::Function,f2::$T) = f2 == 0 ? f1 : (x,p=nothing)->f1(x,p)+f2
-        fadd(f1::$T,f2::Function) = f1 == 0 ? f2 : (x,p=nothing)->f1+f2(x,p)
-        fsub(f1::Function,f2::$T) = f2 == 0 ? f1 : (x,p=nothing)->f1(x,p)-f2
-        fsub(f1::$T,f2::Function) = f1 == 0 ? fsub(f2) : (x,p=nothing)->f1-f2(x,p)
-        fmul(f1::Function,f2::$T) = f2 == 1 ? f1 : f2 == 0 ? con_zero : (x,p=nothing)->f1(x,p)*f2
-        fmul(f1::$T,f2::Function) = f1 == 1 ? f2 : f1 == 0 ? con_zero : (x,p=nothing)->f1*f2(x,p)
-        fpow(f1::Function,f2::$T) = f2 == 1 ? f1 : f2 == 0 ? con_one  : (x,p=nothing)->f1(x,p)^f2
-        fpow(f1::$T,f2::Function) = f1 == 1 ? f1 : f1 == 0 ? con_zero : (x,p=nothing)->f1^f2(x,p)
-        fcom(f1::Function,f2::Function,a::$T) = (x,p=nothing)->f1(f2(x,p),a)
-        fcom(f1::Function,a::$T,f3::Function) = (x,p=nothing)->f1(a,f3(x,p))
+        fadd(f1::Function,f2::$T) = f2 == 0 ? f1 : @inline (x,p=nothing)->f1(x,p)+f2
+        fadd(f1::$T,f2::Function) = f1 == 0 ? f2 : @inline (x,p=nothing)->f1+f2(x,p)
+        fsub(f1::Function,f2::$T) = f2 == 0 ? f1 : @inline (x,p=nothing)->f1(x,p)-f2
+        fsub(f1::$T,f2::Function) = f1 == 0 ? fsub(f2) : @inline (x,p=nothing)->f1-f2(x,p)
+        fmul(f1::Function,f2::$T) = f2 == 1 ? f1 : f2 == 0 ? con_zero : @inline (x,p=nothing)->f1(x,p)*f2
+        fmul(f1::$T,f2::Function) = f1 == 1 ? f2 : f1 == 0 ? con_zero : @inline (x,p=nothing)->f1*f2(x,p)
+        fpow(f1::Function,f2::$T) = f2 == 1 ? f1 : f2 == 0 ? con_one  : @inline (x,p=nothing)->f1(x,p)^f2
+        fpow(f1::$T,f2::Function) = f1 == 1 ? f1 : f1 == 0 ? con_zero : @inline (x,p=nothing)->f1^f2(x,p)
+        fcom(f1::Function,f2::Function,a::$T) = @inline (x,p=nothing)->f1(f2(x,p),a)
+        fcom(f1::Function,a::$T,f3::Function) = @inline (x,p=nothing)->f1(a,f3(x,p))
     end
 end
-fsum(fs) = (x,p=nothing)->sum(f(x,p) for f in fs)
+fsum(fs) = @inline (x,p=nothing)->sum(f(x,p) for f in fs)
 
-function f_add_sum(f1,f2)
+@inline function f_add_sum(f1,f2)
     if hasfield(typeof(f1),:fs)
         i = findfirst(f->f2 isa eltype(f.fs),f1.fs)
         if i==nothing            
@@ -161,7 +164,7 @@ add_sum(e1::Expression,e2::Expression) = Term(parent(e1,e2),f_add_sum(func(e1),f
 
 for (M,f,nargs) in diffrules
     if nargs == 1
-        df = :((x,p=nothing)->$(diffrule(M,f,:x)))
+        df = :(@inline (x,p=nothing)->$(diffrule(M,f,:x)))
         @eval begin
             $f(e::Expression)=Term(
                 parent(e),
@@ -172,7 +175,7 @@ for (M,f,nargs) in diffrules
     elseif nargs == 2
         if f != :^
             dfsym,~ = diffrule(M,f,:x,:a)
-            df = :((x,a,p=nothing)->$dfsym)
+            df = :(@inline (x,a,p=nothing)->$dfsym)
             for T in Reals
                 @eval begin
                     $f(e::Expression,a::$T) = Term(
@@ -184,7 +187,7 @@ for (M,f,nargs) in diffrules
             end
 
             ~,dfsym = diffrule(M,f,:a,:x)
-            df = :((a,x,p=nothing)->$dfsym)
+            df = :(@inline (a,x,p=nothing)->$dfsym)
 
             for T in Reals
                 @eval begin
@@ -198,8 +201,8 @@ for (M,f,nargs) in diffrules
         end
 
         dfsym1,dfsym2 = diffrule(M,f,:x1,:x2)
-        df1 = :((x1,x2,p=nothing)->$dfsym1)
-        df2 = :((x1,x2,p=nothing)->$dfsym2)
+        df1 = :(@inline (x1,x2,p=nothing)->$dfsym1)
+        df2 = :(@inline (x1,x2,p=nothing)->$dfsym2)
 
         @eval begin
             $f(e1::Expression,e2::Expression) = Term(

@@ -59,7 +59,9 @@ end
 
 
 
-m = SimpleNLModels.Model(Ipopt.Optimizer)
+m = SimpleNLModels.Model()
+
+@test set_optimizer(m,Ipopt.Optimizer) == Ipopt.Optimizer
 
 x = variable(m)
 setvalue(x,3)

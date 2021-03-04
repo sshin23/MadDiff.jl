@@ -1,4 +1,6 @@
 for (forig,dorig,points) in [
+    (x->one(x[1]), Dict(), [randn(1) for i=1:3]),
+    (x->zero(x[1]), Dict(), [randn(1) for i=1:3]),
     (x->+x[1], Dict(1=>x->1.), [randn(1) for i=1:3]),
     (x->x[1]+1., Dict(1=>x->1.), [randn(1) for i=1:3]),
     (x->2x[1], Dict(1=>x->2.), [randn(1) for i=1:3]),

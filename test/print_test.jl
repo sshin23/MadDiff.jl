@@ -11,6 +11,8 @@
     
     show(stdout, MIME"text/plain"(),xx)
     show(stdout, MIME"text/plain"(),pp)
+    show(stdout, MIME"text/plain"(),xx[1])
+    show(stdout, MIME"text/plain"(),pp[1])
     show(stdout, MIME"text/plain"(),c)
     show(stdout, MIME"text/plain"(),u[2])
     show(stdout, MIME"text/plain"(),v[3])

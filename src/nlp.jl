@@ -48,9 +48,12 @@ parent(c::Constraint) = c.parent
 index(c::Constraint) = c.index
 func(c::Constraint) = func(parent(c).cons[index(c)])
 
-Model(optimizer;opt...) =Model(
+SimpleModel(optimizer=nothing) = Model(optimizer)
+Model(optimizer=nothing;opt...) =Model(
     PrintVariable[],PrintVariable[],Expression[],Term(),0,0,0,Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],nothing,optimizer,
     Dict{Symbol,Any}(),Dict{Symbol,Any}(name=>option for (name,option) in opt))
+
+set_optimizer(m::Model,optimizer) = m.optimizer = optimizer
 
 function variable(m::Model;lb=-Inf,ub=Inf,start=0.,name="$DEFAULT_VAR_STRING[$(m.n+1)]")
     m.n += 1

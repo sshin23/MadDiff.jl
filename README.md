@@ -48,7 +48,7 @@ optimize!(m)
 ```
 
 ## How it works?
-SimpleNLModels constructs first and second derivative functions off-line (i.e., prior to calling the optimization solver) by applying expression template-based automatic differentiation on _functions_ rather than dual numbers. This off-line process is typically more expensive than the model creation in other AD-based algebraic modeling languages such as `JuMP` and `Ampl`, but enables faster first and second order derivative evaluations (thus is suitable for problems that require repeated solution of the same problem, such as in control). A benchmark code is included in `example`.
+SimpleNLModels constructs first and second derivative functions off-line (i.e., prior to calling the optimization solver) by applying expression template-based automatic differentiation on _functions_ rather than dual numbers. This off-line procedure is typically more expensive than the model creation procedure in other AD-based algebraic modeling languages such as `JuMP` and `Ampl`, but enables faster first and second order derivative evaluations (thus is suitable for problems that require repeated solution of the same problem, such as in control). A benchmark code is included in `example`.
 
 <img src="/example/output/luksanvlcek.png" width="400"/><img src="/example/output/hehnandrea.png" width="400"/>
 

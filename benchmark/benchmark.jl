@@ -30,15 +30,15 @@ for (N,nlm,jump,name) in [
     end
 end
 
-# ticklabel = ["SimpleNLModels","AMPL","JuMP"]
-# barlabel = ["Model Creation + Solution Time (Wall)" "Solution Time (CPU)" "NLP Function Evaluation Time (CPU)"]
+ticklabel = ["SimpleNLModels","AMPL","JuMP"]
+barlabel = ["Model Creation + Solution Time (Wall)" "Solution Time (CPU)" "NLP Function Evaluation Time (CPU)"]
 
-# plt1 = groupedbar([result[1][1] result[1][2] result[1][3]], title="Luksan & Vlcek (1999)", bar_position = :dodge,
-#                   bar_width=0.7, xticks=(1:3, ticklabel), label=barlabel, ylabel="Time (sec)", framestyle=:box, ylim = (0,1.1*maximum(vcat(result[1]...))),dpi = 300)
-# plt2 = groupedbar([result[2][1] result[2][2] result[2][3]], title="Hehn & Andrea (2011, modified)", bar_position = :dodge,
-#                   bar_width=0.7, xticks=(1:3, ticklabel), label=barlabel, ylabel="Time (sec)", framestyle=:box, ylim = (0,1.1*maximum(vcat(result[2]...))),dpi = 300)
-# savefig(plt1,"output/luksanvlcek.png")
-# savefig(plt2,"output/hehnandrea.png")
+plt1 = groupedbar([result[1][1] result[1][2] result[1][3]], title="Luksan & Vlcek (1999)", bar_position = :dodge,
+                  bar_width=0.7, xticks=(1:3, ticklabel), label=barlabel, ylabel="Time (sec)", framestyle=:box, ylim = (0,1.1*maximum(vcat(result[1]...))),dpi = 300)
+plt2 = groupedbar([result[2][1] result[2][2] result[2][3]], title="Hehn & Andrea (2011, modified)", bar_position = :dodge,
+                  bar_width=0.7, xticks=(1:3, ticklabel), label=barlabel, ylabel="Time (sec)", framestyle=:box, ylim = (0,1.1*maximum(vcat(result[2]...))),dpi = 300)
+savefig(plt1,"output/luksanvlcek.png")
+savefig(plt2,"output/hehnandrea.png")
 
 
 

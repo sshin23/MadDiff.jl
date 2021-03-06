@@ -1,10 +1,3 @@
-
-******************************************************************************
-This program contains Ipopt, a library for large-scale nonlinear optimization.
- Ipopt is released as open source code under the Eclipse Public License (EPL).
-         For more information visit https://github.com/coin-or/Ipopt
-******************************************************************************
-
 This is Ipopt version 3.13.4, running with linear solver ma27.
 
 Number of nonzeros in equality constraint Jacobian...:    29994
@@ -33,11 +26,11 @@ iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
 Number of Iterations....: 6
 
                                    (scaled)                 (unscaled)
-Objective...............:   7.8692659500479578e-01    6.2324586324379831e+00
-Dual infeasibility......:   7.9744559784639631e-10    6.3157691349434593e-09
-Constraint violation....:   8.3559825725387782e-12    8.3559825725387782e-12
+Objective...............:   7.8692659500479645e-01    6.2324586324379885e+00
+Dual infeasibility......:   7.9743417311611166e-10    6.3156786510796049e-09
+Constraint violation....:   8.3555384833289281e-12    8.3555384833289281e-12
 Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-Overall NLP error.......:   7.9744559784639631e-10    6.3157691349434593e-09
+Overall NLP error.......:   7.9743417311611166e-10    6.3156786510796049e-09
 
 
 Number of objective function evaluations             = 7
@@ -47,7 +40,7 @@ Number of inequality constraint evaluations          = 0
 Number of equality constraint Jacobian evaluations   = 7
 Number of inequality constraint Jacobian evaluations = 0
 Number of Lagrangian Hessian evaluations             = 6
-Total CPU secs in IPOPT (w/o function evaluations)   =      0.036
-Total CPU secs in NLP function evaluations           =      0.099
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.024
+Total CPU secs in NLP function evaluations           =      0.023
 
 EXIT: Optimal Solution Found.

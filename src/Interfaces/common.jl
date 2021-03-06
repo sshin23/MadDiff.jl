@@ -16,8 +16,7 @@ end
 end
 
 @inline function fill_hessian!(H,pairs,x,p,sig,lag)
-    @simd for l in eachindex(pairs)
-        ((i,j),k,d) = pairs[l]
+    for ((i,j),k,d) in pairs
         @inbounds H[k] = d(x,p,sig,lag)
     end
 end
@@ -160,8 +159,9 @@ function sparsity!(I,J,pairs)
 end
 
 
-function get_nlp_functions(obj,cons,p)
-
+function get_nlp_functions(objs,cons,p)
+    obj = sum_init_0(obj for obj in objs)
+    
     _obj = x->func(obj)(x,p)
     _grad! = eval_grad!(obj,p)
     _con! = eval_con!(cons,p)

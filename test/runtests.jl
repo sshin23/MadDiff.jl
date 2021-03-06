@@ -21,6 +21,9 @@ function compare(f1,f2,xpoints,ppoints)
 end
 
 @testset "SimpleNLModels test" begin
+    @testset "basic" begin
+        include("basic_test.jl")
+    end
     @testset "Function Test" begin
         include("function_test.jl")
     end

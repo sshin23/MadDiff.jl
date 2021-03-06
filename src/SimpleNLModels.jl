@@ -1,8 +1,8 @@
 module SimpleNLModels
 
-import Base: string,show,print,getindex,add_sum,+,-,*,^,/,==,<=,>=,one,zero
+import Base: string,show,print,getindex,add_sum,+,-,*,^,/,==,<=,>=,one,zero, copy
 import DiffRules: diffrule
-import JuMP: optimize!, value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, lower_bound, upper_bound # to avoid conflict
+import JuMP: optimize!, value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, lower_bound, upper_bound, num_varibles, num_constraints # to avoid conflict
 import SpecialFunctions
 import Requires: @require
 
@@ -38,7 +38,8 @@ const Reals = [Int,Float64]
 
 export Source, Variable, Parameter, Term, func, deriv, 
     SimpleModel, variable, parameter, constraint, objective, instantiate!, optimize!,
-    value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, lower_bound, upper_bound, set_optimizer
+    value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, lower_bound, upper_bound, set_optimizer,
+    num_variables, num_constraints
 
 
 include("expression.jl")

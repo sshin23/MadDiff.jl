@@ -3,7 +3,7 @@ mutable struct Model
     pars::Vector{PrintVariable}
     
     cons::Vector{Expression}
-    obj::Expression
+    objs::Vector{Expression}
 
     n::Int # num vars
     q::Int # num pars
@@ -50,7 +50,7 @@ func(c::Constraint) = func(parent(c).cons[index(c)])
 
 SimpleModel(optimizer=nothing;opt...) = Model(optimizer;opt...)
 Model(optimizer=nothing;opt...) =Model(
-    PrintVariable[],PrintVariable[],Expression[],Term(),0,0,0,Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],nothing,optimizer,
+    PrintVariable[],PrintVariable[],Expression[],Expression[],0,0,0,Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],nothing,optimizer,
     Dict{Symbol,Any}(),Dict{Symbol,Any}(name=>option for (name,option) in opt))
 
 set_optimizer(m::Model,optimizer) = m.optimizer = optimizer
@@ -84,18 +84,14 @@ function constraint(m::Model,e::Expression;lb=0.,ub=0.,name=nothing)
 end
 
 function objective(m::Model,e::Expression)
-    m.obj = e
+    push!(m.objs,e)
     nothing
 end
 
-function instantiate!(m::Model)
-    m.prob = create_problem(m,m.optimizer;m.opt...)
-    m
-end
-
+instantiate!(m::Model) = instantiate!(m,m.optimizer;m.opt...)
 function optimize!(m::Model)
     m.prob == nothing && instantiate!(m)
-    solve_problem(m.prob,m.optimizer;m.opt...)
+    optimize!(m.prob,m.optimizer;m.opt...)
 end
 
 value(e::Term{Model}) = func(e)(parent(e).x,parent(e).p)
@@ -112,5 +108,7 @@ for (T,ub,lb) in [(Variable{Model},:xl,:xu), (Constraint,:gl,:gu)]
 end
 
 dual(c::Constraint) = parent(c).l[index(c)]
-objective_value(m::Model) = parent(m.obj) isa Nothing ? 0. : value(m.obj)
+objective_value(m::Model) = sum_init_0(value(obj) for obj in m.objs)
 
+num_variables(m::Model) = length(m.vars)
+num_constraints(m::Model) = length(m.cons)

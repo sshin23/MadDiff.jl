@@ -59,3 +59,4 @@ for (forig,xpoints,ppoints) in [
     f = func(expr)
     @test compare(forig,f, xpoints,ppoints)
 end
+

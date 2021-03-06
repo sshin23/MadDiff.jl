@@ -22,6 +22,10 @@ mutable struct Term{T} <: Expression
     deriv::Dict{Int,Function}
 end
 
+index(e::Variable) = e.index
+copy(e::Variable) = Variable(parent(e),fxentry(index(e)),index(e))
+copy(e::Term) = Term(parent(e),func(e),copy(deriv(e)))
+
 Variable() = Source{Variable}(DEFAULT_VAR_STRING)
 Parameter() = Source{Parameter}(DEFAULT_PAR_STRING)
 Variable(str::String) = Source{Variable}(str)
@@ -34,7 +38,6 @@ getindex(e::Source{Parameter},n) = Parameter(n;parent=e)
 fxentry(n) = @inline (x,p=nothing)->x[n]
 fpentry(n) = @inline (x,p=nothing)->p[n]
 
-Term(;parent=nothing) = Term(parent,con_zero,Dict{Int,Function}())
 parent(e1,e2) = marry(parent(e1),parent(e2))
 marry(p1::Source{Variable},p2::Source{Parameter}) = (p1,p2)
 marry(p1::Source{Parameter},p2::Source{Variable}) = (p2,p1)
@@ -99,9 +102,9 @@ fsum(fs) = @inline (x,p=nothing)->sum(f(x,p) for f in fs)
         return f1
     else
         if typeof(f1)==typeof(f2)
-            return fsum([fsum([f1,f2])])
+            return fsum(Function[fsum([f1,f2])])
         else
-            return fsum([
+            return fsum(Function[
                 fsum([f1]),
                 fsum([f2])
             ])

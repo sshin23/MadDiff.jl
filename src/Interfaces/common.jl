@@ -160,7 +160,7 @@ end
 
 
 function get_nlp_functions(objs,cons,p)
-    obj = sum(obj for obj in objs)
+    obj = sum_init_0(obj for obj in objs)
     _obj = x->func(obj)(x,p)
     _grad! = eval_grad!(obj,p)
     _con! = eval_con!(cons,p)

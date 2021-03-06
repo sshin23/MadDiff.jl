@@ -70,6 +70,8 @@ fcom(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(f2(x,p))
 fcom(f1::Function,f2::Function,f3::Function) = @inline (x,p=nothing)->f1(f2(x,p),f3(x,p))
 flog(f::Function) = @inline (x,p=nothing)->log(f(x,p))
 
+fadd(f1::Function,f2::typeof(con_zero)) = f1
+fadd(f1::typeof(con_zero),f2::Function) = f2
 fmul(f1::Function,f2::typeof(con_one)) = f1
 fmul(f1::typeof(con_one),f2::Function) = f2
 

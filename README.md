@@ -2,7 +2,7 @@
 [![codecov](https://codecov.io/gh/sshin23/SimpleNLModels.jl/branch/main/graph/badge.svg?token=U6NMMW0IT5)](https://codecov.io/gh/sshin23/SimpleNLModels.jl)
 # SimpleNLModels.jl
 
-SimpleNLModels is a simple algebraic modeling language for nonlinear programgs.
+SimpleNLModels is a simple algebraic modeling language for nonlinear programs.
 
 ## Installation
 ```julia

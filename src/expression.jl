@@ -22,6 +22,11 @@ mutable struct Term{T} <: Expression
     deriv::Dict{Int,Function}
 end
 
+mutable struct Constant{T} <: Expression
+    parent::T
+    val::Real
+end
+
 index(e::Variable) = e.index
 copy(e::Variable) = Variable(parent(e),fxentry(index(e)),index(e))
 copy(e::Term) = Term(parent(e),func(e),copy(deriv(e)))

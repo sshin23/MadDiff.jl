@@ -48,6 +48,9 @@ parent(c::Constraint) = c.parent
 index(c::Constraint) = c.index
 func(c::Constraint) = func(parent(c).cons[index(c)])
 
+getindex(m::Model,idx::Symbol) = m.ext[idx]
+setindex!(m::Model,val,idx::Symbol) = setindex!(m.ext,val,idx)
+
 SimpleModel(optimizer=nothing;opt...) = Model(optimizer;opt...)
 Model(optimizer=nothing;opt...) =Model(
     PrintVariable[],PrintVariable[],Expression[],Expression[],0,0,0,Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],nothing,optimizer,
@@ -85,6 +88,11 @@ end
 
 function objective(m::Model,e::Expression)
     push!(m.objs,e)
+    nothing
+end
+
+function objective(m::Model,e::Real)
+    push!(m.objs,Term(m,(x,p=nothing)->e,Dict{Int,Function}()))
     nothing
 end
 

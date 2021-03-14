@@ -1,6 +1,6 @@
 module SimpleNLModels
 
-import Base: string,show,print,getindex,add_sum,+,-,*,^,/,==,<=,>=,one,zero, copy
+import Base: string,show,print,getindex,setindex!,add_sum,+,-,*,^,/,==,<=,>=,one,zero, copy
 import DiffRules: diffrule
 import JuMP: optimize!, value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, lower_bound, upper_bound, num_variables, num_constraints # to avoid conflict
 import SpecialFunctions

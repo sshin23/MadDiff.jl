@@ -4,27 +4,27 @@ struct Source{T}
     str::String
 end
 
-struct Variable{T} <: Expression
+struct Variable{T,F<:Function} <: Expression
     parent::T
-    func::Function
+    func::F
     index::Int
 end
 
-struct Parameter{T} <: Expression
+struct Parameter{T,F<:Function} <: Expression
     parent::T
-    func::Function
+    func::F
     index::Int
 end
 
-mutable struct Term{T} <: Expression
+struct Term{T,F<:Function} <: Expression
     parent::T
-    func::Function
+    func::F
     deriv::Dict{Int,Function}
 end
 
-mutable struct Constant{T} <: Expression
+struct Constant{T,F<:Function,V<:Real} <: Expression
     parent::T
-    val::Real
+    val::V
 end
 
 index(e::Variable) = e.index
@@ -65,35 +65,35 @@ con_zero(x,p=nothing) = 0.
 zero(e::Expression) = 0.
 one(e::Expression) = 1.
 
-fsub(f::Function) = @inline (x,p=nothing)->-f(x,p)
-fadd(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(x,p)+f2(x,p)
-fmul(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(x,p)*f2(x,p)
-fpow(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(x,p)^f2(x,p)
-fdiv(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(x,p)/f2(x,p)
-fsub(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(x,p)-f2(x,p)
-fcom(f1::Function,f2::Function) = @inline (x,p=nothing)->f1(f2(x,p))
-fcom(f1::Function,f2::Function,f3::Function) = @inline (x,p=nothing)->f1(f2(x,p),f3(x,p))
-flog(f::Function) = @inline (x,p=nothing)->log(f(x,p))
+fsub(f::F) where F <: Function = @inline (x,p=nothing)->-f(x,p)
+fadd(f1::F1,f2::F2) where {F1,F2 <: Function} = @inline (x,p=nothing)->f1(x,p)+f2(x,p)
+fmul(f1::F1,f2::F2) where {F1,F2 <: Function} = @inline (x,p=nothing)->f1(x,p)*f2(x,p)
+fpow(f1::F1,f2::F2) where {F1,F2 <: Function} = @inline (x,p=nothing)->f1(x,p)^f2(x,p)
+fdiv(f1::F1,f2::F2) where {F1,F2 <: Function} = @inline (x,p=nothing)->f1(x,p)/f2(x,p)
+fsub(f1::F1,f2::F2) where {F1,F2 <: Function} = @inline (x,p=nothing)->f1(x,p)-f2(x,p)
+fcom(f1::F1,f2::F2) where {F1,F2 <: Function} = @inline (x,p=nothing)->f1(f2(x,p))
+fcom(f1::F1,f2::F2,f3::F3) where {F1,F2,F3 <: Function} = @inline (x,p=nothing)->f1(f2(x,p),f3(x,p))
+flog(f::F) where F <: Function = @inline (x,p=nothing)->log(f(x,p))
 
-fadd(f1::Function,f2::typeof(con_zero)) = f1
-fadd(f1::typeof(con_zero),f2::Function) = f2
-fmul(f1::Function,f2::typeof(con_one)) = f1
-fmul(f1::typeof(con_one),f2::Function) = f2
+fadd(f1::F,f2::typeof(con_zero)) where F <: Function = f1
+fadd(f1::typeof(con_zero),f2::F) where F <: Function = f2
+fmul(f1::F,f2::typeof(con_one)) where F <: Function = f1
+fmul(f1::typeof(con_one),f2::F) where F <: Function = f2
 
 for T in Reals
     @eval begin 
-        fadd(f1::Function,f2::$T) = f2 == 0 ? f1 : @inline (x,p=nothing)->f1(x,p)+f2
-        fadd(f1::$T,f2::Function) = f1 == 0 ? f2 : @inline (x,p=nothing)->f1+f2(x,p)
-        fsub(f1::Function,f2::$T) = f2 == 0 ? f1 : @inline (x,p=nothing)->f1(x,p)-f2
-        fsub(f1::$T,f2::Function) = f1 == 0 ? fsub(f2) : @inline (x,p=nothing)->f1-f2(x,p)
-        fmul(f1::Function,f2::$T) = f2 == 1 ? f1 : f2 == 0 ? con_zero : @inline (x,p=nothing)->f1(x,p)*f2
-        fmul(f1::$T,f2::Function) = f1 == 1 ? f2 : f1 == 0 ? con_zero : @inline (x,p=nothing)->f1*f2(x,p)
-        fpow(f1::Function,f2::$T) = f2 == 1 ? f1 : f2 == 0 ? con_one  : @inline (x,p=nothing)->f1(x,p)^f2
-        fpow(f1::$T,f2::Function) = f1 == 1 ? f1 : f1 == 0 ? con_zero : @inline (x,p=nothing)->f1^f2(x,p)
-        fdiv(f1::Function,f2::$T) = f2 == 1 ? f1 : @inline (x,p=nothing)->f1(x,p)/f2
-        fdiv(f1::$T,f2::Function) = f1 == 0 ? con_zero : @inline (x,p=nothing)->f1/f2(x,p)
-        fcom(f1::Function,f2::Function,a::$T) = @inline (x,p=nothing)->f1(f2(x,p),a)
-        fcom(f1::Function,a::$T,f3::Function) = @inline (x,p=nothing)->f1(a,f3(x,p))
+        fadd(f1::F,f2::$T) where F <: Function = f2 == 0 ? f1 : @inline (x,p=nothing)->f1(x,p)+f2
+        fadd(f1::$T,f2::F) where F <: Function = f1 == 0 ? f2 : @inline (x,p=nothing)->f1+f2(x,p)
+        fsub(f1::F,f2::$T) where F <: Function = f2 == 0 ? f1 : @inline (x,p=nothing)->f1(x,p)-f2
+        fsub(f1::$T,f2::F) where F <: Function = f1 == 0 ? fsub(f2) : @inline (x,p=nothing)->f1-f2(x,p)
+        fmul(f1::F,f2::$T) where F <: Function = f2 == 1 ? f1 : f2 == 0 ? con_zero : @inline (x,p=nothing)->f1(x,p)*f2
+        fmul(f1::$T,f2::F) where F <: Function = f1 == 1 ? f2 : f1 == 0 ? con_zero : @inline (x,p=nothing)->f1*f2(x,p)
+        fpow(f1::F,f2::$T) where F <: Function = f2 == 1 ? f1 : f2 == 0 ? con_one  : @inline (x,p=nothing)->f1(x,p)^f2
+        fpow(f1::$T,f2::F) where F <: Function = f1 == 1 ? f1 : f1 == 0 ? con_zero : @inline (x,p=nothing)->f1^f2(x,p)
+        fdiv(f1::F,f2::$T) where F <: Function = f2 == 1 ? f1 : @inline (x,p=nothing)->f1(x,p)/f2
+        fdiv(f1::$T,f2::F) where F <: Function = f1 == 0 ? con_zero : @inline (x,p=nothing)->f1/f2(x,p)
+        fcom(f1::F1,f2::F2,a::$T) where {F1,F2 <: Function} = @inline (x,p=nothing)->f1(f2(x,p),a)
+        fcom(f1::F1,a::$T,f3::F2) where {F1,F2 <: Function} = @inline (x,p=nothing)->f1(a,f3(x,p))
     end
 end
 fsum(fs) = @inline (x,p=nothing)->sum(f(x,p) for f in fs)

@@ -34,12 +34,13 @@ end
 struct Equality e::Expression end
 struct Inequality e::Expression end
 
-==(e1::Expression,e2) = Equality(e1-e2)
-==(e1,e2::Expression) = Equality(e1-e2)
->=(e1::Expression,e2) = Inequality(e1-e2)
->=(e1,e2::Expression) = Inequality(e1-e2)
-<=(e1::Expression,e2) = Inequality(e2-e1)
-<=(e1,e2::Expression) = Inequality(e2-e1)
+for (T1,T2) in [(Expression,Expression),(Expression,Real),(Real,Expression)]
+    @eval begin
+        ==(e1::$T1,e2::$T2) = Equality(e1-e2)
+        >=(e1::$T1,e2::$T2) = Inequality(e1-e2)
+        <=(e1::$T1,e2::$T2) = Inequality(e2-e1)
+    end
+end
 
 constraint(m,eq::Equality) = constraint(m,eq.e)
 constraint(m,eq::Inequality) = constraint(m,eq.e;ub=Inf)

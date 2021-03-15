@@ -21,6 +21,22 @@ end
     end
 end
 
+get_obj_funcss(objs) = [
+    [func(objs[i]) for i=1:length(objs) if typeof(func(objs[i]))==type]
+    for type in union(typeof(func(obj)) for obj in objs)
+]
+function eval_obj(objs,p)
+    funcss = get_obj_funcss(objs)
+    @inline function (x)
+        obj = .0
+        for funcs in funcss
+            for func in funcs
+                obj += func(x,p)
+            end
+        end
+        return obj
+    end
+end
 
 get_pairss(dict) =  begin
     k = 0
@@ -34,8 +50,8 @@ get_con_pairss(cons) = [
     for type in union(typeof(func(con)) for con in cons)
 ]
 
-function eval_grad!(obj,p)
-    pairss = get_pairss(deriv(obj))
+function eval_grad!(objs,p)
+    pairss = get_pairss([(i,d) for obj in objs for (i,d) in deriv(obj)])
     @inline function (f,x)
         f.=0
         for pairs in pairss
@@ -76,17 +92,19 @@ function eval_jac!(cons,p)
     (jac!,jac_sparsity!,nnz_jac)
 end
 
-function get_hess_dict(obj_2nd,con_2nds)
+function get_hess_dict(obj_2nds,con_2nds)
     hess_dict = Dict{Tuple{Int,Int},Function}()
-    
-    for (i,dobj) in obj_2nd
-        for (j,d) in dobj
-            # if haskey(hess_dict,(i,j))
-            #     dold = hess_dict[i,j]
-            #     hess_dict[i,j] = (x,p,sig,lag)->dold(x,p,sig,lag)+d(x,p)*sig
-            # else
-            i>=j && (hess_dict[i,j] = (x,p,sig,lag)->d(x,p)*sig)
-            # end
+
+    for obj_2nd in obj_2nds
+        for (i,dobj) in obj_2nd
+            for (j,d) in dobj
+                # if haskey(hess_dict,(i,j))
+                #     dold = hess_dict[i,j]
+                #     hess_dict[i,j] = (x,p,sig,lag)->dold(x,p,sig,lag)+d(x,p)*sig
+                # else
+                i>=j && (hess_dict[i,j] = (x,p,sig,lag)->d(x,p)*sig)
+                # end
+            end
         end
     end
 
@@ -105,7 +123,7 @@ function get_hess_dict(obj_2nd,con_2nds)
     return hess_dict
 end
 
-get_obj_2nd(obj) = [(i,deriv(d(Variable(),Parameter()))) for (i,d) in deriv(obj)]
+get_obj_2nds(objs) = [[(i,deriv(d(Variable(),Parameter()))) for (i,d) in deriv(obj)] for obj in objs]
 get_con_2nds(cons) = [[(i,deriv(d(Variable(),Parameter()))) for (i,d) in deriv(con)] for con in cons]
 
 # TODO: need to think about multi-threading in model creation
@@ -127,11 +145,11 @@ get_con_2nds(cons) = [[(i,deriv(d(Variable(),Parameter()))) for (i,d) in deriv(c
 #     return result
 # end
 
-function eval_hess!(obj,cons,p)
-    obj_2nd = get_obj_2nd(obj)
+function eval_hess!(objs,cons,p)
+    obj_2nds = get_obj_2nds(objs)
     con_2nds = get_con_2nds(cons)
     
-    hess_dict = get_hess_dict(obj_2nd,con_2nds)
+    hess_dict = get_hess_dict(obj_2nds,con_2nds)
     pairss = get_pairss(hess_dict)
     
     @inline function hess!(H,x,lag,sig)
@@ -160,12 +178,12 @@ end
 
 
 function get_nlp_functions(objs,cons,p)
-    obj = sum_init_0(obj for obj in objs)
-    _obj = x->func(obj)(x,p)
-    _grad! = eval_grad!(obj,p)
+    _obj = eval_obj(objs,p)
+    _grad! = eval_grad!(objs,p)
     _con! = eval_con!(cons,p)
     _jac!,_jac_sparsity!,nnz_jac = eval_jac!(cons,p)
-    _hess!,_hess_sparsity!,nnz_hess = eval_hess!(obj,cons,p)
+    _hess!,_hess_sparsity!,nnz_hess = eval_hess!(objs,cons,p)
     
     (_obj,_grad!,_con!,_jac!,_jac_sparsity!,nnz_jac,_hess!,_hess_sparsity!,nnz_hess)
 end
+

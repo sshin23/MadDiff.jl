@@ -67,17 +67,20 @@ deriv(e::Parameter) = Dict{Int,Function}()
 func(a::T) where T <: Real = @inline (x,p=nothing)->a
 deriv(e::T) where T <: Real = Dict{Int,Function}()
 
-
 fsub(f::F) where F <: Function = @inline (x,p=nothing)->-f(x,p)
-fadd(f1::F1,f2::F2) where {F1,F2 <: Function} = @inline (x,p=nothing)->f1(x,p)+f2(x,p)
-fmul(f1::F1,f2::F2) where {F1,F2 <: Function} = @inline (x,p=nothing)->f1(x,p)*f2(x,p)
-fpow(f1::F1,f2::F2) where {F1,F2 <: Function} = @inline (x,p=nothing)->f1(x,p)^f2(x,p)
-fdiv(f1::F1,f2::F2) where {F1,F2 <: Function} = @inline (x,p=nothing)->f1(x,p)/f2(x,p)
-fsub(f1::F1,f2::F2) where {F1,F2 <: Function} = @inline (x,p=nothing)->f1(x,p)-f2(x,p)
-fcom(f1::F1,f2::F2) where {F1,F2 <: Function} = @inline (x,p=nothing)->f1(f2(x,p))
-fcom(f1::F1,f2::F2,f3::F3) where {F1,F2,F3 <: Function} = @inline (x,p=nothing)->f1(f2(x,p),f3(x,p))
+fadd(f1::F1,f2::F2) where {F1 <: Function, F2 <: Function} = @inline (x,p=nothing)->f1(x,p)+f2(x,p)
+fmul(f1::F1,f2::F2) where {F1 <: Function, F2 <: Function} = @inline (x,p=nothing)->f1(x,p)*f2(x,p)
+fpow(f1::F1,f2::F2) where {F1 <: Function, F2 <: Function} = @inline (x,p=nothing)->f1(x,p)^f2(x,p)
+fdiv(f1::F1,f2::F2) where {F1 <: Function, F2 <: Function} = @inline (x,p=nothing)->f1(x,p)/f2(x,p)
+fsub(f1::F1,f2::F2) where {F1 <: Function, F2 <: Function} = @inline (x,p=nothing)->f1(x,p)-f2(x,p)
+fcom(f1::F1,f2::F2) where {F1 <: Function, F2 <: Function} = @inline (x,p=nothing)->f1(f2(x,p))
+fcom(f1::F1,f2::F2,f3::F3) where {F1 <: Function,F2 <: Function,F3 <: Function} = @inline (x,p=nothing)->f1(f2(x,p),f3(x,p))
 flog(f::F) where F <: Function = @inline (x,p=nothing)->log(f(x,p))
 
+return_type(f,typ) = Base.return_types(f,(typ,))[1]
+return_type(f,typ1,typ2) = Base.return_types(f,(typ1,typ2))[1]
+fsub(f::return_type(fsub,Function)) = f.f
+fsub(f::return_type(fsub,Function,Function)) = fsub(f.f2,f.f1)
 fadd(f1::F,f2::TypeConZero) where F <: Function = f1
 fadd(f1::TypeConZero,f2::F) where F <: Function = f2
 fmul(f1::F,f2::TypeConOne) where F <: Function = f1
@@ -93,30 +96,22 @@ fpow(f1::F,f2::T) where {T <: Real,F <: Function} = f2 == 1 ? f1 : f2 == 0 ? con
 fpow(f1::T,f2::F) where {T <: Real,F <: Function} = f1 == 1 ? f1 : f1 == 0 ? con_zero : @inline (x,p=nothing)->f1^f2(x,p)
 fdiv(f1::F,f2::T) where {T <: Real,F <: Function} = f2 == 1 ? f1 : @inline (x,p=nothing)->f1(x,p)/f2
 fdiv(f1::T,f2::F) where {T <: Real,F <: Function} = f1 == 0 ? con_zero : @inline (x,p=nothing)->f1/f2(x,p)
-fcom(f1::F1,f2::F2,a::T) where {T <: Real, F1 <: Function,F2 <: Function} = @inline (x,p=nothing)->f1(f2(x,p),a)
-fcom(f1::F1,a::T,f3::F2) where {T <: Real, F1 <: Function,F2 <: Function} = @inline (x,p=nothing)->f1(a,f3(x,p))
-fsum(fs) = @inline (x,p=nothing)->sum(f(x,p) for f in fs)
+fcom(f1::F1,f2::F2,f3::T) where {T <: Real, F1 <: Function,F2 <: Function} = @inline (x,p=nothing)->f1(f2(x,p),f3)
+fcom(f1::F1,f2::T,f3::F2) where {T <: Real, F1 <: Function,F2 <: Function} = @inline (x,p=nothing)->f1(f2,f3(x,p))
+fsum(fs::Vector{F}) where F <: Function = @inline (x,p=nothing)->sum(f(x,p) for f in fs)
 
-@inline function f_add_sum(f1,f2)
-    if hasfield(typeof(f1),:fs)
-        i = findfirst(f->f2 isa eltype(f.fs),f1.fs)
-        if i==nothing            
-            push!(f1.fs,fsum([f2]))
-        else
-            push!(f1.fs[i].fs,f2)
-        end
-        return f1
-    else
-        if typeof(f1)==typeof(f2)
-            return fsum(Function[fsum([f1,f2])])
-        else
-            return fsum(Function[
-                fsum([f1]),
-                fsum([f2])
-            ])
+function f_add_sum(f1::return_type(fsum,Vector{Function}),f2::F) where F <: Function
+    for f in f1.fs
+        if f2 isa eltype(f.fs)
+            push!(f.fs,f2)
+            return f1
         end
     end
+    push!(f1.fs,fsum([f2]))
+    return f1
 end
+f_add_sum(f1::F,f2::F) where {F <: Function} = fsum(Function[fsum([f1,f2])])
+f_add_sum(f1::F1,f2::F2) where {F1 <: Function,F2 <: Function} = fsum(Function[fsum([f1]),fsum([f2])])
 
 deriv!(deriv,f) = (map!(f,values(deriv)); deriv)
 derivadd!(deriv1,deriv2) = mergewith!(fadd,deriv1,deriv2)

@@ -36,6 +36,7 @@ nlp_test[3] = function (optimizer;opt...)
     c = constraint(m,0 ==x[1]+sin(x[2])-x[3]/2 + 1. )
     objective(m,x[2]^2)
     objective(m,x[2]^2)
+    objective(m,1.)
 
     optimize!(m)
     
@@ -68,6 +69,7 @@ x = variable(m)
 setvalue(x,3)
 set_lower_bound(x,-1)
 set_upper_bound(x,1)
+@test SimpleNLModels.index(x) == 1
 @test value(x) == 3 
 @test lower_bound(x) == -1 
 @test upper_bound(x) == 1
@@ -85,8 +87,13 @@ setvalue(p,4)
 @test value(p) == 4
 
 objective(m,p*x)
-@test objective_value(m) == 12
 
+m[:test] = "test"
+
+@test objective_value(m) == 12
+@test num_variables(m) == 1
+@test num_constraints(m) == 1
+@test m[:test] == "test"
 
 for (optimizer,opt) in [(SimpleNLModels.Ipopt.Optimizer,[:print_level=>0]),
                         (SimpleNLModels.MadNLP.Optimizer,[:print_level=>MadNLP.ERROR])]

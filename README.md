@@ -48,7 +48,7 @@ optimize!(m)
 ```
 
 ## How it works?
-SimpleNLModels.jl constructs first and second derivative functions off-line (i.e., prior to calling the optimization solver) by applying operator overloading-based automatic differentiation on _functions_ rather than dual numbers. The exact _derivative functions_ can be obtained as results. This off-line procedure is typically more expensive than the model creation procedure in other AD-based algebraic modeling languages such as `JuMP` and `Ampl`, but enables faster first and second order derivative evaluations (thus is suitable for problems that require repeated solution of the same problem, such as control). A benchmark code is included in [here](https://github.com/sshin23/SimpleNLModels.jl/blob/main/benchmark/benchmark.jl).
+SimpleNLModels.jl constructs first and second derivative functions off-line (i.e., prior to calling the optimization solver) by applying operator overloading-based automatic differentiation on _functions_ rather than dual numbers. The exact _derivative functions_ can be obtained as results. This off-line procedure is typically more expensive than the model creation procedure in other AD-based algebraic modeling languages such as [JuMP.jl](https://github.com/jump-dev/JuMP.jl) and [Ampl](https://ampl.com/), but enables faster first and second order derivative evaluations (thus is suitable for problems that require repeated solution of the same problem, such as control). A benchmark code is included in [here](https://github.com/sshin23/SimpleNLModels.jl/blob/main/benchmark/benchmark.jl).
 
 <img src="/benchmark/output/luksanvlcek.png" width="400"/><img src="/benchmark/output/hehnandrea.png" width="400"/>
 

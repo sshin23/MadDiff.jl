@@ -13,39 +13,40 @@ getindex(e::HessianSource,n) = n <= e.index ? Variable(n;parent=VAR) : Term(VAR,
     end
 end
 
-@inline function fill!(f,pairs,x,p)
-    @simd for l in eachindex(pairs)
-        i,~,d = pairs[l]
+@inline function fill!(f,tuples,x,p)
+    @simd for l in eachindex(tuples)
+        i,~,d = tuples[l]
         @inbounds f[i] += d(x,p)
     end
 end
 
-@inline function fill_jacobian!(J,pairs,x,p)
-    @simd for l in eachindex(pairs)
-        ~,k,d = pairs[l]
+@inline function fill_jacobian!(J,tuples,x,p)
+    @simd for l in eachindex(tuples)
+        ~,k,d = tuples[l]
         @inbounds J[k] = d(x,p)
     end
 end
 
-@inline function fill_hessian!(H,pairs,x,p,sig,lag)
-    @simd for l in eachindex(pairs)
-        ~,k,d = pairs[l]
+@inline function fill_hessian!(H,tuples,x,p,sig,lag)
+    @simd for l in eachindex(tuples)
+        ~,k,d = tuples[l]
         @inbounds H[k] = d(x,p,sig,lag)
     end
 end
 
-@inline function sparsity!(I,J,pairs)
-    @simd for l in eachindex(pairs)
-        (i,j),k,~ = pairs[l]
+@inline function sparsity!(I,J,tuples)
+    @simd for l in eachindex(tuples)
+        (i,j),k,~ = tuples[l]
         @inbounds I[k] = i
         @inbounds J[k] = j
     end
 end
 
-function eval_obj(objs,p)
-    funcss = get_obj_funcss(objs)
+function get_evaluators_obj(objs,p)
+    funcss = classify_obj_funcss(objs)
+    obj = [.0]
     @inline function (x)
-        obj = [.0]
+        obj[] = 0.
         @simd for l in eachindex(funcss)
             @inbounds add!(obj,funcss[l],x,p)
         end
@@ -53,71 +54,73 @@ function eval_obj(objs,p)
     end
 end
 
-function eval_grad!(objs,p)
-    pairss = get_pairss(get_grad_dict(objs))
+function get_evaluators_grad!(objs,p)
+    tupless = classify_tupless(get_grad_tuples(objs))
     @inline function (f,x)
         f.=0
-        @simd for l in eachindex(pairss)
-            @inbounds fill!(f,pairss[l],x,p)
+        @simd for l in eachindex(tupless)
+            @inbounds fill!(f,tupless[l],x,p)
         end
     end
 end
 
-function eval_con!(cons,p)
-    pairss = get_con_pairss(cons)
+function get_evaluators_con!(cons,p)
+    tupless = classify_tupless(get_con_tuples(cons))
     @inline function (c,x)
         c.= 0
-        @simd for l in eachindex(pairss)
-            @inbounds fill!(c,pairss[l],x,p)
+        @simd for l in eachindex(tupless)
+            @inbounds fill!(c,tupless[l],x,p)
         end
     end
 end
 
-function eval_jac!(cons,p)
-    pairss = get_pairss(get_jac_dict(cons))
+function get_evaluators_jac!(cons,p)
+    tupless = classify_tupless(get_jac_tuples(cons))
     
     @inline function jac!(J,x)
-        @simd for l in eachindex(pairss)
-            @inbounds fill_jacobian!(J,pairss[l],x,p)
+        @simd for l in eachindex(tupless)
+            @inbounds fill_jacobian!(J,tupless[l],x,p)
         end
     end
     @inline function jac_sparsity!(I,J)
-        offset = 0
-        @simd for l in eachindex(pairss)
-            @inbounds sparsity!(I,J,pairss[l])
+        @simd for l in eachindex(tupless)
+            @inbounds sparsity!(I,J,tupless[l])
         end
     end
-    nnz_jac = sum_init_0(length(pairss[l]) for l in eachindex(pairss))
+    nnz_jac = sum_init_0(length(tupless[l]) for l in eachindex(tupless))
     
-    (jac!,jac_sparsity!,nnz_jac)
+    return jac!,jac_sparsity!,nnz_jac
 end
 
-function eval_hess!(objs,cons,p)
-    pairss = get_pairss(get_hess_dict(get_2nds(objs),get_2nds(cons)))
+function get_evaluators_hess!(grad!,jac!,p)
+    tupless = classify_tupless(get_hess_dict(get_obj_2nds(grad!.tupless),get_con_2nds(jac!.tupless)))
 
     @inline function hess!(H,x,lag,sig)
-        @simd for l in eachindex(pairss)
-            @inbounds fill_hessian!(H,pairss[l],x,p,sig,lag)
+        @simd for l in eachindex(tupless)
+            @inbounds fill_hessian!(H,tupless[l],x,p,sig,lag)
         end
     end
 
     @inline function hess_sparsity!(I,J)
-        @simd for l in eachindex(pairss)
-            @inbounds sparsity!(I,J,pairss[l])
+        @simd for l in eachindex(tupless)
+            @inbounds sparsity!(I,J,tupless[l])
         end
     end
 
-    nnz_hess = sum_init_0(length(pairss[l]) for l in eachindex(pairss)) 
+    nnz_hess = sum_init_0(length(tupless[l]) for l in eachindex(tupless)) 
 
-    (hess!,hess_sparsity!,nnz_hess)
+    return hess!,hess_sparsity!,nnz_hess
 end
 
-get_pairss(dict) = (k=0; [[(i,k+=1,d) for (i,d) in dict if typeof(d)==type] for type in union(typeof(d) for (i,d) in dict)])
-get_con_pairss(cons) = [[(i,nothing,func(cons[i])) for i=1:length(cons) if typeof(func(cons[i]))==type] for type in union(typeof(func(con)) for con in cons)]
-get_obj_funcss(objs) = [[func(objs[i]) for i in eachindex(objs) if typeof(func(objs[i]))==type] for type in union(typeof(func(obj)) for obj in objs)]
-get_2nds(exprs) = [[(i,deriv(d(HessianSource(i),PAR))) for (i,d) in deriv(expr)] for expr in exprs]
-get_grad_dict(objs) = [(i,d) for obj in objs for (i,d) in deriv(obj)]
-get_jac_dict(cons)= [((i,j),d) for i=1:length(cons) for (j,d) in deriv(cons[i])]
+classify_tupless(dict) = (k=0; [[(i,k+=1,d) for (i,d) in dict if typeof(d)==type] for type in union(typeof(d) for (i,d) in dict)])
+classify_obj_funcss(objs) = [[func(objs[i]) for i in eachindex(objs) if typeof(func(objs[i]))==type] for type in union(typeof(func(obj)) for obj in objs)]
+
+get_obj_2nds(tupless) = [[(i,deriv(d(HessianSource(i),Parameter()))) for (i,j,d) in tuples] for tuples in tupless]
+get_con_2nds(tupless) = [[(k,i,deriv(d(HessianSource(i),Parameter()))) for ((k,i),j,d) in tuples] for tuples in tupless]
+
+get_grad_tuples(objs) = [(i,d) for obj in objs for (i,d) in deriv(obj)]
+get_con_tuples(cons) = [(i,func(cons[i])) for i in eachindex(cons)]
+get_jac_tuples(cons) = [((i,j),d) for i=1:length(cons) for (j,d) in deriv(cons[i])]
 
 function get_hess_dict(obj_2nds,con_2nds)
     hess_dict = Dict{Tuple{Int,Int},Function}()
@@ -128,11 +131,12 @@ function get_hess_dict(obj_2nds,con_2nds)
         end
     end
 
-    for k=1:length(con_2nds)
-        for (i,dcon) in con_2nds[k]
+    for con_2nd in con_2nds
+        for (k,i,dcon) in con_2nd
             hess_dict_con!(hess_dict,dcon,i,k)
         end
     end
+    
     return hess_dict
 end
 function hess_dict_obj!(hess_dict,dobj,i)
@@ -159,13 +163,12 @@ f_hess_con_entry(d,k) = @inline (x,p,sig,lag)->d(x,p)*lag[k]
 f_hess_con_entry(d,dold,k) = @inline (x,p,sig,lag)->dold(x,p,sig,lag)+d(x,p)*lag[k]
 
 
-
 function get_nlp_functions(objs,cons,p)
-    _obj = eval_obj(objs,p)
-    _grad! = eval_grad!(objs,p)
-    _con! = eval_con!(cons,p)
-    _jac!,_jac_sparsity!,nnz_jac = eval_jac!(cons,p)
-    _hess!,_hess_sparsity!,nnz_hess = eval_hess!(objs,cons,p)
+    _obj = get_evaluators_obj(objs,p)
+    _grad! = get_evaluators_grad!(objs,p)
+    _con! = get_evaluators_con!(cons,p)
+    _jac!,_jac_sparsity!,nnz_jac = get_evaluators_jac!(cons,p)
+    _hess!,_hess_sparsity!,nnz_hess = get_evaluators_hess!(_grad!,_jac!,p)
     
     (_obj,_grad!,_con!,_jac!,_jac_sparsity!,nnz_jac,_hess!,_hess_sparsity!,nnz_hess)
 end

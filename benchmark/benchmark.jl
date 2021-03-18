@@ -9,23 +9,30 @@ for (N,nlm,jump,name) in [
     (10000,nlm_ocp,jump_ocp,"hehnandrea")
 ]
     for i=1:2
+        GC.enable(false)
         t1 = @elapsed begin
             m = nlm(;N=N,optimizer=Ipopt.Optimizer,output_file="output/$name-simplenlmodels.out")
             instantiate!(m)
             optimize!(m)
         end
         t2,t3 = parse_ipopt_output("output/$name-simplenlmodels.out")
-
+        GC.enable(true)
+        
+        GC.enable(false)
         m = jump(;N=N,optimizer=() -> AmplNLWriter.Optimizer("ipopt",["output_file=output/$name-ampl.out"]))
         optimize!(m)
         t4 = m.moi_backend.optimizer.model.ext[:MPBModel].inner.solve_time
         t5,t6 = parse_ipopt_output("output/$name-ampl.out")
+        GC.enable(true)
 
+        GC.enable(false)
         t7 = @elapsed begin
             m = jump(;N=N,optimizer=()->Ipopt.Optimizer(output_file="output/$name-jump.out"))
             optimize!(m)
         end
         t8,t9 = parse_ipopt_output("output/$name-jump.out")
+        GC.enable(true)
+        
         i==2 && push!(result,[[t1,t4,t7],[t2,t5,t8],[t3,t6,t9]])
     end
 end

@@ -1,7 +1,7 @@
 [![build](https://github.com/sshin23/SimpleNLModels.jl/actions/workflows/test.yml/badge.svg)](https://github.com/sshin23/SimpleNLModels.jl/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/sshin23/SimpleNLModels.jl/branch/main/graph/badge.svg?token=U6NMMW0IT5)](https://codecov.io/gh/sshin23/SimpleNLModels.jl)
 # SimpleNLModels.jl
-
+ 
 SimpleNLModels.jl is a simple algebraic modeling/differentiation package.
 
 ## Installation

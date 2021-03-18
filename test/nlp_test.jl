@@ -35,6 +35,7 @@ nlp_test[3] = function (optimizer;opt...)
     
     c = constraint(m,0 ==x[1]+sin(x[2])-x[3]/2 + 1. )
     objective(m,x[2]^2)
+    objective(m,x[2]^2)
 
     optimize!(m)
     

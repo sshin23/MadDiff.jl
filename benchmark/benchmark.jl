@@ -1,4 +1,4 @@
-using SimpleNLModels, Ipopt, JuMP, AmplNLWriter, StatsPlots
+using SimpleNLModels, Ipopt, JuMP, AmplNLWriter, CasADi, StatsPlots
 
 include("benchmark_include.jl")
 

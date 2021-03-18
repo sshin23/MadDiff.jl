@@ -69,12 +69,10 @@ deriv(e::T) where T <: Real = ImmutableDict{Int,Function}()
 fsub(f::F) where F <: Function = @inline (x,p=nothing)->-f(x,p)
 fadd(f1::F1,f2::F2) where {F1 <: Function, F2 <: Function} = @inline (x,p=nothing)->f1(x,p)+f2(x,p)
 fmul(f1::F1,f2::F2) where {F1 <: Function, F2 <: Function} = @inline (x,p=nothing)->f1(x,p)*f2(x,p)
-fpow(f1::F1,f2::F2) where {F1 <: Function, F2 <: Function} = @inline (x,p=nothing)->f1(x,p)^f2(x,p)
 fdiv(f1::F1,f2::F2) where {F1 <: Function, F2 <: Function} = @inline (x,p=nothing)->f1(x,p)/f2(x,p)
 fsub(f1::F1,f2::F2) where {F1 <: Function, F2 <: Function} = @inline (x,p=nothing)->f1(x,p)-f2(x,p)
 fcom(f1::F1,f2::F2) where {F1 <: Function, F2 <: Function} = @inline (x,p=nothing)->f1(f2(x,p))
 fcom(f1::F1,f2::F2,f3::F3) where {F1 <: Function,F2 <: Function,F3 <: Function} = @inline (x,p=nothing)->f1(f2(x,p),f3(x,p))
-flog(f::F) where F <: Function = @inline (x,p=nothing)->log(f(x,p))
 
 return_type(f,typ) = Base.return_types(f,(typ,))[1]
 return_type(f,typ1,typ2) = Base.return_types(f,(typ1,typ2))[1]

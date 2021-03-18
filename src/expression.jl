@@ -111,9 +111,9 @@ f_add_sum(f1::F,f2::F) where {F <: Function} = fsum(Function[fsum([f1,f2])])
 f_add_sum(f1::F1,f2::F2) where {F1 <: Function,F2 <: Function} = fsum(Function[fsum([f1]),fsum([f2])])
 
 deriv!(f,deriv) = (map!(f,values(deriv)); deriv)
-deriv!(f,deriv::ImmutableDict) = isempty(deriv) ? deriv : ImmutableDict{Int,Function}(deriv.key,f(deriv.value))
+deriv!(f,deriv::ImmutableDict{Int,Function}) = isempty(deriv) ? deriv : ImmutableDict{Int,Function}(deriv.key,f(deriv.value))
 deriv!(f,deriv1,deriv2) = mergewith!(f,deriv1,deriv2)
-deriv!(f,deriv1::ImmutableDict,deriv2) = mergewith(f,deriv1,deriv2)
+deriv!(f,deriv1::ImmutableDict{Int,Function},deriv2) = mergewith(f,deriv1,deriv2)
 
 +(e::E) where E <: Expression = e
 -(e::E) where E <: Expression = Term(parent(e),fsub(func(e)),deriv!(fsub,deriv(e)))

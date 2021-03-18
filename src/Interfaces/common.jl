@@ -1,62 +1,64 @@
 sum_init_0(itr) = isempty(itr) ? 0 : sum(itr)
-    
+
+const VAR = Variable()
+const PAR = Parameter()
+struct HessianSource
+    index::Int
+end
+getindex(e::HessianSource,n) = n <= e.index ? Variable(n;parent=VAR) : Term(VAR,fxentry(n),ImmutableDict{Int,Function}())
+
+@inline function add!(obj,funcs,x,p)
+    @simd for func in funcs
+        obj[] += func(x,p)
+    end
+end
 
 @inline function fill!(f,pairs,x,p)
     @simd for l in eachindex(pairs)
-        (i,k,d) = pairs[l]
+        i,~,d = pairs[l]
         @inbounds f[i] += d(x,p)
     end
 end
 
 @inline function fill_jacobian!(J,pairs,x,p)
     @simd for l in eachindex(pairs)
-        (i,k,d) = pairs[l]
+        ~,k,d = pairs[l]
         @inbounds J[k] = d(x,p)
     end
 end
 
 @inline function fill_hessian!(H,pairs,x,p,sig,lag)
-    for ((i,j),k,d) in pairs
+    @simd for l in eachindex(pairs)
+        ~,k,d = pairs[l]
         @inbounds H[k] = d(x,p,sig,lag)
     end
 end
 
-
-get_pairss(dict) =  begin
-    k = 0
-    [
-        [(i,k+=1,d) for (i,d) in dict if typeof(d)==type]
-        for type in union(typeof(d) for (i,d) in dict)
-    ]
+@inline function sparsity!(I,J,pairs)
+    @simd for l in eachindex(pairs)
+        (i,j),k,~ = pairs[l]
+        @inbounds I[k] = i
+        @inbounds J[k] = j
+    end
 end
-get_con_pairss(cons) = [
-    [(i,nothing,func(cons[i])) for i=1:length(cons) if typeof(func(cons[i]))==type]
-    for type in union(typeof(func(con)) for con in cons)
-]
 
 function eval_obj(objs,p)
     funcss = get_obj_funcss(objs)
     @inline function (x)
-        obj = .0
-        for funcs in funcss
-            for func in funcs
-                obj += func(x,p)
-            end
+        obj = [.0]
+        @simd for l in eachindex(funcss)
+            @inbounds add!(obj,funcss[l],x,p)
         end
-        return obj
+        return obj[]
     end
 end
-get_obj_funcss(objs) = [
-    [func(objs[i]) for i=1:length(objs) if typeof(func(objs[i]))==type]
-    for type in union(typeof(func(obj)) for obj in objs)
-]
 
 function eval_grad!(objs,p)
-    pairss = get_pairss([(i,d) for obj in objs for (i,d) in deriv(obj)])
+    pairss = get_pairss(get_grad_dict(objs))
     @inline function (f,x)
         f.=0
-        for pairs in pairss
-            fill!(f,pairs,x,p)
+        @simd for l in eachindex(pairss)
+            @inbounds fill!(f,pairss[l],x,p)
         end
     end
 end
@@ -65,74 +67,97 @@ function eval_con!(cons,p)
     pairss = get_con_pairss(cons)
     @inline function (c,x)
         c.= 0
-        for pairs in pairss
-            fill!(c,pairs,x,p)
+        @simd for l in eachindex(pairss)
+            @inbounds fill!(c,pairss[l],x,p)
         end
     end
 end
 
-get_jac_dict(cons)= [((i,j),d) for i=1:length(cons) for (j,d) in deriv(cons[i])]
-
 function eval_jac!(cons,p)
-    jac_dict = get_jac_dict(cons)
-    pairss = get_pairss(jac_dict)
+    pairss = get_pairss(get_jac_dict(cons))
     
     @inline function jac!(J,x)
-        for pairs in pairss
-            fill_jacobian!(J,pairs,x,p)
+        @simd for l in eachindex(pairss)
+            @inbounds fill_jacobian!(J,pairss[l],x,p)
         end
     end
     @inline function jac_sparsity!(I,J)
         offset = 0
-        for pairs in pairss
-            sparsity!(I,J,pairs)
+        @simd for l in eachindex(pairss)
+            @inbounds sparsity!(I,J,pairss[l])
         end
     end
-    nnz_jac = sum_init_0(length(pairs) for pairs in pairss)
+    nnz_jac = sum_init_0(length(pairss[l]) for l in eachindex(pairss))
     
     (jac!,jac_sparsity!,nnz_jac)
 end
 
-get_con_2nds(cons) = [[(i,deriv(d(Variable(),Parameter()))) for (i,d) in deriv(con)] for con in cons]
-get_obj_2nds(objs) = [[(i,deriv(d(Variable(),Parameter()))) for (i,d) in deriv(obj)] for obj in objs]
+function eval_hess!(objs,cons,p)
+    pairss = get_pairss(get_hess_dict(get_2nds(objs),get_2nds(cons)))
+
+    @inline function hess!(H,x,lag,sig)
+        @simd for l in eachindex(pairss)
+            @inbounds fill_hessian!(H,pairss[l],x,p,sig,lag)
+        end
+    end
+
+    @inline function hess_sparsity!(I,J)
+        @simd for l in eachindex(pairss)
+            @inbounds sparsity!(I,J,pairss[l])
+        end
+    end
+
+    nnz_hess = sum_init_0(length(pairss[l]) for l in eachindex(pairss)) 
+
+    (hess!,hess_sparsity!,nnz_hess)
+end
+
+get_pairss(dict) = (k=0; [[(i,k+=1,d) for (i,d) in dict if typeof(d)==type] for type in union(typeof(d) for (i,d) in dict)])
+get_con_pairss(cons) = [[(i,nothing,func(cons[i])) for i=1:length(cons) if typeof(func(cons[i]))==type] for type in union(typeof(func(con)) for con in cons)]
+get_obj_funcss(objs) = [[func(objs[i]) for i in eachindex(objs) if typeof(func(objs[i]))==type] for type in union(typeof(func(obj)) for obj in objs)]
+get_2nds(exprs) = [[(i,deriv(d(HessianSource(i),PAR))) for (i,d) in deriv(expr)] for expr in exprs]
+get_grad_dict(objs) = [(i,d) for obj in objs for (i,d) in deriv(obj)]
+get_jac_dict(cons)= [((i,j),d) for i=1:length(cons) for (j,d) in deriv(cons[i])]
 
 function get_hess_dict(obj_2nds,con_2nds)
     hess_dict = Dict{Tuple{Int,Int},Function}()
 
     for obj_2nd in obj_2nds
         for (i,dobj) in obj_2nd
-            for (j,d) in dobj
-                if haskey(hess_dict,(i,j))
-                    dold = hess_dict[i,j]
-                    hess_dict[i,j] = (x,p,sig,lag)->dold(x,p,sig,lag)+d(x,p)*sig
-                else
-                    i>=j && (hess_dict[i,j] = (x,p,sig,lag)->d(x,p)*sig)
-                end
-            end
+            hess_dict_obj!(hess_dict,dobj,i)
         end
     end
 
     for k=1:length(con_2nds)
         for (i,dcon) in con_2nds[k]
-            for (j,d) in dcon
-                if haskey(hess_dict,(i,j))
-                    dold = hess_dict[i,j]
-                    hess_dict[i,j] = (x,p,sig,lag)->dold(x,p,sig,lag)+d(x,p)*lag[k]
-                else
-                    i>=j && (hess_dict[i,j] = (x,p,sig,lag)->d(x,p)*lag[k])
-                end
-            end
+            hess_dict_con!(hess_dict,dcon,i,k)
         end
     end
     return hess_dict
 end
-
-function sparsity!(I,J,pairs)
-    for ((i,j),k,d) in pairs
-        I[k] = i
-        J[k] = j
+function hess_dict_obj!(hess_dict,dobj,i)
+    for (j,d) in dobj
+        if haskey(hess_dict,(i,j))
+            hess_dict[i,j] = f_hess_obj_entry(d,hess_dict[i,j])
+        else
+            hess_dict[i,j] = f_hess_obj_entry(d)
+        end
     end
 end
+function hess_dict_con!(hess_dict,dcon,i,k)
+    for (j,d) in dcon
+        if haskey(hess_dict,(i,j))
+            hess_dict[i,j] = f_hess_con_entry(d,hess_dict[i,j],k)
+        else
+            hess_dict[i,j] = f_hess_con_entry(d,k)
+        end
+    end
+end
+f_hess_obj_entry(d) = @inline (x,p,sig,lag)->d(x,p)*sig
+f_hess_obj_entry(d,dold) = @inline (x,p,sig,lag)->dold(x,p,sig,lag)+d(x,p)*sig
+f_hess_con_entry(d,k) = @inline (x,p,sig,lag)->d(x,p)*lag[k]
+f_hess_con_entry(d,dold,k) = @inline (x,p,sig,lag)->dold(x,p,sig,lag)+d(x,p)*lag[k]
+
 
 
 function get_nlp_functions(objs,cons,p)
@@ -146,26 +171,3 @@ function get_nlp_functions(objs,cons,p)
 end
 
 
-function eval_hess!(objs,cons,p)
-    obj_2nds = get_obj_2nds(objs)
-    con_2nds = get_con_2nds(cons)
-    
-    hess_dict = get_hess_dict(obj_2nds,con_2nds)
-    pairss = get_pairss(hess_dict)
-    
-    @inline function hess!(H,x,lag,sig)
-        for pairs in pairss
-            fill_hessian!(H,pairs,x,p,sig,lag)
-        end
-    end
-
-    @inline function hess_sparsity!(I,J)
-        for pairs in pairss
-            sparsity!(I,J,pairs)
-        end
-    end
-
-    nnz_hess = sum_init_0(length(pairs) for pairs in pairss) 
-
-    (hess!,hess_sparsity!,nnz_hess)
-end

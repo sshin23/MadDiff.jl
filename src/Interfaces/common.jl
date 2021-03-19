@@ -1,14 +1,12 @@
-sum_init_0(itr) = isempty(itr) ? 0 : sum(itr)
-
-const SNL = SimpleNLModels
-export SNL
 
 const VAR = Variable()
 const PAR = Parameter()
 struct HessianSource
     index::Int
 end
+
 getindex(e::HessianSource,n) = n <= e.index ? Variable(n;parent=VAR) : Term(VAR,fxentry(n),ImmutableDict{Int,Function}())
+sum_init_0(itr) = isempty(itr) ? 0 : sum(itr)
 
 @inline function add!(obj,funcs,x,p)
     @simd for func in funcs

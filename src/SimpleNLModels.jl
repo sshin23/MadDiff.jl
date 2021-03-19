@@ -34,8 +34,9 @@ end
 
 const DEFAULT_VAR_STRING = "x"
 const DEFAULT_PAR_STRING = "p"
+const SNL = SimpleNLModels
 
-export Source, Variable, Parameter, Term, func, deriv, 
+export SNL, Source, Variable, Parameter, Term, func, deriv, 
     SimpleModel, variable, parameter, constraint, objective, instantiate!, optimize!,
     value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, lower_bound, upper_bound, set_optimizer,
     num_variables, num_constraints

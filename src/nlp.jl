@@ -31,19 +31,8 @@ struct Constraint
     index::Int
 end
 
-struct Equality e::Expression end
-struct Inequality e::Expression end
-
-for (T1,T2) in [(Expression,Expression),(Expression,Real),(Real,Expression)]
-    @eval begin
-        ==(e1::$T1,e2::$T2) = Equality(e1-e2)
-        >=(e1::$T1,e2::$T2) = Inequality(e1-e2)
-        <=(e1::$T1,e2::$T2) = Inequality(e2-e1)
-    end
-end
-
-constraint(m,eq::Equality) = constraint(m,eq.e)
-constraint(m,eq::Inequality) = constraint(m,eq.e;ub=Inf)
+constraint(m,eq::Equality{E}) where {E<:Expression} = constraint(m,eq.e)
+constraint(m,eq::Inequality{E}) where {E<:Expression} = constraint(m,eq.e;ub=Inf)
 
 parent(c::Constraint) = c.parent
 index(c::Constraint) = c.index
@@ -77,7 +66,7 @@ function parameter(m::Model,val=0.;name="$DEFAULT_PAR_STRING[$(m.q+1)]")
     Parameter(m.q;parent=m)
 end
 
-function constraint(m::Model,e::Expression;lb=0.,ub=0.,name=nothing)
+function constraint(m::Model,e::E;lb=0.,ub=0.,name=nothing) where E <: Expression
     m.m += 1
     push!(m.cons,e)
     push!(m.l,0.)
@@ -87,7 +76,7 @@ function constraint(m::Model,e::Expression;lb=0.,ub=0.,name=nothing)
     Constraint(m,m.m)
 end
 
-function objective(m::Model,e::Expression)
+function objective(m::Model,e::E) where E <: Expression
     push!(m.objs,e)
     nothing
 end

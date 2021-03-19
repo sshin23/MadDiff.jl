@@ -25,6 +25,9 @@ struct Term{T,F<:Function,R<:AbstractDict{Int,Function}} <: Expression
     deriv::R
 end
 
+struct Equality{E<:Expression} e::E end
+struct Inequality{E<:Expression} e::E end
+
 Variable() = Source{Variable}(DEFAULT_VAR_STRING)
 Variable(str::String) = Source{Variable}(str)
 Variable(n::Int;parent=nothing) = Variable(parent,n)
@@ -177,3 +180,10 @@ for (M,f,nargs) in union(diffrules,[(:Base,:^,2),(:Base,:/,2)])
     end
 end
 
+for (T1,T2) in [(Expression,Expression),(Expression,Real),(Real,Expression)]
+    @eval begin
+        ==(e1::T1,e2::T2) where {T1 <: $T1, T2 <: $T2} = Equality(e1-e2)
+        >=(e1::T1,e2::T2) where {T1 <: $T1, T2 <: $T2} = Inequality(e1-e2)
+        <=(e1::T1,e2::T2) where {T1 <: $T1, T2 <: $T2} = Inequality(e2-e1)
+    end
+end

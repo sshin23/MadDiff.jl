@@ -220,7 +220,7 @@ Hessian(e::Expression2{F,E1,E2}, d,indexer = nothing) where {F<:Union{typeof(+),
 
 # performance killer ---------------
 function Hessian(d1::GradientSum{D1,I1},d2::GradientSum{D2,I2},indexer = nothing) where {D1,D2,I1,I2}
-    error("This operation is expensive")
+    @warn "This operation is expensive"
     hinner = Hessian(inner(d1),d2,indexer)
     hs = [Hessian(d,d2,indexer) for d in d1.ds]
     @inline function (z,x,p=nothing,h0=1)
@@ -231,7 +231,7 @@ function Hessian(d1::GradientSum{D1,I1},d2::GradientSum{D2,I2},indexer = nothing
     end
 end
 function Hessian(d1::GradientSum{D1,Nothing},d2::GradientSum{D2,I2},indexer = nothing) where {D1,D2,I2}
-    error("This operation is expensive")
+    @warn "This operation is expensive"
     hs = [Hessian(d,d2,indexer) for d in d1.ds]
     @inline function (z,x,p=nothing,h0=1)
         @simd for i in eachindex(hs)
@@ -239,8 +239,48 @@ function Hessian(d1::GradientSum{D1,Nothing},d2::GradientSum{D2,I2},indexer = no
         end
     end
 end
-function Hessian(d1::G,d2::GradientSum{D2,I2},indexer = nothing) where {G <: Union{GradientNull,Gradient0,Gradient1,Gradient2},D2,I2}
-    error("This operation is expensive")
+function Hessian(d1::GradientSum{D1,I1},d2::GradientSum{D2,Nothing},indexer = nothing) where {D1,D2,I1}
+    @warn "This operation is expensive"
+    hinner = Hessian(inner(d1),d2,indexer)
+    hs = [Hessian(d,d2,indexer) for d in d1.ds]
+    @inline function (z,x,p=nothing,h0=1)
+        hinner(z,x,p,h0)
+        @simd for i in eachindex(hs)
+            @inbounds hs[i](z,x,p,h0)
+        end
+    end
+end
+function Hessian(d1::GradientSum{D1,Nothing},d2::GradientSum{D2,Nothing},indexer = nothing) where {D1,D2}
+    @warn "This operation is expensive"
+    hs = [Hessian(d,d2,indexer) for d in d1.ds]
+    @inline function (z,x,p=nothing,h0=1)
+        @simd for i in eachindex(hs)
+            @inbounds hs[i](z,x,p,h0)
+        end
+    end
+end
+function Hessian(d1::GradientSum{D1,I1},d2::G,indexer = nothing) where {D1,D2,I1,I2,G <: Gradient}
+    @warn "This operation is expensive"
+    hinner = Hessian(inner(d1),d2,indexer)
+    hs = [Hessian(d,d2,indexer) for d in d1.ds]
+    @inline function (z,x,p=nothing,h0=1)
+        hinner(z,x,p,h0)
+        @simd for i in eachindex(hs)
+            @inbounds hs[i](z,x,p,h0)
+        end
+    end
+end
+function Hessian(d1::GradientSum{D1,Nothing},d2::G,indexer = nothing) where {D1,D2,I2,G <: Gradient}
+    @warn "This operation is expensive"
+    hs = [Hessian(d,d2,indexer) for d in d1.ds]
+    @inline function (z,x,p=nothing,h0=1)
+        @simd for i in eachindex(hs)
+            @inbounds hs[i](z,x,p,h0)
+        end
+    end
+end
+function Hessian(d1::G,d2::GradientSum{D2,I2},indexer = nothing) where {G <: Gradient,D2,I2}
+    @warn "This operation is expensive"
     hinner = Hessian(d1,inner(d2),indexer)
     hs = [Hessian(d1,d,indexer) for d in d2.ds]
     @inline function (z,x,p=nothing,h0=1)
@@ -250,8 +290,8 @@ function Hessian(d1::G,d2::GradientSum{D2,I2},indexer = nothing) where {G <: Uni
         end
     end
 end
-function Hessian(d1::G,d2::GradientSum{D2,Nothing},indexer = nothing) where {G <: Union{GradientNull,Gradient0,Gradient1,Gradient2}, D2}
-    error("This operation is expensive")
+function Hessian(d1::G,d2::GradientSum{D2,Nothing},indexer = nothing) where {G <: Gradient, D2}
+    @warn "This operation is expensive"
     hs = [Hessian(d1,d,indexer) for d in d2.ds]
     @inline function (z,x,p=nothing,h0=1)
         @simd for i in eachindex(hs)

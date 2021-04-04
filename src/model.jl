@@ -163,10 +163,10 @@ getindex(::Dummy,key::Int) = 0.
 getindex(::Tuple{Int,Dummy},key::Int) = 0.
 setindex!(::Dummy,val,key) = nothing
 setindex!(::Tuple{Int,Dummy},val,key) = nothing
-ndims(::Type{Dummy}) = 0
-ndims(::Type{T}) where T <: HessianSum = 0
-size(::Dummy) = 0
-copyto!(::Dummy,val) = nothing
+# ndims(::Type{Dummy}) = 0
+# ndims(::Type{T}) where T <: HessianSum = 0
+# size(::Dummy) = 0
+# copyto!(::Dummy,val) = nothing
 
 @inline function fill_sparsity!(I,J,tuples)
     @simd for l in eachindex(tuples)

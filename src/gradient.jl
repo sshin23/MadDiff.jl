@@ -75,7 +75,7 @@ Gradient(e::V,::Nothing) where V <: Variable = Gradient0(index(e),index(e))
 Gradient(e::V,::Tuple{Int,Nothing}) where V <: Variable = Gradient0(index(e),index(e))
 Gradient(e::P,::T) where {P<:Parameter,T} = GRADIENT_NULL
 Gradient(e::C, indexer = nothing ) where {C<:Constant,T} = GRADIENT_NULL
-Gradient(e::ExpressionSum{E,I},indexer = nothing) where {E,I} = GradientSum(Gradient(inner(e)),[Gradient(ee,indexer) for ee in e.es])
+Gradient(e::ExpressionSum{E,I},indexer = nothing) where {E,I} = GradientSum(Gradient(inner(e),indexer),[Gradient(ee,indexer) for ee in e.es])
 Gradient(e::ExpressionSum{E,Nothing},indexer = nothing) where {E,I} = GradientSum(nothing,[Gradient(ee,indexer) for ee in e.es])
 Gradient(e::Expression1{F,E}, indexer = nothing) where {F,E} = Gradient1(e,indexer)
 Gradient(e::Expression2{F,E1,E2}, indexer = nothing) where {F,E1,E2} = Gradient2(e,indexer)

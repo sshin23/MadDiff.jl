@@ -26,10 +26,10 @@ Number of Iterations....: 5
 
                                    (scaled)                 (unscaled)
 Objective...............:   2.3885398402420989e+04    4.7775573884522462e+04
-Dual infeasibility......:   2.5599442704526965e-11    5.1204005297594834e-11
-Constraint violation....:   2.4825887873225483e-13    2.4825887873225483e-13
+Dual infeasibility......:   2.5599439235080013e-11    5.1203998358007041e-11
+Constraint violation....:   2.4825801137051684e-13    2.4825801137051684e-13
 Complementarity.........:   0.0000000000000000e+00    0.0000000000000000e+00
-Overall NLP error.......:   2.5599442704526965e-11    5.1204005297594834e-11
+Overall NLP error.......:   2.5599439235080013e-11    5.1203998358007041e-11
 
 
 Number of objective function evaluations             = 6
@@ -39,7 +39,7 @@ Number of inequality constraint evaluations          = 0
 Number of equality constraint Jacobian evaluations   = 6
 Number of inequality constraint Jacobian evaluations = 0
 Number of Lagrangian Hessian evaluations             = 5
-Total CPU secs in IPOPT (w/o function evaluations)   =      0.627
-Total CPU secs in NLP function evaluations           =      0.759
+Total CPU secs in IPOPT (w/o function evaluations)   =      0.650
+Total CPU secs in NLP function evaluations           =      0.768
 
 EXIT: Optimal Solution Found.

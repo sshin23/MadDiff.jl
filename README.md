@@ -15,10 +15,10 @@ SimpleNL.jl provides a flexible user-interface for writing nonlinear expressions
 ```julia
 using SimpleNL
 
-x = Variable("x")
-p = Parameter("p")
+x = Variable()
+p = Parameter()
 expr = x[1]^2 + exp(x[2]^p[1])/2 + log(x[3]+p[2])
-println(expr) # (((x[1])^(2))+((exp((x[2])^(p[1])))/(2)))+(log((x[3])+(p[2])))
+println(expr) # x[1]^2 + exp(x[2]^p[1])/2 + log(x[3] + p[2])
 
 x0 = [0.,0.5,1.5]
 p0 = [2,0.5]

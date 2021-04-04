@@ -37,6 +37,11 @@ const printlist = [
     (:(Expression2{typeof(*),E1,E2} where {E1,E2<:ComplexExpression}),e-> "$(string(e.e1))*($(string(e.e2)))"),
     (:(Expression2{typeof(/),E1,E2} where {E1,E2<:ComplexExpression}),e-> "$(string(e.e1))/($(string(e.e2)))"),
     (:(Expression2{typeof(^),E1,E2} where {E1,E2<:ComplexExpression}),e-> "$(string(e.e1))^($(string(e.e2)))"),
+    (:(Expression2{typeof(+),E1,E2} where {E1<:ComplexExpression,E2<:ComplexExpression}),e-> "$(string(e.e1)) + $(string(e.e2))"),
+    (:(Expression2{typeof(-),E1,E2} where {E1<:ComplexExpression,E2<:ComplexExpression}),e-> "$(string(e.e1)) - ($(string(e.e2)))"),
+    (:(Expression2{typeof(*),E1,E2} where {E1<:ComplexExpression,E2<:ComplexExpression}),e-> "($(string(e.e1)))*($(string(e.e2)))"),
+    (:(Expression2{typeof(/),E1,E2} where {E1<:ComplexExpression,E2<:ComplexExpression}),e-> "($(string(e.e1)))/($(string(e.e2)))"),
+    (:(Expression2{typeof(^),E1,E2} where {E1<:ComplexExpression,E2<:ComplexExpression}),e-> "($(string(e.e1)))^($(string(e.e2)))"),
     (:(ExpressionSum{E,I} where {E,I}),stringsum),
 ]
 

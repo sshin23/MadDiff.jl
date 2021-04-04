@@ -59,7 +59,7 @@ end
 
 
 
-m = SimpleNL.Model(Ipopt.Optimizer)
+m = SimpleNL.Model()
 
 x = variable(m)
 setvalue(x,3)
@@ -71,6 +71,9 @@ set_upper_bound(x,1)
 @test upper_bound(x) == 1
 
 c = constraint(m,x==1.)
+constraint(m,x>=1.)
+constraint(m,x<=1.)
+
 setvalue(c,2)
 set_lower_bound(c,-1)
 set_upper_bound(c,1)
@@ -88,7 +91,7 @@ m[:test] = "test"
 
 @test objective_value(m) == 12
 @test num_variables(m) == 1
-@test num_constraints(m) == 1
+@test num_constraints(m) == 3
 @test m[:test] == "test"
 
 for (optimizer,opt) in [(Ipopt.Optimizer,[:print_level=>0]),

@@ -28,7 +28,7 @@ end
 @inline (e::IndexedExpression{E})(y,x,p=nothing) where {E} = (y[e.index] = e.e(x,p))
 
 Field() = Sink{Field}(FIELD_NULL)
-Field(e::E) where E <: IndexedExpression= Field1([e])
+# Field(e::E) where E <: IndexedExpression= Field1([e])
 Field(f::FieldNull,e::E) where E <: IndexedExpression = Field1([e])
 Field(f::F,e::E) where {F <: Field, E <: IndexedExpression} = _field(f,e) ? f : Field1(f,[e])
 

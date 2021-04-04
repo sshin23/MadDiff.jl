@@ -95,11 +95,6 @@ function objective(m::Model,e::E) where E <: Expression
     nothing
 end
 
-function objective!(m::Model,e::E) where E <: Expression
-    m.obj = add_sum(m.obj,e)
-    nothing
-end
-
 instantiate!(m::Model{Optimizer}) where Optimizer = (m.prob = Optimizer(m))
 function optimize!(m::Model)
     m.prob == nothing && instantiate!(m)

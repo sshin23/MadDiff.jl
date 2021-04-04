@@ -6,8 +6,6 @@ struct FZero2 <: Function end; @inline (::FZero2)(x1,x2)=0.;  f_zero2 = FZero2()
 struct FMOne2 <: Function end; @inline (::FMOne2)(x1,x2)=-1.;  f_mone2 = FMOne2()
 struct FX1 <: Function end; @inline (::FX1)(x1,x2)=x1;  f_x1 = FX1()
 struct FX2 <: Function end; @inline (::FX2)(x1,x2)=x2;  f_x2 = FX2()
-struct Fix1{F,R} <: Function; f::F; a::R; end; (f::Fix1{F,R})(x) where {F,R} = f.f(f.a,x)
-struct Fix2{F,R} <: Function; f::F; a::R; end; (f::Fix2{F,R})(x) where {F,R} = f.f(x,f.a)
 
 const f_nargs_1 = [
     (

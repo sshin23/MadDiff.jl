@@ -12,7 +12,7 @@ function nlm_ocp(;N=1,optimizer=Ipopt.Optimizer,opt...)
     
     d(i,j) = (j==1 ? 1*sin(2*pi/N*i) : 0) + (j==3 ? 2*sin(4*pi/N*i) : 0) + (j==5 ? 2*i/N : 0)
 
-    m = SimpleNLModels.Model(optimizer;opt...)
+    m = SimpleNL.Model(optimizer;opt...)
     
     x=[variable(m,start = 0) for i=1:N+1,j=1:n]
     u=[variable(m,start = 0) for i=1:N,j=1:p]
@@ -28,17 +28,9 @@ function nlm_ocp(;N=1,optimizer=Ipopt.Optimizer,opt...)
         constraint(m, -x[i+1,8] + x[i,8] + (-b*u[i,2]*sin(x[i,7])+u[i,3]*cos(x[i,7]))*dt)
         constraint(m, -x[i+1,9] + x[i,9] + (b*u[i,2]*cos(x[i,7])*tan(x[i,8])+u[i,3]*sin(x[i,7])*tan(x[i,8])+u[i,4])*dt)
     end
-    for i=1:N
-        for j=1:n
-            objective(m,.5*Q[j]*(x[i,j]-d(i,j))^2 )
-        end
-        for j=1:p
-            objective(m,.5*R[j]*(u[i,j]^2))
-        end
-    end
-    for j=1:n
-        objective(m,.5*Qf[j]*(x[N+1,j]-d(N+1,j))^2)
-    end
+    objective(m,sum(sum(.5*Q[j]*(x[i,j]-d(i,j))^2 for j=1:n) + sum(.5*R[j]*(u[i,j]^2) for j=1:p) for i=1:N) +
+              sum(.5*Qf[j]*(x[N+1,j]-d(N+1,j))^2 for j=1:n))
+
         
     return m
 end
@@ -60,7 +52,7 @@ function jump_ocp(;N=1,optimizer=Ipopt.Optimizer)
     Qf= [1,0,1,0,1,0,1,1,1]/dt
     R = ones(4)/10
     
-    m = Model(optimizer)
+    m = JuMP.Model(optimizer)
     @variable(m,x[1:N+1,1:n],start = 0)
     @variable(m,u[1:N,1:p],start = 0)
     @constraint(m,[i=1:n],x[1,i]==x0[i])
@@ -80,23 +72,19 @@ end
 
 
 function nlm_luksan_vlcek_501(;N=1,optimizer=Ipopt.Optimizer,opt...)
-    m = SimpleNLModels.Model(optimizer;opt...)
+    m = SimpleNL.Model(optimizer;opt...)
 
-    x = [variable(m;start=mod(i,2)==1 ? -1.2 : 1.) for i=1:N];
-
-    for i=2:N
-        objective(m,100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2)
-    end
-
+    x = [SimpleNL.variable(m;start=mod(i,2)==1 ? -1.2 : 1.) for i=1:N];
     for i=1:N-2
-        constraint(m,3x[i+1]^3+2*x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3)
+        SimpleNL.constraint(m,3x[i+1]^3+2*x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3)
     end
+    SimpleNL.objective(m,sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:N))
     
     return m
 end
 
 function jump_luksan_vlcek_501(;N=1,optimizer=Ipopt.Optimizer)
-    m=Model(optimizer)
+    m=JuMP.Model(optimizer)
     @variable(m,x[i=1:N], start= mod(i,2)==1 ? -1.2 : 1.)
     @NLconstraint(m,[i=1:N-2], 3x[i+1]^3+2x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3==0.)
     @NLobjective(m,Min,sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:N))

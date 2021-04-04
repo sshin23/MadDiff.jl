@@ -2,7 +2,7 @@ nlp_test = Dict()
 
 nlp_test[1] = function (optimizer;opt...)
 
-    m = SimpleModel(optimizer;opt...)
+    m = SimpleNL.Model(optimizer;opt...)
 
     x = variable(m;lb=2,ub=4)
     objective(m,(x-1)^2)
@@ -14,7 +14,7 @@ end
 
 nlp_test[2] = function (optimizer;opt...)
 
-    m = SimpleModel(optimizer;opt...)
+    m = SimpleNL.Model(optimizer;opt...)
 
     x = variable(m)
     constraint(m,x+1<= -1)
@@ -29,14 +29,12 @@ end
 
 nlp_test[3] = function (optimizer;opt...)
 
-    m = SimpleModel(optimizer;opt...)
+    m = SimpleNL.Model(optimizer;opt...)
 
     x = [variable(m,name="s[$i]",start = .1) for i=1:3]
     
     c = constraint(m,0 ==x[1]+sin(x[2])-x[3]/2 + 1. )
-    objective(m,x[2]^2)
-    objective(m,x[2]^2)
-    objective(m,1.)
+    objective(m,x[2]^2 + x[2]^2 + 1.)
 
     optimize!(m)
     
@@ -45,7 +43,7 @@ end
 
 nlp_test[4] = function (optimizer;opt...)
     
-    m = SimpleModel(optimizer;opt...)
+    m = SimpleNL.Model(optimizer;opt...)
 
     x = [variable(m;start=mod(i,2)==1 ? -1.2 : 1.) for i=1:10];
     p = [parameter(m,2) for i=1:10];
@@ -61,15 +59,13 @@ end
 
 
 
-m = SimpleModel()
-
-@test set_optimizer(m,Ipopt.Optimizer) == Ipopt.Optimizer
+m = SimpleNL.Model(Ipopt.Optimizer)
 
 x = variable(m)
 setvalue(x,3)
 set_lower_bound(x,-1)
 set_upper_bound(x,1)
-@test SimpleNLModels.index(x) == 1
+@test SimpleNL.index(x) == 1
 @test value(x) == 3 
 @test lower_bound(x) == -1 
 @test upper_bound(x) == 1
@@ -95,8 +91,8 @@ m[:test] = "test"
 @test num_constraints(m) == 1
 @test m[:test] == "test"
 
-for (optimizer,opt) in [(SimpleNLModels.Ipopt.Optimizer,[:print_level=>0]),
-                        (SimpleNLModels.MadNLP.Optimizer,[:print_level=>MadNLP.ERROR])]
+for (optimizer,opt) in [(Ipopt.Optimizer,[:print_level=>0]),
+                        (MadNLP.Optimizer,[:print_level=>MadNLP.ERROR])]
     for f in values(nlp_test)
         @test f(optimizer;opt...)
     end

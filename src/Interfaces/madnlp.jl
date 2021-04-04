@@ -1,19 +1,23 @@
 import ..MadNLP 
 
-function instantiate!(m::Model,::Type{MadNLP.Optimizer};opt...) 
+function MadNLP.Optimizer(m::Model) 
+    _obj,_grad!,_con!,_jac!,jac_sparsity,_hess!,hess_sparsity = nlp_evaluator(m.obj,m.con)
+    _jac_fill_sparsity! = @inline (I,J)->fill_sparsity!(I,J,jac_sparsity)
+    _hess_fill_sparsity! = @inline (I,J)->fill_sparsity!(I,J,hess_sparsity)
+    p = m.p
 
-    _obj,_grad!,_con!,_jac!,_jac_sparsity!,nnz_jac,_hess!,_hess_sparsity!,nnz_hess = get_nlp_functions(m.objs,m.cons,m.p)
-    m.prob = MadNLP.NonlinearProgram(
-        m.n,m.m,nnz_hess,nnz_jac,
+    prob = MadNLP.NonlinearProgram(
+        m.n,m.m,length(hess_sparsity),length(jac_sparsity),
         0.,m.x,m.g,m.l,m.zl,m.zu,m.xl,m.xu,m.gl,m.gu,
-        _obj,_grad!,_con!,_jac!,_hess!,
-        _hess_sparsity!,_jac_sparsity!,
+        x->_obj(x,p),(g,x)->_grad!(g,x,p),(c,x)->_con!(c,x,p),(jac,x)->_jac!(jac,x,p),
+        (hess,x,lag,sig)->_hess!(hess,x,p,lag,sig),
+        _hess_fill_sparsity!,_jac_fill_sparsity!,
         MadNLP.INITIAL,Dict())
     
-    m.prob.ext[:solver] = MadNLP.Solver(m.prob;opt...)
+    prob.ext[:solver] = MadNLP.Solver(prob;m.opt...)
     
-    return 
+    return prob
 end
 
 
-optimize!(prob,::Type{MadNLP.Optimizer};opt...) = MadNLP.optimize!(prob.ext[:solver])
+optimize!(prob::MadNLP.NonlinearProgram) = MadNLP.optimize!(prob.ext[:solver])

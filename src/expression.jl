@@ -12,16 +12,17 @@ struct Parameter <: Expression
     ref::MyRef{Float64}
     Parameter(n::Int) = new(n,MyRef(0.))
 end
+
 struct Expression1{F <: Function ,E <: Expression} <: Expression
     e1::E
     ref::MyRef{Float64}
-    Expression1(f,e1) = new{typeof(f),typeof(e1)}(e1,MyRef(0.))
+    Expression1(f::F,e1::E) where {F,E} = new{F,E}(e1,MyRef(0.))
 end
 struct Expression2{F <: Function,E1,E2} <: Expression
     e1::E1
     e2::E2
     ref::MyRef{Float64}
-    Expression2(f,e1,e2) = new{typeof(f),typeof(e1),typeof(e2)}(e1,e2,MyRef(0.))
+    Expression2(f::F,e1::E1,e2::E2) where {F,E1,E2} = new{F,E1,E2}(e1,e2,MyRef(0.))
 end
 struct ExpressionSum{E <: Expression,I} <: Expression
     inner::I

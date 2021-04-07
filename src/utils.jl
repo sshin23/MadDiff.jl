@@ -44,10 +44,18 @@ end
 @inline non_caching_eval(e::Parameter,x,p=nothing)  = @inbounds getindex(p,index(e))
 @inline non_caching_eval(e::Constant,x,p=nothing)  = refval(e)
 @inline function non_caching_eval(e::ExpressionSum{E,I},x,p=nothing) where {E,I}
-    return add_sum(non_caching_eval(e.inner,x,p),sum(non_caching_eval(e.es[i],x,p) for i in eachindex(e.es)))
+    res = non_caching_eval(e.inner,x,p)
+    @simd for i in eachindex(e.es)
+        @inbounds res = add_sum(res,non_caching_eval(e.es[i],x,p))
+    end
+    return res
 end
 @inline function non_caching_eval(e::ExpressionSum{E,Nothing},x,p=nothing) where E
-    return sum(non_caching_eval(e.es[i],x,p) for i in eachindex(e.es))
+    res = non_caching_eval(e.es[1],x,p)
+    @simd for i in 2:length(e.es)
+        @inbounds res = add_sum(res,non_caching_eval(e.es[i],x,p))
+    end
+    return res
 end
 
 @inline non_caching_eval(::GradientNull,z,x,p=nothing,d0=1) = nothing

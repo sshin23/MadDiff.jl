@@ -12,14 +12,14 @@ for (N,nlm,jump,name) in [
         GC.enable(false)
         t1 = @elapsed begin
             m = nlm(;N=N,optimizer=Ipopt.Optimizer,output_file="output/$name-simplenlmodels.out")
-            optimize!(m)
+            SimpleNL.optimize!(m)
         end
         t2,t3 = parse_ipopt_output("output/$name-simplenlmodels.out")
         GC.enable(true);GC.gc()
         
         GC.enable(false)
         m = jump(;N=N,optimizer=() -> AmplNLWriter.Optimizer("ipopt",["output_file=output/$name-ampl.out"]))
-        optimize!(m)
+        JuMP.optimize!(m)
         t4 = m.moi_backend.optimizer.model.ext[:MPBModel].inner.solve_time
         t5,t6 = parse_ipopt_output("output/$name-ampl.out")
         GC.enable(true);GC.gc()
@@ -27,7 +27,7 @@ for (N,nlm,jump,name) in [
         GC.enable(false)
         t7 = @elapsed begin
             m = jump(;N=N,optimizer=()->Ipopt.Optimizer(output_file="output/$name-jump.out"))
-            optimize!(m)
+            JuMP.optimize!(m)
         end
         t8,t9 = parse_ipopt_output("output/$name-jump.out")
         GC.enable(true);GC.gc()

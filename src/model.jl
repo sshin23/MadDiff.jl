@@ -49,6 +49,9 @@ for o in [:(==),:(>=),:(<=)]
     @eval $o(e1::T1,e2) where {T1 <: ModelComponent} = $o(inner(e1),e2)
     @eval $o(e1,e2::T2) where {T2 <: ModelComponent} = $o(e1,inner(e2))
 end
+add_sum(a::E,b::ModelComponent{C}) where {C,E<:ExpressionSum} = add_sum(a,b.inner)
+add_sum(a::ModelComponent{C},b::E) where {C,E<:ExpressionSum} = add_sum(a.inner,b)
+add_sum(a::ModelComponent{C},b::ModelComponent{C}) where C = add_sum(a.inner,b.inner)
 
 parent(c) = c.parent
 index(c::ModelComponent{C}) where C = index(inner(c))

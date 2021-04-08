@@ -62,6 +62,7 @@ end
 m = SimpleNL.Model()
 
 x = variable(m)
+y = variable(m)
 setvalue(x,3)
 set_lower_bound(x,-1)
 set_upper_bound(x,1)
@@ -74,6 +75,14 @@ c = constraint(m,x==1.)
 constraint(m,x>=1.)
 constraint(m,x<=1.)
 
+constraint(m,1. ==y)
+constraint(m,1. <=y)
+constraint(m,-1. >=y)
+
+constraint(m,x==y)
+constraint(m,x-4. <=y)
+constraint(m,x+4. >=y)
+
 setvalue(c,2)
 set_lower_bound(c,-1)
 set_upper_bound(c,1)
@@ -85,13 +94,13 @@ p = parameter(m,1.)
 setvalue(p,4)
 @test value(p) == 4
 
-objective(m,p*x)
+objective(m,sum([p,x,y]))
 
 m[:test] = "test"
 
-@test objective_value(m) == 12
-@test num_variables(m) == 1
-@test num_constraints(m) == 3
+@test objective_value(m) == 7.
+@test num_variables(m) == 2
+@test num_constraints(m) == 9
 @test m[:test] == "test"
 
 for (optimizer,opt) in [(Ipopt.Optimizer,[:print_level=>0]),

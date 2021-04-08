@@ -22,6 +22,10 @@
                                               1 +beta(sin(x[1]^x[2])+(erf(p[2])+sin(x[2])/p[1])^2,(cos(p[1]*x[4])+x[1])/x[5]^2-x[3]+sin(x[i])) + beta(p[2]*x[1],3) for i=1:7))
     show(stdout, MIME"text/plain"(),1 - (1/p[1])^2 - sum(-sin(sin(sin(cos(beta(1,x[i]/x[i+1])+p[2])-1.)+4)^9)/abs2(x[3]) for i=1:7))
     show(stdout, MIME"text/plain"(),sum(1 - (p[i]+x[i])^(p[2]+x[1]) + (p[i]+x[i])/(p[2]+x[1]) for i=1:7))
+    show(stdout, MIME"text/plain"(),1 - p[2]^(p[1]+x[1]))
+    show(stdout, MIME"text/plain"(),1 - p[2]/(p[1]+x[1]))
+    show(stdout, MIME"text/plain"(),1 - p[2]*(p[1]+x[1]))
+    show(stdout, MIME"text/plain"(),1 - (p[2]+x[3])+(p[1]+x[1]))
     
     true
 end

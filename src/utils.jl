@@ -73,6 +73,6 @@ end
         non_caching_eval(d.ds[i],y,x,p,d0)
     end
 end
-@inline non_caching_eval(e::IndexedExpression{E},y,x,p=nothing) where {E} = (y[index(e)] = e.e(x,p))
-@inline non_caching_eval(e::JacobianEntry{E},y,x,p=nothing) where {E} = e.e((index(e),y),x,p)
+@inline non_caching_eval(e::IndexedExpression{E},y,x,p=nothing) where {E} = (y[index(e)] = non_caching_eval(e.e,x,p))
+@inline non_caching_eval(e::JacobianEntry{E},y,x,p=nothing) where {E} = non_caching_eval(e.e,(index(e),y),x,p)
 @inline non_caching_eval(e::FieldNull,y,x,p=nothing) = nothing

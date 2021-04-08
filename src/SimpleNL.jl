@@ -15,8 +15,8 @@ abstract type Entry end
 mutable struct MyRef{T}
     x::T
 end
-@inline getindex(ref::MyRef) = ref.x
-@inline setindex!(ref::MyRef,val) = ref.x = val
+@inline getindex(ref::MyRef{T}) where T = ref.x
+@inline setindex!(ref::MyRef{T},val) where T = ref.x = val
 
 include("functionlist.jl")
 include("expression.jl")

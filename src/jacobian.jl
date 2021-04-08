@@ -20,7 +20,7 @@ end
 #     end
 # end
 @inline (e::JacobianEntry{E})(y,x,p=nothing) where {E} = e.e((index(e),y),x,p)
-Jacobian(s::Sink{Field}) = Jacobian(inner(s))
+# Jacobian(s::Sink{Field}) = Jacobian(inner(s))
 Jacobian(f::Field1{G,I},indexer = nothing) where {G,I} = Field1(Jacobian(inner(f),indexer),[JacobianEntry(index(ie),Gradient(ie.e,(index(ie),indexer))) for ie in f.es])
 Jacobian(f::Field1{G,Nothing},indexer = nothing) where G = Field1(nothing,[JacobianEntry(index(ie),Gradient(ie.e,(index(ie),indexer))) for ie in f.es])
 

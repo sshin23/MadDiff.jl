@@ -28,7 +28,7 @@ end
     @testset "Print Test" begin
         include("print_test.jl")
     end
-    @testset "NLP Test" begin
-        include("nlp_test.jl")
+    @testset "Model Test" begin
+        include("model_test.jl")
     end
 end 

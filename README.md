@@ -50,7 +50,7 @@ optimize!(m)
 ```
 
 ## How it works?
-SimpleNLModels.jl constructs first and second derivative functions off-line (i.e., prior to calling the optimization solver) by applying operator overloading-based automatic differentiation on _functions_. The exact _derivative functions_ can be obtained as results. A benchmark code is [here](https://github.com/sshin23/SimpleNLModels.jl/blob/main/benchmark/benchmark.jl).
+SimpleNL.jl constructs first and second derivative functions off-line (i.e., prior to calling the optimization solver) by applying operator overloading-based automatic differentiation on _functions_. The exact _derivative functions_ can be obtained as results. A benchmark code is [here](https://github.com/sshin23/SimpleNL.jl/blob/main/benchmark/benchmark.jl).
 
 <img src="/benchmark/output/luksanvlcek.png" width="400"/><img src="/benchmark/output/hehnandrea.png" width="400"/>
 

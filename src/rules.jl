@@ -4,7 +4,7 @@
 for (f,df,ddf) in f_nargs_1
     @eval begin
         $f(e::E) where E <: Expression = Expression1($f,e)
-        @inline (e::Expression1{typeof($f),F1})(x,p=nothing) where {F1} = setrefval(e,$f(e.e1(x,p)))
+        @inline (e::Expression1{typeof($f),E})(x,p=nothing) where {E} = setrefval(e,$f(e.e1(x,p)))
         
         @inline function (d::Gradient1{typeof($f),F1})(y,x,p=nothing,d0=1.) where {F1}
             setrefval(d,$df(frefval1(d)))
@@ -18,7 +18,7 @@ for (f,df,ddf) in f_nargs_1
             return
         end
         
-        @inline non_caching_eval(e::Expression1{typeof($f),F1},x,p=nothing) where {F,F1} = $f(non_caching_eval(e.e1,x,p))
+        @inline non_caching_eval(e::Expression1{typeof($f),E},x,p=nothing) where {E} = $f(non_caching_eval(e.e1,x,p))
         @inline function non_caching_eval(d::Gradient1{typeof($f),D1},y,x,p=nothing,d0=1.)  where D1
             non_caching_eval(d.d1,y,x,p,d0*$df(frefval1(d)))
             return 
@@ -75,9 +75,9 @@ for (f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
             return
         end
 
-        @inline non_caching_eval(e::Expression2{typeof($f),F1,F2},x,p=nothing) where {F,F1,F2} = $f(non_caching_eval(e.e1,x,p),non_caching_eval(e.e2,x,p))
-        @inline non_caching_eval(e::Expression2{typeof($f),F1,F2},x,p=nothing) where {F,F1<:Real,F2} = $f(e.e1,non_caching_eval(e.e2,x,p))
-        @inline non_caching_eval(e::Expression2{typeof($f),F1,F2},x,p=nothing) where {F,F1,F2<:Real} = $f(non_caching_eval(e.e1,x,p),e.e2)
+        @inline non_caching_eval(e::Expression2{typeof($f),F1,F2},x,p=nothing) where {F1,F2} = $f(non_caching_eval(e.e1,x,p),non_caching_eval(e.e2,x,p))
+        @inline non_caching_eval(e::Expression2{typeof($f),F1,F2},x,p=nothing) where {F1<:Real,F2} = $f(e.e1,non_caching_eval(e.e2,x,p))
+        @inline non_caching_eval(e::Expression2{typeof($f),F1,F2},x,p=nothing) where {F1,F2<:Real} = $f(non_caching_eval(e.e1,x,p),e.e2)
         
         @inline function non_caching_eval(d::Gradient2F1{typeof($f),D1,R},y,x,p=nothing,d0=1.) where {D1,R}
             non_caching_eval(d.d1,y,x,p,d0*$df2(d.a,frefval1(d)))

@@ -27,9 +27,9 @@ f = function_evaluator(expr)
 println("f(x0,p0) = $(f(x0,p0))") # f(x0,p0) = 1.3351598889038159
 
 y0 = zeros(3)
-d = gradient_evaluator(expr)
-d(y0,x0,p0)
-println("d_2(x0,p0) = $y0") # d_2(x0,p0) = [0.0, 0.6420127083438707, 0.5]
+g = gradient_evaluator(expr)
+g(y0,x0,p0)
+println("g(x0,p0) = $y0") # g(x0,p0) = [0.0, 0.6420127083438707, 0.5]
 ```
 
 ### Nonlinear Programming

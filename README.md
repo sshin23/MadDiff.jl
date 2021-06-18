@@ -1,4 +1,4 @@
-[![build](https://github.com/sshin23/SimpleNL.jl/actions/workflows/test.yml/badge.svg)](https://github.com/sshin23/SimpleNL.jl/actions/workflows/test.yml)
+[![build](https://github.com/sshin23/SimpleNL.jl/actions/workflows/test.yml/badge.svg)](https://github.com/sshin23/SimpleNL.jl/actions/workflows/test.yml) 
 [![codecov](https://codecov.io/gh/sshin23/SimpleNL.jl/branch/main/graph/badge.svg?token=U6NMMW0IT5)](https://codecov.io/gh/sshin23/SimpleNL.jl)
 # SimpleNL.jl
  

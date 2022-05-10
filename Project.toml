@@ -5,12 +5,14 @@ version = "0.1.0"
 
 [deps]
 MadDiffCore = "5ac3a7ac-a472-4f3e-93f4-0386471e765c"
-MadDiffModel = "0a02dcc4-1900-4d9f-8666-284b56fa2ab7"
+MadDiffModels = "3a0fffed-42e2-400f-bc9f-183fc4b91caf"
+MadDiffMOI = "703d8b96-412a-4415-8fe9-74f341fe3283"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
 MadDiffCore = "0.1"
-MadDiffModel = "0.1"
+MadDiffModels = "0.1"
+MadDiffMOI = "0.1"
 Reexport = "1.2"
 julia = "1.6"
 

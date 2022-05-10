@@ -1,12 +1,12 @@
 module MadDiffMOI
 
 using MadDiffCore, MadDiffModels
-using MathOptInterface
 using SpecialFunctions
+using MathOptInterface
 
 const MOI = MathOptInterface
-const X = MadDiff.Variable()
-const P = MadDiff.Parameter()
+const X = MadDiffCore.Variable()
+const P = MadDiffCore.Parameter()
 
 Expression(ex::MOI.Nonlinear.Expression) = Expression(ex::MOI.Nonlinear.Expression, 1, -1)[1]
 function Expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int)
@@ -66,8 +66,8 @@ function Expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int)
 
 end
 
-function MadDiff.Model(nlp_data::MathOptInterface.Nonlinear.Model)
-    m = MadDiff.Model()
+function MadDiffModels.Model(nlp_data::MathOptInterface.Nonlinear.Model)
+    m = MadDiffModels.Model()
 
     for i=1:10
         variable(m)
@@ -96,6 +96,11 @@ struct MadDiffAutomaticDifferentiation <: MOI.Nonlinear.AbstractAutomaticDiffere
 
 mutable struct MadDiffEvaluator <: MOI.AbstractNLPEvaluator
     backend
+    eval_objective_timer::Float64
+    eval_constraint_timer::Float64
+    eval_objective_gradient_timer::Float64
+    eval_constraint_jacobian_timer::Float64
+    eval_hessian_lagrangian_timer::Float64
 end
 
 function MOI.Nonlinear.Evaluator(
@@ -104,40 +109,37 @@ function MOI.Nonlinear.Evaluator(
     ::Vector{MathOptInterface.VariableIndex}
     )
     
-    MadDiffEvaluator(MadDiff.Model(model))
+    MadDiffEvaluator(MadDiffModels.Model(model),0.,0.,0.,0.,0.)
 end
 
-function MOI.NLPBlockData(::MadDiffEvaluator) end
-
 function MOI.eval_objective(evaluator::MadDiffEvaluator, x)
-    # start = time()
+    start = time()
     obj = MadDiffModels.obj(evaluator.backend, x)
-    # evaluator.eval_objective_timer += time() - start
+    evaluator.eval_objective_timer += time() - start
     return obj
 end
 function MOI.eval_objective_gradient(evaluator::MadDiffEvaluator, g, x)
-    # start = time()
+    start = time()
     MadDiffModels.grad!(evaluator.backend, x, g)
-    # evaluator.eval_objective_gradient_timer += time() - start
+    evaluator.eval_objective_gradient_timer += time() - start
     return
 end
 function MOI.eval_constraint(evaluator::MadDiffEvaluator, g, x)
-    # start = time()
+    start = time()
     MadDiffModels.cons!(evaluator.backend, x, g)
-    # evaluator.eval_constraint_timer += time() - start
+    evaluator.eval_constraint_timer += time() - start
     return
 end
 function MOI.eval_constraint_jacobian(evaluator::MadDiffEvaluator, J, x)
-    # start = time()
-    # MOI.eval_constraint_jacobian(evaluator.backend, J, x)
+    start = time()
     MadDiffModels.jac_coord!(evaluator.backend, x, J)
-    # evaluator.eval_constraint_jacobian_timer += time() - start
+    evaluator.eval_constraint_jacobian_timer += time() - start
     return
 end
 function MOI.eval_hessian_lagrangian(evaluator::MadDiffEvaluator, H, x, σ, μ)
-    # start = time()
+    start = time()
     MadDiffModels.hess_coord!(evaluator.backend, x, μ, H; obj_weight = σ)
-    # evaluator.eval_hessian_lagrangian_timer += time() - start
+    evaluator.eval_hessian_lagrangian_timer += time() - start
     return
 end
 
@@ -159,10 +161,10 @@ end
 
 
 MOI.features_available(::MadDiffEvaluator) = [:Grad,:Hess,:Jac]
-MOI.initialize(evaluator::MadDiffEvaluator,::Vector{Symbol}) = MadDiffModel.instantiate!(evaluator.backend)
+MOI.initialize(evaluator::MadDiffEvaluator,::Vector{Symbol}) = MadDiffModels.instantiate!(evaluator.backend)
 
-unidict = [eval(f) for f in MOI.Nonlinear.DEFAULT_UNIVARIATE_OPERATORS]
-multidict = [eval(f) for f in MOI.Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS]
+const unidict = [eval(f) for f in MOI.Nonlinear.DEFAULT_UNIVARIATE_OPERATORS]
+const multidict = [eval(f) for f in MOI.Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS]
 
 get_univariate_fun(i) = unidict[i]
 get_multivariate_fun(i) = multidict[i]

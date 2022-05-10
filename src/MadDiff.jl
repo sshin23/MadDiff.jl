@@ -3,7 +3,12 @@ module MadDiff
 using Reexport: @reexport
 
 @reexport using MadDiffCore
-@reexport using MadDiffModel
-using MadDiffModel: Model
+@reexport using MadDiffModels
+@reexport using MadDiffMOI
+
+using MadDiffModels: Model
+using MadDiffMOI: MadDiffAutomaticDifferentiation
+
+export MadDiffAutomaticDifferentiation
 
 end

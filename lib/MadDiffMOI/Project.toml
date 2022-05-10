@@ -1,0 +1,12 @@
+name = "MadDiffMOI"
+uuid = "703d8b96-412a-4415-8fe9-74f341fe3283"
+authors = ["Sungho Shin <sshin@anl.gov>"]
+version = "0.1.0"
+
+[deps]
+MadDiffCore = "5ac3a7ac-a472-4f3e-93f4-0386471e765c"
+MadDiffModels = "0a02dcc4-1900-4d9f-8666-284b56fa2ab7"
+
+[compat]
+MadDiffCore = "0.1.0"
+MadDiffModels = "0.1.0"

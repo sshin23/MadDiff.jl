@@ -1,8 +1,24 @@
 struct Dummy end
+struct Equality{E<:Expression} e::E end
+struct Inequality{E<:Expression} e::E end
+for (T1,T2) in [(Expression,Expression),(Expression,Real),(Real,Expression)]
+    @eval begin
+        ==(e1::T1,e2::T2) where {T1 <: $T1, T2 <: $T2} = Equality(e1-e2)
+        >=(e1::T1,e2::T2) where {T1 <: $T1, T2 <: $T2} = Inequality(e1-e2)
+        <=(e1::T1,e2::T2) where {T1 <: $T1, T2 <: $T2} = Inequality(e2-e1)
+    end
+end
 
 const DUMMY = Dummy()
 
-mutable struct Model{Optimizer}
+struct Evaluator
+    grad
+    jac
+    hess
+    jac_sparsity::Vector{Tuple{Int,Int}}
+    hess_sparsity::Vector{Tuple{Int,Int}}
+end
+mutable struct Model{T} <: AbstractNLPModel{T,Vector{T}}
     con::Sink{Field}
     obj::Union{Nothing,Expression}
 
@@ -10,30 +26,32 @@ mutable struct Model{Optimizer}
     q::Int # num pars
     m::Int # num cons
 
-    x::Vector{Float64}
-    p::Vector{Float64}
-    g::Vector{Float64}
-    l::Vector{Float64}
-    zl::Vector{Float64}
-    zu::Vector{Float64}
-    xl::Vector{Float64}
-    xu::Vector{Float64}
-    gl::Vector{Float64}
-    gu::Vector{Float64}
+    x::Vector{T}
+    p::Vector{T}
+    l::Vector{T}
+    zl::Vector{T}
+    zu::Vector{T}
+    xl::Vector{T}
+    xu::Vector{T}
+    gl::Vector{T}
+    gu::Vector{T}
 
-    prob
+    meta::Union{Nothing,NLPModelMeta{T, Vector{T}}}
+    evaluator::Union{Nothing,Evaluator}
+    counters::Union{Nothing,NLPModelsCounters}
+    
     ext::Dict{Symbol,Any}
     opt::Dict{Symbol,Any}
-end
-
-struct ModelComponent{C <: Union{Variable,Parameter}}
-    parent::Model
-    inner::C
 end
 
 struct Constraint
     parent::Model
     index::Int
+end
+
+struct ModelComponent{C <: Union{Variable,Parameter}}
+    parent::Model
+    inner::C
 end
 
 for (f,df,ddf) in f_nargs_1
@@ -60,9 +78,11 @@ convert(::Type{Expression},e::ModelComponent{C}) where C = inner(e)
 getindex(m::Model,idx::Symbol) = m.ext[idx]
 setindex!(m::Model,val,idx::Symbol) = setindex!(m.ext,val,idx)
 
-default_optimizer() = @isdefined(DEFAULT_OPTIMIZER) ? DEFAULT_OPTIMIZER : error("DEFAULT_OPTIMIZER is not defined. To use Ipopt as a default optimizer, do: using Ipopt")
-Model(Optimizer=default_optimizer();opt...) =Model{Optimizer}(
-    Field(),Constant(0.),0,0,0,Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],nothing,Dict{Symbol,Any}(),Dict{Symbol,Any}(name=>option for (name,option) in opt))
+Model(;opt...) =Model(
+    Field(),Constant(0.),0,0,0,
+    Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],
+    nothing,nothing,nothing,
+    Dict{Symbol,Any}(),Dict{Symbol,Any}(name=>option for (name,option) in opt))
 
 function variable(m::Model;lb=-Inf,ub=Inf,start=0.,name=nothing)
     m.n += 1
@@ -84,7 +104,6 @@ function constraint(m::Model,e::E;lb=0.,ub=0.) where E <: Expression
     m.m += 1
     m.con[m.m] = e
     push!(m.l,0.)
-    push!(m.g,0.)
     push!(m.gl,lb)
     push!(m.gu,ub)
     Constraint(m,m.m)
@@ -96,12 +115,6 @@ constraint(m,eq::Inequality{E}) where {E<:Expression} = constraint(m,eq.e;ub=Inf
 function objective(m::Model,e::E) where E <: Expression
     m.obj = e
     nothing
-end
-
-instantiate!(m::Model{Optimizer}) where Optimizer = (m.prob = Optimizer(m))
-function optimize!(m::Model)
-    m.prob == nothing && instantiate!(m)
-    optimize!(m.prob)
 end
 
 value(e::ModelComponent{C}) where C = non_caching_eval(inner(e),parent(e).x,parent(e).p)
@@ -127,39 +140,74 @@ objective_value(m::Model) = non_caching_eval(m.obj,m.x,m.p)
 num_variables(m::Model) = m.n
 num_constraints(m::Model) = m.m
 
-
-function nlp_evaluator(obj,con)
+function instantiate!(m::Model)
     
-    grad = Gradient(obj)
-    jac,jac_sparsity = SparseJacobian(con)
-    hess,hess_sparsity = SparseLagrangianHessian(obj,grad,inner(con),jac)
+    grad = Gradient(m.obj)
+    jac,jac_sparsity = SparseJacobian(m.con)
+    hess,hess_sparsity = SparseLagrangianHessian(m.obj,grad,inner(m.con),jac)
     
-    _obj = @inline (x,p)->non_caching_eval(obj,x,p)
-    _con = @inline (y,x,p)->non_caching_eval(con,y,x,p)
-    _grad! = @inline function (y,x,p)
-        y .= 0
-        obj(x,p)
-        non_caching_eval(grad,y,x,p)
-    end
-    _jac! = @inline function (J,x,p)
-        J .= 0
-        con(DUMMY,x,p)
-        non_caching_eval(jac,J,x,p)
-    end
-    _hess! = @inline function (z,x,p,lag,sig)
-        z .= 0
-        obj(x,p)
-        con(DUMMY,x,p)
-        grad(DUMMY,x,p)
-        jac(DUMMY,x,p)
-        hess(z,x,p,lag,sig)
-    end
-        
-    nnz_jac = length(jac_sparsity)
-    nnz_hess = length(hess_sparsity)
+    m.evaluator = Evaluator(
+        grad,jac,hess,jac_sparsity,hess_sparsity
+    )
+    m.meta = NLPModelMeta(
+        m.n,
+        x0 = m.x,
+        lvar = m.xl,
+        uvar = m.xu,
+        ncon = m.m,
+        y0 = m.l,
+        lcon = m.gl,
+        ucon = m.gu,
+        nnzj = length(jac_sparsity),
+        nnzh = length(hess_sparsity),
+        minimize = true
+    )
+    m.counters = NLPModelsCounters()
     
-    return _obj,_grad!,_con,_jac!,jac_sparsity,_hess!,hess_sparsity
+    return 
 end
+@inline function jac_structure!(m::Model,I::AbstractVector{T},J::AbstractVector{T}) where T
+    fill_sparsity!(I,J,m.evaluator.jac_sparsity)
+    return 
+end
+@inline function hess_structure!(m::Model,I::AbstractVector{T},J::AbstractVector{T}) where T
+    fill_sparsity!(I,J,m.evaluator.hess_sparsity)
+    return 
+end
+@inline function obj(m::Model,x::AbstractVector)
+    increment!(m, :neval_obj)
+    non_caching_eval(m.obj,x,m.p)
+end
+@inline function cons!(m::Model,x::AbstractVector,y::AbstractVector)
+    increment!(m, :neval_cons)
+    non_caching_eval(m.con,y,x,m.p)
+    return 
+end
+@inline function grad!(m::Model,x::AbstractVector,y::AbstractVector)
+    increment!(m, :neval_grad)
+    y .= 0
+    m.obj(x,m.p)
+    non_caching_eval(m.evaluator.grad,y,x,m.p)
+    return 
+end
+@inline function jac_coord!(m::Model,x::AbstractVector,J::AbstractVector)
+    increment!(m, :neval_jac)
+    J .= 0
+    m.con(DUMMY,x,m.p)
+    non_caching_eval(m.evaluator.jac,J,x,m.p)
+    return 
+end
+@inline function hess_coord!(m::Model,x::AbstractVector,lag::AbstractVector,z::AbstractVector; obj_weight = 1.0)
+    increment!(m, :neval_hess)
+    z .= 0
+    m.obj(x,m.p)
+    m.con(DUMMY,x,m.p)
+    m.evaluator.grad(DUMMY,x,m.p)
+    m.evaluator.jac(DUMMY,x,m.p)
+    m.evaluator.hess(z,x,m.p,lag, obj_weight) ###
+    return 
+end
+
 
 # etc
 getindex(::Dummy,key::Int) = 0.
@@ -178,3 +226,5 @@ setindex!(::Tuple{Int,Dummy},val,key) = nothing
         @inbounds J[l] = j
     end
 end
+
+

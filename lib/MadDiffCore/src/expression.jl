@@ -31,8 +31,6 @@ struct ExpressionSum{E <: Expression,I} <: Expression
     ExpressionSum(es) = new{eltype(es),Nothing}(nothing,es,MyRef(0.))
     ExpressionSum(inner,es) = new{eltype(es),typeof(inner)}(inner,es,ref(inner))
 end
-struct Equality{E<:Expression} e::E end
-struct Inequality{E<:Expression} e::E end
 
 @inline function (e::ExpressionSum{E,I})(x,p=nothing) where {E,I}
     inner(e)(x,p)
@@ -52,10 +50,3 @@ end
 @inline (e::Parameter)(x,p=nothing)  = setrefval(e,getindex(p,index(e)))
 @inline (e::Constant)(x,p=nothing)  = refval(e)
 
-for (T1,T2) in [(Expression,Expression),(Expression,Real),(Real,Expression)]
-    @eval begin
-        ==(e1::T1,e2::T2) where {T1 <: $T1, T2 <: $T2} = Equality(e1-e2)
-        >=(e1::T1,e2::T2) where {T1 <: $T1, T2 <: $T2} = Inequality(e1-e2)
-        <=(e1::T1,e2::T2) where {T1 <: $T1, T2 <: $T2} = Inequality(e2-e1)
-    end
-end

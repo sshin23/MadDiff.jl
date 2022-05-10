@@ -8,17 +8,17 @@ function Ipopt.Optimizer(m::Model)
     _hess_fill_sparsity! = @inline (I,J)->fill_sparsity!(I,J,hess_sparsity)
     p = m.p
     
-    prob =  Ipopt.createProblem(
+    prob =  Ipopt.CreateIpoptProblem(
         m.n,m.xl,m.xu,m.m,m.gl,m.gu,length(jac_sparsity),length(hess_sparsity),
         x->_obj(x,p), (x,g)->_con!(g,x,p), (x,f)->_grad!(f,x,p),
-        (x, mode, I,J, jac)-> mode == :Structure ? _jac_fill_sparsity!(I,J) : _jac!(jac,x,p),
-        (x, mode, I,J, sig, lag, hess)-> mode == :Structure ? _hess_fill_sparsity!(I,J) : _hess!(hess,x,p,lag,sig)
+        (x, I,J, jac)-> jac == nothing ? _jac_fill_sparsity!(I,J) : _jac!(jac,x,p),
+        (x, I,J, sig, lag, hess)-> hess == nothing ? _hess_fill_sparsity!(I,J) : _hess!(hess,x,p,lag,sig)
     )
 
     prob.x .= m.x
 
     for (name,option) in m.opt
-        Ipopt.addOption(prob,string(name),option)
+        Ipopt.AddIpoptStrOption(prob,string(name),option)
     end
 
     m.x = prob.x
@@ -29,4 +29,4 @@ function Ipopt.Optimizer(m::Model)
     return prob
 end
 
-optimize!(prob::Ipopt.IpoptProblem) = Ipopt.solveProblem(prob)
+optimize!(prob::Ipopt.IpoptProblem) = Ipopt.IpoptSolve(prob)

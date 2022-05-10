@@ -1,4 +1,4 @@
-Field1(inner,::Vector{LagrangianEntry{SimpleNL.HessianNull}}) = inner
+Field1(inner,::Vector{LagrangianEntry{HessianNull}}) = inner
 
 Hessian11a(::HessianNull,::MyRef{Float64}) = HESSIAN_NULL
 Hessian22a(::HessianNull,::HessianNull,::MyRef{Float64},::MyRef{Float64}) = HESSIAN_NULL

@@ -1,15 +1,17 @@
-name = "SimpleNL"
+name = "MadDiff"
 uuid = "7bbef9ca-9061-49de-8b0e-60c2db5b3b29"
 authors = ["Sungho Shin"]
 version = "0.1.0"
 
 [deps]
-SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
-Requires = "ae029012-a4dd-5104-9daa-d747884805df"
+MadDiffCore = "5ac3a7ac-a472-4f3e-93f4-0386471e765c"
+MadDiffModel = "0a02dcc4-1900-4d9f-8666-284b56fa2ab7"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
-SpecialFunctions = "1.3"
-Requires = "1"
+MadDiffCore = "0.1"
+MadDiffModel = "0.1"
+Reexport = "1.2"
 julia = "1.6"
 
 [extras]
@@ -21,6 +23,7 @@ StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
+NaNMath = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 
 [targets]
 benchmark = ["JuMP", "MadNLP", "Ipopt", "AmplNLWriter", "StatsPlots"]

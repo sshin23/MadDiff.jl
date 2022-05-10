@@ -1,3 +1,5 @@
+using MadDiff, Ipopt, JuMP, AmplNLWriter, Ipopt_jll, StatsPlots
+
 n = 9
 p = 4
 nd= 9
@@ -8,8 +10,8 @@ Q = [1,0,1,0,1,0,1,1,1]
 Qf= [1,0,1,0,1,0,1,1,1]/dt
 R = ones(4)/10
 
-function nlm_ocp(;N=1,optimizer=Ipopt.Optimizer,opt...)
-    m = SimpleNL.Model(optimizer;opt...)
+function nlm_ocp(;N=1,opt...)
+    m = MadDiff.Model(;opt...)
     
     x=[variable(m,start = 0) for i=1:N+1,j=1:n]
     u=[variable(m,start = 0) for i=1:N,j=1:p]
@@ -32,8 +34,8 @@ function nlm_ocp(;N=1,optimizer=Ipopt.Optimizer,opt...)
     return m
 end
 
-function jump_ocp(;N=1,optimizer=Ipopt.Optimizer)
-    m = JuMP.Model(optimizer)
+function jump_ocp(;N=1)
+    m = JuMP.Model()
     @variable(m,x[1:N+1,1:n],start = 0)
     @variable(m,u[1:N,1:p],start = 0)
     @constraint(m,[i=1:n],x[1,i]==x0[i])
@@ -52,20 +54,20 @@ function jump_ocp(;N=1,optimizer=Ipopt.Optimizer)
 end
 
 
-function nlm_luksan_vlcek_501(;N=1,optimizer=Ipopt.Optimizer,opt...)
-    m = SimpleNL.Model(optimizer;opt...)
+function nlm_luksan_vlcek_501(;N=1,opt...)
+    m = MadDiff.Model(;opt...)
 
-    x = [SimpleNL.variable(m;start=mod(i,2)==1 ? -1.2 : 1.) for i=1:N];
+    x = [MadDiff.variable(m;start=mod(i,2)==1 ? -1.2 : 1.) for i=1:N];
     for i=1:N-2
-        SimpleNL.constraint(m,3x[i+1]^3+2*x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3)
+        MadDiff.constraint(m,3x[i+1]^3+2*x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3)
     end
-    SimpleNL.objective(m,sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:N))
+    MadDiff.objective(m,sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:N))
     
     return m
 end
 
-function jump_luksan_vlcek_501(;N=1,optimizer=Ipopt.Optimizer)
-    m=JuMP.Model(optimizer)
+function jump_luksan_vlcek_501(;N=1)
+    m=JuMP.Model()
     @variable(m,x[i=1:N], start= mod(i,2)==1 ? -1.2 : 1.)
     @NLconstraint(m,[i=1:N-2], 3x[i+1]^3+2x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3==0.)
     @NLobjective(m,Min,sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:N))

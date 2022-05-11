@@ -1,4 +1,3 @@
-struct Dummy end
 struct Equality{E<:Expression} e::E end
 struct Inequality{E<:Expression} e::E end
 for (T1,T2) in [(Expression,Expression),(Expression,Real),(Real,Expression)]
@@ -9,7 +8,6 @@ for (T1,T2) in [(Expression,Expression),(Expression,Real),(Real,Expression)]
     end
 end
 
-const DUMMY = Dummy()
 
 struct Evaluator
     grad
@@ -127,7 +125,7 @@ upper_bound(e::ModelComponent{V}) where V <: Variable = parent(e).xu[index(e)]
 
 value(e::Constraint) = parent(e).g[index(e)]
 # value(e::Constraint) = non_caching_eval(parent(e).con[e.index],parent(e).x,parent(e).p)
-setvalue(e::Constraint,val) = parent(e).g[index(e)] = val
+# setvalue(e::Constraint,val) = parent(e).g[index(e)] = val
 set_lower_bound(e::Constraint,val) = parent(e).gl[index(e)] = val
 set_upper_bound(e::Constraint,val) = parent(e).gu[index(e)] = val
 lower_bound(e::Constraint) = parent(e).gl[index(e)]

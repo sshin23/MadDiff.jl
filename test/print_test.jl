@@ -4,7 +4,7 @@
     println("Test printing")
     x= Variable()
     p= Parameter()
-    m = SimpleNL.Model(Ipopt.Optimizer)
+    m = MadDiff.Model()
     u = [variable(m) for i=1:10]
     v = [parameter(m) for i=1:10]
     c = constraint(m,u[1]+u[2]==0)

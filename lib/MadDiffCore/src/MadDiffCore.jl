@@ -15,6 +15,10 @@ abstract type Entry end
 mutable struct MyRef{T}
     x::T
 end
+
+struct Dummy end
+const DUMMY = Dummy()
+
 @inline getindex(ref::MyRef{T}) where T = ref.x
 @inline setindex!(ref::MyRef{T},val) where T = ref.x = val
 
@@ -33,14 +37,5 @@ include("utils.jl")
 include("evaluator.jl")
 include("model.jl")
 include("print.jl")
-
-# function __init__()
-#     @require Ipopt="b6b21f68-93f8-5de0-b562-5493be1d77c9" @eval begin
-#         include("Interfaces/ipopt.jl")
-#     end
-#     @require MadNLP = "2621e9c9-9eb4-46b1-8089-e8c72242dfb6" @eval begin
-#         include("Interfaces/madnlp.jl")
-#     end
-# end
 
 end

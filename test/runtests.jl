@@ -1,4 +1,4 @@
-using Test, SimpleNL, MadNLP, Ipopt, ForwardDiff, SpecialFunctions
+using Test, MadDiff, MadNLP, NLPModelsIpopt, ForwardDiff, SpecialFunctions
 import Random: seed!
 const eps = 1e-6
 seed!(0)
@@ -21,7 +21,7 @@ function compare(f1,f2,y1,y2,xpoints,ppoints)
     return true
 end
 
-@testset "SimpleNLModels test" begin
+@testset "MadDiffModels test" begin
     @testset "Function Test" begin
         include("function_test.jl")
     end

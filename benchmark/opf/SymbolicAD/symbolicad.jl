@@ -1,6 +1,10 @@
-using SymbolicAD, PowerModels, JuMP, Ipopt, Plots, DelimitedFiles
-pgfplotsx()
-PowerModels.silence()
+using Distributed
+
+const NWORKERS = 10
+
+if nworkers() != NWORKERS
+    addprocs(NWORKERS - nworkers(),exeflags="--project=.")
+end
 
 cases = [
     "pglib_opf_case24_ieee_rts.m", "pglib_opf_case4619_goc.m", "pglib_opf_case2736sp_k.m",
@@ -25,46 +29,53 @@ cases = [
     "pglib_opf_case24464_goc.m", "pglib_opf_case4601_goc.m"
 ]
 
+@everywhere begin
+    using SymbolicAD, PowerModels, JuMP, Ipopt, DelimitedFiles
+    PowerModels.silence()
 
+    function get_t3(model)
+        return model.moi_backend.optimizer.model.nlp_data.evaluator.eval_objective_timer +
+            model.moi_backend.optimizer.model.nlp_data.evaluator.eval_constraint_timer +
+            model.moi_backend.optimizer.model.nlp_data.evaluator.eval_objective_gradient_timer +
+            model.moi_backend.optimizer.model.nlp_data.evaluator.eval_constraint_jacobian_timer +
+            model.moi_backend.optimizer.model.nlp_data.evaluator.eval_hessian_lagrangian_timer
+    end
+    
+    function benchmark_opf(case)
+        m = instantiate_model(
+            joinpath("$(ENV["PGLIB_PATH"])",case),
+            ACPPowerModel,
+            PowerModels.build_opf
+        ).model
 
-function get_t3(model)
-    return model.moi_backend.optimizer.model.nlp_data.evaluator.eval_objective_timer +
-        model.moi_backend.optimizer.model.nlp_data.evaluator.eval_constraint_timer +
-        model.moi_backend.optimizer.model.nlp_data.evaluator.eval_objective_gradient_timer +
-        model.moi_backend.optimizer.model.nlp_data.evaluator.eval_constraint_jacobian_timer +
-        model.moi_backend.optimizer.model.nlp_data.evaluator.eval_hessian_lagrangian_timer
+        set_optimizer(m,Ipopt.Optimizer)
+        set_optimizer_attribute(m,"linear_solver","ma27")
+        set_optimize_hook(m, SymbolicAD.optimize_hook)
+        
+        optimize!(m) # force compile
+        GC.enable(false)
+        t1_symb = @elapsed begin
+            optimize!(m)
+        end
+        GC.enable(true)
+        t2_symb = solve_time(m)
+        t3_symb = get_t3(m)
+
+        return t1_symb, t2_symb, t3_symb
+    end
 end
+    
+
+results = pmap(benchmark_opf,cases)
 
 t1s_symb = []
 t2s_symb = []
 t3s_symb = []
-
-for case in cases
-    m = instantiate_model(
-        joinpath("$(ENV["PGLIB_PATH"])",case),
-        ACPPowerModel,
-        PowerModels.build_opf
-    ).model
-
-    set_optimizer(m,Ipopt.Optimizer)
-    set_optimizer_attribute(m,"linear_solver","ma27")
-    set_optimize_hook(m, SymbolicAD.optimize_hook)
-    
-    optimize!(m) # force compile
-    GC.enable(false)
-    t1_symb = @elapsed begin
-        optimize!(m)
-    end
-    GC.enable(true)
-    t2_symb = solve_time(m)
-    t3_symb = get_t3(m)
-
-
+for (t1_symb,t2_symb,t3_symb) in results
     push!(t1s_symb, t1_symb)
     push!(t2s_symb, t2_symb)
     push!(t3s_symb, t3_symb)
 end
-
 
 writedlm("../t1s_symb.csv", t1s_symb, ',')
 writedlm("../t2s_symb.csv", t2s_symb, ',')

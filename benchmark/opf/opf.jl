@@ -1,4 +1,4 @@
-using Distributed
+using Distributed, Plots, BenchmarkProfiles
 
 const NWORKERS = 10
 
@@ -7,7 +7,7 @@ if nworkers() != NWORKERS
 end
 
 @everywhere begin
-    using MadDiff, PowerModels, JuMP, Ipopt, AmplNLWriter, Ipopt_jll, BenchmarkProfiles, DelimitedFiles
+    using MadDiff, PowerModels, JuMP, Ipopt, AmplNLWriter, Ipopt_jll, DelimitedFiles
     PowerModels.silence()
 
     cases = [
@@ -92,9 +92,9 @@ end
         # push!(t3s_ampl, t3_ampl)
 
         return (
-            t1s_jump, t2s_jump, t3s_jump,
-            t1s_maddiff, t2s_maddiff, t3s_maddiff,
-            t1s_ampl, t2s_ampl
+            t1_jump, t2_jump, t3_jump,
+            t1_maddiff, t2_maddiff, t3_maddiff,
+            t1_ampl, t2_ampl
         )
     end
 
@@ -112,7 +112,7 @@ t1s_ampl = Float64[]
 t2s_ampl = Float64[]
 # t3s_ampl = Float64[]
 
-for (t1s_jump, t2s_jump, t3s_jump, t1s_maddiff, t2s_maddiff, t3s_maddiff, t1s_ampl, t2s_ampl) in results
+for (t1_jump, t2_jump, t3_jump, t1_maddiff, t2_maddiff, t3_maddiff, t1_ampl, t2_ampl) in results
     push!(t1s_jump, t1_jump)
     push!(t1s_maddiff, t1_maddiff)
     push!(t1s_ampl, t1_ampl)
@@ -140,9 +140,9 @@ t1s_symb = readdlm("t1s_symb.csv",Float64)
 t2s_symb = readdlm("t2s_symb.csv",Float64)
 t3s_symb = readdlm("t3s_symb.csv",Float64)
 
-p1 = performance_profile(PlotsBackend(), Matrix{Float64}([t1s_jump t1s_maddiff t1s_symb t1s_ampl]), ["JuMP", "MadDiff", "SymbolicAD", "Ampl"], title="optimize! time", logscale =false, framestyle=:box)
-p2 = performance_profile(PlotsBackend(), Matrix{Float64}([t2s_jump t2s_maddiff t2s_symb t2s_ampl]), ["JuMP", "MadDiff", "SymbolicAD", "Ampl"], title="solver time", logscale =false, framestyle=:box)
-p3 = performance_profile(PlotsBackend(), Matrix{Float64}([t3s_jump t3s_maddiff t3s_symb]), ["JuMP", "MadDiff", "SymbolicAD"], title="AD time", logscale =false, framestyle=:box)
+p1 = performance_profile(PlotsBackend(), Matrix{Float64}([t1s_jump t1s_maddiff t1s_symb t1s_ampl]), ["JuMP", "MadDiff", "SymbolicAD", "Ampl"], title="optimize! time", logscale =false, framestyle=:box, legend=:bottomright)
+p2 = performance_profile(PlotsBackend(), Matrix{Float64}([t2s_jump t2s_maddiff t2s_symb t2s_ampl]), ["JuMP", "MadDiff", "SymbolicAD", "Ampl"], title="solver time", logscale =false, framestyle=:box, legend=:bottomright)
+p3 = performance_profile(PlotsBackend(), Matrix{Float64}([t3s_jump t3s_maddiff t3s_symb]), ["JuMP", "MadDiff", "SymbolicAD"], title="AD time", logscale =false, framestyle=:box, legend=:bottomright)
 
 savefig(p1,"opt-time.pdf")
 savefig(p2,"solver-time.pdf")

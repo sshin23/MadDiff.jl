@@ -1,4 +1,4 @@
-using MadDiff, PowerModels, JuMP, Ipopt, AmplNLWriter, Ipopt_jll, Plots, BenchmarkProfiles, DelimitedFiles
+using SymbolicAD, PowerModels, JuMP, Ipopt, Plots, DelimitedFiles
 pgfplotsx()
 PowerModels.silence()
 
@@ -35,15 +35,9 @@ function get_t3(model)
         model.moi_backend.optimizer.model.nlp_data.evaluator.eval_hessian_lagrangian_timer
 end
 
-t1s_jump = Float64[]
-t2s_jump = Float64[]
-t3s_jump = Float64[]
-t2s_maddiff = Float64[]
-t1s_maddiff = Float64[]
-t3s_maddiff = Float64[]
-t1s_ampl = Float64[]
-t2s_ampl = Float64[]
-# t3s_ampl = Float64[]
+t1s_symb = []
+t2s_symb = []
+t3s_symb = []
 
 for case in cases
     m = instantiate_model(
@@ -52,76 +46,26 @@ for case in cases
         PowerModels.build_opf
     ).model
 
-    # JUMP
     set_optimizer(m,Ipopt.Optimizer)
     set_optimizer_attribute(m,"linear_solver","ma27")
+    set_optimize_hook(m, SymbolicAD.optimize_hook)
     
     optimize!(m) # force compile
     GC.enable(false)
-    t1_jump = @elapsed begin
+    t1_symb = @elapsed begin
         optimize!(m)
     end
     GC.enable(true)
-    t2_jump = solve_time(m)
-    t3_jump = get_t3(m)
+    t2_symb = solve_time(m)
+    t3_symb = get_t3(m)
 
-    # MadDiff
-    set_optimizer(m,Ipopt.Optimizer)
-    set_optimizer_attribute(m,"linear_solver","ma27")
-    optimize!(m,differentiation_backend = MadDiffAD()) # force compile
-    GC.enable(false)
-    t1_maddiff = @elapsed begin
-        optimize!(m,differentiation_backend = MadDiffAD())
-    end
-    GC.enable(true)
-    t2_maddiff = solve_time(m)
-    t3_maddiff = get_t3(m)
 
-    # Ampl
-    set_optimizer(m,() -> AmplNLWriter.Optimizer(Ipopt_jll.amplexe));
-    set_optimizer_attribute(m,"linear_solver","ma27")
-
-    optimize!(m) # force compile
-    GC.enable(false)
-    t1_ampl = @elapsed begin
-        optimize!(m,differentiation_backend = MOI.Nonlinear.ExprGraphOnly())
-    end
-    GC.enable(true)
-    t2_ampl = solve_time(m)
-    # t3_ampl = get_t3(m)
-
-    push!(t1s_jump, t1_jump)
-    push!(t1s_maddiff, t1_maddiff)
-    push!(t1s_ampl, t1_ampl)
-    push!(t2s_jump, t2_jump)
-    push!(t2s_maddiff, t2_maddiff)
-    push!(t2s_ampl, t2_ampl)
-    push!(t3s_jump, t3_jump)
-    push!(t3s_maddiff, t3_maddiff)
-    # push!(t3s_ampl, t3_ampl)
+    push!(t1s_symb, t1_symb)
+    push!(t2s_symb, t2_symb)
+    push!(t3s_symb, t3_symb)
 end
 
 
-writedlm("t1s_jump.csv", t1s_jump, ',')
-writedlm("t2s_jump.csv", t2s_jump, ',')
-writedlm("t3s_jump.csv", t3s_jump, ',')
-
-writedlm("t1s_maddiff.csv", t1s_maddiff, ',')
-writedlm("t2s_maddiff.csv", t2s_maddiff, ',')
-writedlm("t3s_maddiff.csv", t3s_maddiff, ',')
-
-writedlm("t1s_ampl.csv", t1s_ampl, ',')
-writedlm("t2s_ampl.csv", t2s_ampl, ',')
-# writedlm("t3s_ampl.csv", t3s_ampl, ',')
-
-t1s_symb = readdlm("t1s_symb.csv",Float64)
-t2s_symb = readdlm("t2s_symb.csv",Float64)
-t3s_symb = readdlm("t3s_symb.csv",Float64)
-
-p1 = performance_profile(PlotsBackend(), Matrix{Float64}([t1s_jump t1s_maddiff t1s_symb t1s_ampl]), ["JuMP", "MadDiff", "SymbolicAD", "Ampl"], title="optimize! time", logscale =false, framestyle=:box)
-p2 = performance_profile(PlotsBackend(), Matrix{Float64}([t2s_jump t2s_maddiff t2s_symb t2s_ampl]), ["JuMP", "MadDiff", "SymbolicAD", "Ampl"], title="solver time", logscale =false, framestyle=:box)
-p3 = performance_profile(PlotsBackend(), Matrix{Float64}([t3s_jump t3s_maddiff t3s_symb]), ["JuMP", "MadDiff", "SymbolicAD"], title="AD time", logscale =false, framestyle=:box)
-
-savefig(p1,"opt-time.pdf")
-savefig(p2,"solver-time.pdf")
-savefig(p3,"ad-time.pdf")
+writedlm("../t1s_symb.csv", t1s_symb, ',')
+writedlm("../t2s_symb.csv", t2s_symb, ',')
+writedlm("../t3s_symb.csv", t3s_symb, ',')

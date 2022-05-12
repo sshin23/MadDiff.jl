@@ -16,9 +16,6 @@ mutable struct MyRef{T}
     x::T
 end
 
-struct Dummy end
-const DUMMY = Dummy()
-
 @inline getindex(ref::MyRef{T}) where T = ref.x
 @inline setindex!(ref::MyRef{T},val) where T = ref.x = val
 
@@ -35,7 +32,6 @@ include("rules.jl")
 include("template.jl")
 include("utils.jl")
 include("evaluator.jl")
-include("model.jl")
 include("print.jl")
 
 end

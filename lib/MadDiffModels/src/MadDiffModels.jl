@@ -6,7 +6,7 @@ import MadDiffCore: MadDiffCore, Sink, Field, Gradient, Jacobian, Hessian, Expre
 
 import NLPModels: finalize, AbstractNLPModel, obj, grad!, cons!, jac_coord!, hess_coord!, hess_structure!, jac_structure!, NLPModelMeta, get_nvar, get_ncon, get_minimize, get_x0, get_y0, get_nnzj, get_nnzh, get_lvar, get_uvar, get_lcon, get_ucon, Counters as NLPModelsCounters, increment! # get_zl,get_zu
 
-export variable, parameter, objective, constraint, num_variables, num_constraints, value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, lower_bound, upper_bound, instantiate!
+export MadDiffModel, variable, parameter, objective, constraint, num_variables, num_constraints, value, dual, objective_value, setvalue, set_lower_bound, set_upper_bound, lower_bound, upper_bound, instantiate!
 
 include("model.jl")
 

@@ -16,7 +16,7 @@ struct Evaluator
     jac_sparsity::Vector{Tuple{Int,Int}}
     hess_sparsity::Vector{Tuple{Int,Int}}
 end
-mutable struct Model{T} <: AbstractNLPModel{T,Vector{T}}
+mutable struct MadDiffModel{T} <: AbstractNLPModel{T,Vector{T}}
     con::Sink{Field}
     obj::Union{Nothing,Expression}
 
@@ -43,12 +43,12 @@ mutable struct Model{T} <: AbstractNLPModel{T,Vector{T}}
 end
 
 struct Constraint
-    parent::Model
+    parent::MadDiffModel
     index::Int
 end
 
 struct ModelComponent{C <: Union{Variable,Parameter}}
-    parent::Model
+    parent::MadDiffModel
     inner::C
 end
 
@@ -73,16 +73,16 @@ parent(c) = c.parent
 index(c::ModelComponent{C}) where C = index(inner(c))
 convert(::Type{Expression},e::ModelComponent{C}) where C = inner(e)
 
-getindex(m::Model,idx::Symbol) = m.ext[idx]
-setindex!(m::Model,val,idx::Symbol) = setindex!(m.ext,val,idx)
+getindex(m::MadDiffModel,idx::Symbol) = m.ext[idx]
+setindex!(m::MadDiffModel,val,idx::Symbol) = setindex!(m.ext,val,idx)
 
-Model(;opt...) =Model(
+MadDiffModel(;opt...) =MadDiffModel(
     Field(),Constant(0.),0,0,0,
     Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],
     nothing,nothing,nothing,
     Dict{Symbol,Any}(),Dict{Symbol,Any}(name=>option for (name,option) in opt))
 
-function variable(m::Model;lb=-Inf,ub=Inf,start=0.,name=nothing)
+function variable(m::MadDiffModel;lb=-Inf,ub=Inf,start=0.,name=nothing)
     m.n += 1
     push!(m.x,start)
     push!(m.xl,lb)
@@ -92,13 +92,13 @@ function variable(m::Model;lb=-Inf,ub=Inf,start=0.,name=nothing)
     ModelComponent(m,Variable(m.n))
 end
 
-function parameter(m::Model,val=0.;name=nothing)
+function parameter(m::MadDiffModel,val=0.;name=nothing)
     m.q += 1
     push!(m.p,val)
     ModelComponent(m,Parameter(m.q))
 end
 
-function constraint(m::Model,e::E;lb=0.,ub=0.) where E <: Expression
+function constraint(m::MadDiffModel,e::E;lb=0.,ub=0.) where E <: Expression
     m.m += 1
     m.con[m.m] = e
     push!(m.l,0.)
@@ -110,7 +110,7 @@ end
 constraint(m,eq::Equality{E}) where {E<:Expression} = constraint(m,eq.e)
 constraint(m,eq::Inequality{E}) where {E<:Expression} = constraint(m,eq.e;ub=Inf)
 
-function objective(m::Model,e::E) where E <: Expression
+function objective(m::MadDiffModel,e::E) where E <: Expression
     m.obj = e
     nothing
 end
@@ -133,12 +133,12 @@ upper_bound(e::Constraint) = parent(e).gu[index(e)]
 
 
 dual(c::Constraint) = parent(c).l[index(c)]
-objective_value(m::Model) = non_caching_eval(m.obj,m.x,m.p)
+objective_value(m::MadDiffModel) = non_caching_eval(m.obj,m.x,m.p)
 
-num_variables(m::Model) = m.n
-num_constraints(m::Model) = m.m
+num_variables(m::MadDiffModel) = m.n
+num_constraints(m::MadDiffModel) = m.m
 
-function instantiate!(m::Model)
+function instantiate!(m::MadDiffModel)
     
     grad = Gradient(m.obj)
     jac,jac_sparsity = SparseJacobian(m.con)
@@ -164,38 +164,38 @@ function instantiate!(m::Model)
     
     return 
 end
-@inline function jac_structure!(m::Model,I::AbstractVector{T},J::AbstractVector{T}) where T
+@inline function jac_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T}) where T
     fill_sparsity!(I,J,m.evaluator.jac_sparsity)
     return 
 end
-@inline function hess_structure!(m::Model,I::AbstractVector{T},J::AbstractVector{T}) where T
+@inline function hess_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T}) where T
     fill_sparsity!(I,J,m.evaluator.hess_sparsity)
     return 
 end
-@inline function obj(m::Model,x::AbstractVector)
+@inline function obj(m::MadDiffModel,x::AbstractVector)
     increment!(m, :neval_obj)
     non_caching_eval(m.obj,x,m.p)
 end
-@inline function cons!(m::Model,x::AbstractVector,y::AbstractVector)
+@inline function cons!(m::MadDiffModel,x::AbstractVector,y::AbstractVector)
     increment!(m, :neval_cons)
     non_caching_eval(m.con,y,x,m.p)
     return 
 end
-@inline function grad!(m::Model,x::AbstractVector,y::AbstractVector)
+@inline function grad!(m::MadDiffModel,x::AbstractVector,y::AbstractVector)
     increment!(m, :neval_grad)
     y .= 0
     m.obj(x,m.p)
     non_caching_eval(m.evaluator.grad,y,x,m.p)
     return 
 end
-@inline function jac_coord!(m::Model,x::AbstractVector,J::AbstractVector)
+@inline function jac_coord!(m::MadDiffModel,x::AbstractVector,J::AbstractVector)
     increment!(m, :neval_jac)
     J .= 0
     m.con(DUMMY,x,m.p)
     non_caching_eval(m.evaluator.jac,J,x,m.p)
     return 
 end
-@inline function hess_coord!(m::Model,x::AbstractVector,lag::AbstractVector,z::AbstractVector; obj_weight = 1.0)
+@inline function hess_coord!(m::MadDiffModel,x::AbstractVector,lag::AbstractVector,z::AbstractVector; obj_weight = 1.0)
     increment!(m, :neval_hess)
     z .= 0
     m.obj(x,m.p)
@@ -205,18 +205,6 @@ end
     m.evaluator.hess(z,x,m.p,lag, obj_weight) ###
     return 
 end
-
-
-# etc
-getindex(::Dummy,key::Int) = 0.
-getindex(::Tuple{Int,Dummy},key::Int) = 0.
-setindex!(::Dummy,val,key) = nothing
-setindex!(::Tuple{Int,Dummy},val,key) = nothing
-# ndims(::Type{Dummy}) = 0
-# ndims(::Type{T}) where T <: HessianSum = 0
-# size(::Dummy) = 0
-# copyto!(::Dummy,val) = nothing
-
 @inline function fill_sparsity!(I,J,tuples)
     @simd for l in eachindex(tuples)
         (i,j) = tuples[l]

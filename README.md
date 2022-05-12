@@ -2,7 +2,7 @@
 [![codecov](https://codecov.io/gh/sshin23/MadDiff.jl/branch/main/graph/badge.svg?token=U6NMMW0IT5)](https://codecov.io/gh/sshin23/MadDiff.jl)
 # MadDiff.jl
  
-MadDiff.jl is a simple algebraic modeling/differentiation package. The package is under development.
+MadDiff.jl is a simple algebraic modeling/differentiation package. *The package is under development. Use at your own risk.*
 
 ## Installation
 ```julia
@@ -60,7 +60,7 @@ m = JuMP.Model(Ipopt.Optimizer)
 @NLobjective(m, Min, sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:1000))
 @NLconstraint(m, [i=1:998], 3x[i+1]^3+2*x[i+2]-5+sin(x[i+1]-x[i+2])sin(x[i+1]+x[i+2])+4x[i+1]-x[i]exp(x[i]-x[i+1])-3 == 0)
 
-optimize!(m; differentiation_backend = MadDiffAutomaticDifferentiation())
+optimize!(m; differentiation_backend = MadDiffAD())
 ```
 
 ## How it works?

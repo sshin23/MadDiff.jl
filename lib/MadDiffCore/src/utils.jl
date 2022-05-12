@@ -1,3 +1,10 @@
+struct Dummy end
+const DUMMY = Dummy()
+getindex(::Dummy,key::Int) = 0.
+getindex(::Tuple{Int,Dummy},key::Int) = 0.
+setindex!(::Dummy,val,key) = nothing
+setindex!(::Tuple{Int,Dummy},val,key) = nothing
+
 index(e) = e.index
 index1(e) = e.index1
 index2(e) = e.index2

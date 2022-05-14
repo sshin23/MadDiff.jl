@@ -1,6 +1,6 @@
 module MadDiffMOI
 
-using MadDiffCore
+using MadDiffCore: MadDiffCore, NLPCore, Expression, Constant
 import MadDiffModels: MadDiffModels, MadDiffModel, variable, constraint
 using SpecialFunctions
 using MathOptInterface

@@ -196,6 +196,7 @@ Hessian(e::ExpressionSum{E,Nothing},d::GradientSum{D,Nothing},indexer = nothing)
 Hessian(e::Variable,::G,indexer) where G <: Gradient = HESSIAN_NULL
 Hessian(e::Parameter,::G,indexer) where G <: Gradient = HESSIAN_NULL
 Hessian(e::Constant,::G,indexer) where G <: Gradient = HESSIAN_NULL
+Hessian(e::ExpressionNull,::G,indexer) where G <: Gradient = HESSIAN_NULL
 Hessian(d1::G,d2::GradientNull,indexer) where G <: Gradient = HESSIAN_NULL
 Hessian(d1::GradientNull,d2::G,indexer) where G <: Gradient = HESSIAN_NULL
 Hessian(d1::GradientNull,d2::GradientNull,indexer) = HESSIAN_NULL

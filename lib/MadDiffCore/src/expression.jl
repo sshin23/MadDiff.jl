@@ -1,3 +1,4 @@
+struct ExpressionNull <: Expression end
 struct Constant <: Expression
     ref::MyRef{Float64}
     Constant(x::R) where R <: Real  = new(MyRef(x))

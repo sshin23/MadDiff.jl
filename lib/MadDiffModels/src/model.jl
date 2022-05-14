@@ -8,17 +8,9 @@ for (T1,T2) in [(Expression,Expression),(Expression,Real),(Real,Expression)]
     end
 end
 
-
-struct Evaluator
-    grad
-    jac
-    hess
-    jac_sparsity::Vector{Tuple{Int,Int}}
-    hess_sparsity::Vector{Tuple{Int,Int}}
-end
 mutable struct MadDiffModel{T} <: AbstractNLPModel{T,Vector{T}}
     con::Sink{Field}
-    obj::Union{Nothing,Expression}
+    obj::Expression
 
     n::Int # num vars
     q::Int # num pars
@@ -35,7 +27,7 @@ mutable struct MadDiffModel{T} <: AbstractNLPModel{T,Vector{T}}
     gu::Vector{T}
 
     meta::Union{Nothing,NLPModelMeta{T, Vector{T}}}
-    evaluator::Union{Nothing,Evaluator}
+    nlpcore::Union{Nothing,NLPCore}
     counters::Union{Nothing,NLPModelsCounters}
     
     ext::Dict{Symbol,Any}
@@ -77,7 +69,7 @@ getindex(m::MadDiffModel,idx::Symbol) = m.ext[idx]
 setindex!(m::MadDiffModel,val,idx::Symbol) = setindex!(m.ext,val,idx)
 
 MadDiffModel(;opt...) =MadDiffModel(
-    Field(),Constant(0.),0,0,0,
+    Field(),ExpressionNull(),0,0,0,
     Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],
     nothing,nothing,nothing,
     Dict{Symbol,Any}(),Dict{Symbol,Any}(name=>option for (name,option) in opt))
@@ -138,14 +130,35 @@ objective_value(m::MadDiffModel) = non_caching_eval(m.obj,m.x,m.p)
 num_variables(m::MadDiffModel) = m.n
 num_constraints(m::MadDiffModel) = m.m
 
+@inline function obj(nlpcore::NLPCore,x,p)
+    non_caching_eval(nlpcore.obj,x,p)
+end
+@inline function cons!(nlpcore::NLPCore,x,y,p)
+    y .= 0
+    non_caching_eval(nlpcore.con,y,x,p)
+end
+@inline function grad!(nlpcore::NLPCore,x,y,p)
+    nlpcore.obj(x,p)
+    non_caching_eval(nlpcore.grad,y,x,p)
+end
+@inline function jac_coord!(nlpcore::NLPCore,x,J,p)
+    J .= 0
+    nlpcore.con(DUMMY,x,p)
+    non_caching_eval(nlpcore.jac,J,x,p)
+end
+@inline function hess_coord!(nlpcore::NLPCore,x,lag,z,p; obj_weight = 1.0)
+    z .= 0
+    nlpcore.obj(x,p)
+    nlpcore.con(DUMMY,x,p)
+    nlpcore.grad(DUMMY,x,p)
+    nlpcore.jac(DUMMY,x,p)
+    nlpcore.hess(z,x,p,lag, obj_weight) ###
+end
+
 function instantiate!(m::MadDiffModel)
     
-    grad = Gradient(m.obj)
-    jac,jac_sparsity = SparseJacobian(m.con)
-    hess,hess_sparsity = SparseLagrangianHessian(m.obj,grad,inner(m.con),jac)
-    
-    m.evaluator = Evaluator(
-        grad,jac,hess,jac_sparsity,hess_sparsity
+    m.nlpcore = NLPCore(
+        m.obj,m.con
     )
     m.meta = NLPModelMeta(
         m.n,
@@ -156,55 +169,49 @@ function instantiate!(m::MadDiffModel)
         y0 = m.l,
         lcon = m.gl,
         ucon = m.gu,
-        nnzj = length(jac_sparsity),
-        nnzh = length(hess_sparsity),
+        nnzj = length(m.nlpcore.jac_sparsity),
+        nnzh = length(m.nlpcore.hess_sparsity),
         minimize = true
     )
     m.counters = NLPModelsCounters()
     
     return 
 end
+
 @inline function jac_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T}) where T
-    fill_sparsity!(I,J,m.evaluator.jac_sparsity)
+    fill_sparsity!(I,J,m.nlpcore.jac_sparsity)
     return 
 end
 @inline function hess_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T}) where T
-    fill_sparsity!(I,J,m.evaluator.hess_sparsity)
+    fill_sparsity!(I,J,m.nlpcore.hess_sparsity)
     return 
 end
+
 @inline function obj(m::MadDiffModel,x::AbstractVector)
     increment!(m, :neval_obj)
-    non_caching_eval(m.obj,x,m.p)
+    obj(m.nlpcore,x,m.p)
 end
 @inline function cons!(m::MadDiffModel,x::AbstractVector,y::AbstractVector)
     increment!(m, :neval_cons)
-    non_caching_eval(m.con,y,x,m.p)
+    cons!(m.nlpcore,x,y,m.p)
     return 
 end
 @inline function grad!(m::MadDiffModel,x::AbstractVector,y::AbstractVector)
     increment!(m, :neval_grad)
-    y .= 0
-    m.obj(x,m.p)
-    non_caching_eval(m.evaluator.grad,y,x,m.p)
+    grad!(m.nlpcore,x,y,m.p)
     return 
 end
 @inline function jac_coord!(m::MadDiffModel,x::AbstractVector,J::AbstractVector)
     increment!(m, :neval_jac)
-    J .= 0
-    m.con(DUMMY,x,m.p)
-    non_caching_eval(m.evaluator.jac,J,x,m.p)
+    jac_coord!(m.nlpcore,x,J,m.p)
     return 
 end
 @inline function hess_coord!(m::MadDiffModel,x::AbstractVector,lag::AbstractVector,z::AbstractVector; obj_weight = 1.0)
     increment!(m, :neval_hess)
-    z .= 0
-    m.obj(x,m.p)
-    m.con(DUMMY,x,m.p)
-    m.evaluator.grad(DUMMY,x,m.p)
-    m.evaluator.jac(DUMMY,x,m.p)
-    m.evaluator.hess(z,x,m.p,lag, obj_weight) ###
+    hess_coord!(m.nlpcore,x,lag,z,m.p; obj_weight = 1.0)
     return 
 end
+
 @inline function fill_sparsity!(I,J,tuples)
     @simd for l in eachindex(tuples)
         (i,j) = tuples[l]

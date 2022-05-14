@@ -2,8 +2,22 @@ const MOI = MathOptInterface
 const X = MadDiffCore.Variable()
 const P = MadDiffCore.Parameter()
 
-Expression(ex::MOI.Nonlinear.Expression) = Expression(ex::MOI.Nonlinear.Expression, 1, -1)[1]
-function Expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int)
+import Base: sum, getindex
+getindex(f::MadDiffCore.Sink,i) = f.inner[i]
+function getindex(f::MadDiffCore.Field,i)
+    for ie in f.es
+        MadDiffCore.index(ie) == i && return ie.e
+    end
+    return f.inner[i]
+end
+sum(f::MadDiffCore.Sink) = sum(f.inner)
+sum(f::MadDiffCore.Field) = sum(ie.e for ie in f.es) + (f.inner == nothing ? 0. : sum(f.inner))
+
+is_another_child(ex,i,j) = j <= length(ex.nodes) && ex.nodes[j].parent == i
+Expression(::Nothing; subex = nothing) = MadDiffCore.Constant(0.)
+Expression(ex::MOI.Nonlinear.Expression; subex = nothing) =
+    Expression(ex::MOI.Nonlinear.Expression, 1, -1; subex=subex)[1]
+function Expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int; subex = nothing)
     j = i + 1
     node = ex.nodes[i]
     typ = node.type
@@ -13,31 +27,39 @@ function Expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int)
     end
     
     if typ == MOI.Nonlinear.NODE_CALL_MULTIVARIATE
-        if node.index == 1 || node.index == 3 # needs some performance check
-            exs = []
-            while j <= length(ex.nodes) && ex.nodes[j].parent == i
-                ex1, j = Expression(ex, j, i)
-                push!(exs,ex1)
-            end
-            if length(exs)<=4
-                return node.index == 1 ? (+(exs...), j) : (*(exs...), j)
+        ex1, j = Expression(ex, j, i; subex=subex)
+        ex2, j = Expression(ex, j, i; subex=subex)
+        
+        if is_another_child(ex,i,j)
+            ex3, j = Expression(ex, j, i; subex=subex)
+            if is_another_child(ex,i,j)
+                ex4, j = Expression(ex, j, i; subex=subex)
+                if is_another_child(ex,i,j)
+                    exs = Any[ex1,ex2,ex3,ex4]
+                    while is_another_child(ex,i,j)
+                        ex1, j = Expression(ex, j, i; subex=subex)
+                        push!(exs,ex1)
+                    end
+
+                    # if length(exs)<=6
+                    #     return get_multivariate_fun(node.index)(exs...), j
+                    # else
+                    return node.index == 1 ? (sum(exs), j) :
+                        node.index == 3 ? (prod(exs), j) :
+                        get_multivariate_fun(node.index)(exs...), j
+                    # end
+                else
+                    return get_multivariate_fun(node.index)(ex1,ex2,ex3,ex4), j
+                end
             else
-                return node.index == 1 ? (sum(exs), j) : (prod(exs), j)
+                return get_multivariate_fun(node.index)(ex1,ex2,ex3), j
             end
-        # if node.index == 1 || node.index == 2 # needs some performance check
-        #     exs = []
-        #     while j <= length(ex.nodes) && ex.nodes[j].parent == i
-        #         ex1, j = Expression(ex, j, i)
-        #         push!(exs,ex1)
-        #     end
-        #     return get_multivariate_fun(node.index)(exs...), j
         else
-            ex1, j = Expression(ex, j, i)
-            ex2, j = Expression(ex, j, i)
             return get_multivariate_fun(node.index)(ex1,ex2), j
         end
+            
     elseif typ == MOI.Nonlinear.NODE_CALL_UNIVARIATE
-        ex1, j = Expression(ex,j,i)
+        ex1, j = Expression(ex,j,i; subex=subex)
         return get_univariate_fun(node.index)(ex1), j
         
     elseif typ == MOI.Nonlinear.NODE_MOI_VARIABLE
@@ -49,47 +71,46 @@ function Expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int)
     elseif typ == MOI.Nonlinear.NODE_VALUE
         return ex.values[node.index], j
         
+    elseif typ == MOI.Nonlinear.NODE_SUBEXPRESSION
+        return subex[node.index], j
     else
-        # TODO
-        # NODE_LOGIC
-        # NODE_COMPARISON
-        # NODE_VARIABLE
-        # NODE_SUBEXPRESSION
+        # TODO: NODE_LOGIC and NODE_COMPARISON
+        # NODE_VARIABLE # only used in SpasreReverseDiff
         error("node type not supported")
     end
 
 end
 
-function MadDiffModel(nlp_data::MathOptInterface.Nonlinear.Model)
-    m = MadDiffModel()
 
-    for i=1:10
-        variable(m)
-    end
+function NLPCore(nlp_data::MathOptInterface.Nonlinear.Model)
     
-    if nlp_data.objective != nothing
-        objective(m,Expression(nlp_data.objective))
+    subex = MadDiffCore.Field()
+    con = MadDiffCore.Field()
+    @simd for i=1:length(nlp_data.expressions)
+        @inbounds subex[i] = Expression(nlp_data.expressions[i])
     end
 
     for (key,val) in nlp_data.constraints
-        if val.set isa MOI.LessThan
-            constraint(m,Expression(val.expression) <= val.set.upper)
-        elseif val.set isa MOI.GreaterThan
-            constraint(m,Expression(val.expression) >= val.set.lower)
-        elseif val.set isa MOI.EqualTo
-            constraint(m,Expression(val.expression) == val.set.value)
-        else
-            error("constraint type not supported")
-        end
+        @inbounds con[key.value] = Expression(val.expression; subex = subex)
     end
-
-    return m
+    
+    obj = Expression(nlp_data.objective; subex = subex)
+    
+    return NLPCore(obj,con)
 end
+
+MOI.NLPBoundsPair(constraints) = [MOI.NLPBoundsPair(val.set) for (key,val) in constraints]
+MOI.NLPBoundsPair(set::MOI.LessThan) = MOI.NLPBoundsPair(-Inf,set.upper)
+MOI.NLPBoundsPair(set::MOI.GreaterThan) = MOI.NLPBoundsPair(set.lower, Inf)
+MOI.NLPBoundsPair(set::MOI.EqualTo) = MOI.NLPBoundsPair(set.value,set.value)
+MOI.NLPBoundsPair(set::MOI.Interval) = MOI.NLPBoundsPair(set.lower,set.upper)
 
 struct MadDiffAD <: MOI.Nonlinear.AbstractAutomaticDifferentiation end
 
 mutable struct MadDiffEvaluator <: MOI.AbstractNLPEvaluator
     backend
+    bounds::Vector{MOI.NLPBoundsPair}
+    parameters::Vector{Float64}
     eval_objective_timer::Float64
     eval_constraint_timer::Float64
     eval_objective_gradient_timer::Float64
@@ -102,52 +123,53 @@ function MOI.Nonlinear.Evaluator(
     ::MadDiffAD,
     ::Vector{MathOptInterface.VariableIndex}
     )
-    
-    MadDiffEvaluator(MadDiffModel(model),0.,0.,0.,0.,0.)
+    backend = NLPCore(model)
+    bounds  = MOI.NLPBoundsPair(model.constraints)
+    MadDiffEvaluator(backend,bounds,model.parameters,0.,0.,0.,0.,0.)
 end
 
 function MOI.eval_objective(evaluator::MadDiffEvaluator, x)
     start = time()
-    obj = MadDiffModels.obj(evaluator.backend, x)
+    obj = MadDiffModels.obj(evaluator.backend, x, evaluator.parameters)
     evaluator.eval_objective_timer += time() - start
     return obj
 end
 function MOI.eval_objective_gradient(evaluator::MadDiffEvaluator, g, x)
     start = time()
-    MadDiffModels.grad!(evaluator.backend, x, g)
+    MadDiffModels.grad!(evaluator.backend, x, g, evaluator.parameters)
     evaluator.eval_objective_gradient_timer += time() - start
     return
 end
 function MOI.eval_constraint(evaluator::MadDiffEvaluator, g, x)
     start = time()
-    MadDiffModels.cons!(evaluator.backend, x, g)
+    MadDiffModels.cons!(evaluator.backend, x, g, evaluator.parameters)
     evaluator.eval_constraint_timer += time() - start
     return
 end
 function MOI.eval_constraint_jacobian(evaluator::MadDiffEvaluator, J, x)
     start = time()
-    MadDiffModels.jac_coord!(evaluator.backend, x, J)
+    MadDiffModels.jac_coord!(evaluator.backend, x, J, evaluator.parameters)
     evaluator.eval_constraint_jacobian_timer += time() - start
     return
 end
 function MOI.eval_hessian_lagrangian(evaluator::MadDiffEvaluator, H, x, σ, μ)
     start = time()
-    MadDiffModels.hess_coord!(evaluator.backend, x, μ, H; obj_weight = σ)
+    MadDiffModels.hess_coord!(evaluator.backend, x, μ, H, evaluator.parameters; obj_weight = σ)
     evaluator.eval_hessian_lagrangian_timer += time() - start
     return
 end
 
 
 function MOI.jacobian_structure(evaluator::MadDiffEvaluator)
-    return evaluator.backend.evaluator.jac_sparsity
+    return evaluator.backend.jac_sparsity
 end
 function MOI.hessian_lagrangian_structure(evaluator::MadDiffEvaluator)
-    return evaluator.backend.evaluator.hess_sparsity
+    return evaluator.backend.hess_sparsity
 end
 
 function MOI.NLPBlockData(evaluator::MadDiffEvaluator)
     return MOI.NLPBlockData(
-        [MathOptInterface.NLPBoundsPair(l,u) for (l,u) in zip(evaluator.backend.gl,evaluator.backend.gu)],
+        evaluator.bounds,
         evaluator,
         !(evaluator.backend.obj isa Constant && evaluator.backend.obj.ref.x == 0.), 
     )
@@ -155,7 +177,7 @@ end
 
 
 MOI.features_available(::MadDiffEvaluator) = [:Grad,:Hess,:Jac]
-MOI.initialize(evaluator::MadDiffEvaluator,::Vector{Symbol}) = MadDiffModels.instantiate!(evaluator.backend)
+MOI.initialize(evaluator::MadDiffEvaluator,::Vector{Symbol}) = nothing
 
 const unidict = [eval(f) for f in MOI.Nonlinear.DEFAULT_UNIVARIATE_OPERATORS]
 const multidict = [eval(f) for f in MOI.Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS]

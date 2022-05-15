@@ -137,31 +137,6 @@ objective_value(m::MadDiffModel) = non_caching_eval(m.obj,m.x,m.p)
 num_variables(m::MadDiffModel) = m.n
 num_constraints(m::MadDiffModel) = m.m
 
-@inline function obj(nlpcore::NLPCore,x,p)
-    non_caching_eval(nlpcore.obj,x,p)
-end
-@inline function cons!(nlpcore::NLPCore,x,y,p)
-    y .= 0
-    non_caching_eval(nlpcore.con,y,x,p)
-end
-@inline function grad!(nlpcore::NLPCore,x,y,p)
-    nlpcore.obj(x,p)
-    non_caching_eval(nlpcore.grad,y,x,p)
-end
-@inline function jac_coord!(nlpcore::NLPCore,x,J,p)
-    J .= 0
-    nlpcore.con(DUMMY,x,p)
-    non_caching_eval(nlpcore.jac,J,x,p)
-end
-@inline function hess_coord!(nlpcore::NLPCore,x,lag,z,p; obj_weight = 1.0)
-    z .= 0
-    nlpcore.obj(x,p)
-    nlpcore.con(DUMMY,x,p)
-    nlpcore.grad(DUMMY,x,p)
-    nlpcore.jac(DUMMY,x,p)
-    nlpcore.hess(z,x,p,lag, obj_weight) ###
-end
-
 function instantiate!(m::MadDiffModel)
 
     m.nlpcore = NLPCore(
@@ -189,35 +164,35 @@ function instantiate!(m::MadDiffModel)
     return m
 end
 
-@inline function jac_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T}) where T
+@inline function NLPModels.jac_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T}) where T
     fill_sparsity!(I,J,m.nlpcore.jac_sparsity)
     return 
 end
-@inline function hess_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T}) where T
+@inline function NLPModels.hess_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T}) where T
     fill_sparsity!(I,J,m.nlpcore.hess_sparsity)
     return 
 end
 
-@inline function obj(m::MadDiffModel,x::AbstractVector)
+@inline function NLPModels.obj(m::MadDiffModel,x::AbstractVector)
     increment!(m, :neval_obj)
     obj(m.nlpcore,x,m.p)
 end
-@inline function cons!(m::MadDiffModel,x::AbstractVector,y::AbstractVector)
+@inline function NLPModels.cons!(m::MadDiffModel,x::AbstractVector,y::AbstractVector)
     increment!(m, :neval_cons)
     cons!(m.nlpcore,x,y,m.p)
     return 
 end
-@inline function grad!(m::MadDiffModel,x::AbstractVector,y::AbstractVector)
+@inline function NLPModels.grad!(m::MadDiffModel,x::AbstractVector,y::AbstractVector)
     increment!(m, :neval_grad)
     grad!(m.nlpcore,x,y,m.p)
     return 
 end
-@inline function jac_coord!(m::MadDiffModel,x::AbstractVector,J::AbstractVector)
+@inline function NLPModels.jac_coord!(m::MadDiffModel,x::AbstractVector,J::AbstractVector)
     increment!(m, :neval_jac)
     jac_coord!(m.nlpcore,x,J,m.p)
     return 
 end
-@inline function hess_coord!(m::MadDiffModel,x::AbstractVector,lag::AbstractVector,z::AbstractVector; obj_weight = 1.0)
+@inline function NLPModels.hess_coord!(m::MadDiffModel,x::AbstractVector,lag::AbstractVector,z::AbstractVector; obj_weight = 1.0)
     increment!(m, :neval_hess)
     hess_coord!(m.nlpcore,x,lag,z,m.p; obj_weight = 1.0)
     return 

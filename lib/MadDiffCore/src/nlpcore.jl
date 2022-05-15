@@ -77,3 +77,29 @@ function NLPCore(obj::Expression,con::Field)
     return NLPCore(obj,con,grad,jac,hess,jac_sparsity,hess_sparsity)
 end
 
+@inline function obj(nlpcore::NLPCore,x,p)
+    non_caching_eval(nlpcore.obj,x,p)
+end
+@inline function cons!(nlpcore::NLPCore,x,y,p)
+    non_caching_eval(nlpcore.con,y,x,p)
+end
+@inline function grad!(nlpcore::NLPCore,x,y,p)
+    y .= 0
+    nlpcore.obj(x,p)
+    non_caching_eval(nlpcore.grad,y,x,p)
+end
+@inline function jac_coord!(nlpcore::NLPCore,x,J,p)
+    J .= 0
+    nlpcore.con(DUMMY,x,p)
+    non_caching_eval(nlpcore.jac,J,x,p)
+end
+@inline function hess_coord!(nlpcore::NLPCore,x,lag,z,p; obj_weight = 1.0)
+    z .= 0
+    nlpcore.obj(x,p)
+    nlpcore.con(DUMMY,x,p)
+    nlpcore.grad(DUMMY,x,p)
+    nlpcore.jac(DUMMY,x,p)
+    nlpcore.hess(z,x,p,lag, obj_weight) ###
+end
+
+

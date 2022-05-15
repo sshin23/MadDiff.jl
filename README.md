@@ -37,7 +37,7 @@ MadDiff.jl provides a simple user-interface for creating nonlinear prgogramming 
 ```julia
 using MadDiff, NLPModelsIpopt
 
-m = MadDiff.Model(; print_level=3) 
+m = MadDiffModel(; print_level=3) 
 
 x = [variable(m; start=mod(i,2)==1 ? -1.2 : 1.) for i=1:1000]
 objective(m, sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:1000))

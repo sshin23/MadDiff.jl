@@ -1,0 +1,4 @@
+[deps]
+MadDiffCore = "5ac3a7ac-a472-4f3e-93f4-0386471e765c"
+MadDiffModels = "3a0fffed-42e2-400f-bc9f-183fc4b91caf"
+MadDiffMOI = "703d8b96-412a-4415-8fe9-74f341fe3283"

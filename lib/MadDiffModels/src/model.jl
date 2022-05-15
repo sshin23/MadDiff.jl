@@ -1,3 +1,7 @@
+"""
+    MadDiffModel
+A mathematical model of a nonlinaer program.
+"""
 mutable struct MadDiffModel{T} <: AbstractNLPModel{T,Vector{T}}
     con::Sink{Field}
     obj::Union{Nothing,Expression}
@@ -43,14 +47,6 @@ for (f,df1,df2,ddf1,ddf12,ddf22) in f_nargs_2
     @eval $f(e1::T,e2) where T <: ModelComponent = $f(inner(e1),e2)
     @eval $f(e1,e2::T) where T <: ModelComponent = $f(e1,inner(e2))
 end
-for o in [:(==),:(>=),:(<=)]
-    @eval $o(e1::T1,e2::T2) where {T1 <: ModelComponent, T2 <: ModelComponent} = $o(inner(e1),inner(e2))
-    @eval $o(e1::T1,e2) where {T1 <: ModelComponent} = $o(inner(e1),e2)
-    @eval $o(e1,e2::T2) where {T2 <: ModelComponent} = $o(e1,inner(e2))
-end
-
-
-
 
 add_sum(a::E,b::ModelComponent{C}) where {C,E<:ExpressionSum} = add_sum(a,b.inner)
 add_sum(a::ModelComponent{C},b::E) where {C,E<:ExpressionSum} = add_sum(a.inner,b)

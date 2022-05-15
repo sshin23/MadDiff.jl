@@ -3,7 +3,7 @@
 # MadDiff.jl
 **This package is under development. Use at your own risk.**
 
-MadDiff.jl is a simple algebraic modeling/differentiation package. 
+MadDiff.jl is an automatic differentiation and algebraic modeling package. 
 
 ## Installation
 ```julia

@@ -1,8 +1,9 @@
 [![build](https://github.com/sshin23/MadDiff.jl/actions/workflows/test.yml/badge.svg)](https://github.com/sshin23/MadDiff.jl/actions/workflows/test.yml) 
 [![codecov](https://codecov.io/gh/sshin23/MadDiff.jl/branch/main/graph/badge.svg?token=U6NMMW0IT5)](https://codecov.io/gh/sshin23/MadDiff.jl)
 # MadDiff.jl
- 
-MadDiff.jl is a simple algebraic modeling/differentiation package. *The package is under development. Use at your own risk.*
+**This package is under development. Use at your own risk.**
+
+MadDiff.jl is a simple algebraic modeling/differentiation package. 
 
 ## Installation
 ```julia

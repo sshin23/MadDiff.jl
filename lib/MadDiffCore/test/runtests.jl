@@ -21,8 +21,6 @@ function compare(f1,f2,y1,y2,xpoints,ppoints)
     return true
 end
 
-@testset "MadDiffModels test" begin
-    @testset "Function Test" begin
-        include("function_test.jl")
-    end
+@testset "MadDiff test" begin
+    include("function_test.jl")
 end 

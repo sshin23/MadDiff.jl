@@ -199,7 +199,7 @@ end
 end
 
 @inline function fill_sparsity!(I,J,tuples)
-    for l in eachindex(tuples)
+    @simd for l in eachindex(tuples)
         (i,j) = tuples[l]
         @inbounds I[l] = i
         @inbounds J[l] = j

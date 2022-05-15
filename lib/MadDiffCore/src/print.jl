@@ -27,6 +27,9 @@ const printlist = [
     (:(Expression2{typeof(*),E1,E2} where {E1,E2}),e-> "$(string(e.e1))*$(string(e.e2))"),
     (:(Expression2{typeof(/),E1,E2} where {E1,E2}),e-> "$(string(e.e1))/$(string(e.e2))"),
     (:(Expression2{typeof(^),E1,E2} where {E1,E2}),e-> "$(string(e.e1))^$(string(e.e2))"),
+    (:(Expression2{typeof(==),E1,E2} where {E1,E2}),e-> "$(string(e.e1)) == $(string(e.e2))"),
+    (:(Expression2{typeof(>=),E1,E2} where {E1,E2}),e-> "$(string(e.e1)) >= $(string(e.e2))"),
+    (:(Expression2{typeof(<=),E1,E2} where {E1,E2}),e-> "$(string(e.e1)) <= $(string(e.e2))"),
     (:(Expression2{typeof(+),E1,E2} where {E1<:ComplexExpression,E2}),e-> "$(string(e.e1)) + $(string(e.e2))"),
     (:(Expression2{typeof(-),E1,E2} where {E1<:ComplexExpression,E2}),e-> "$(string(e.e1)) - $(string(e.e2))"),
     (:(Expression2{typeof(*),E1,E2} where {E1<:ComplexExpression,E2}),e-> "($(string(e.e1)))*$(string(e.e2))"),
@@ -53,7 +56,7 @@ for (f,df,ddf) in f_nargs_1
 end
 
 for (f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
-    f in [:+,:-,:*,:^,:/] && continue
+    f in [:+,:-,:*,:^,:/,:(<=),:(==),:(>=)] && continue
     @eval begin
         push!(printlist,(:(Expression2{$(typeof($f)),E1,E2} where {E1,E2}),e->"$(string($f))($(string(e.e1)),$(string(e.e2)))"))
     end
@@ -61,9 +64,7 @@ end
 
 for (T,f) in printlist
     @eval begin
-        print(io::IO,e::$T) = print(io, string(e))
-        show(io::IO,::MIME"text/plain",e::$T) = print(io,e)
-        string(e::$T) = $f(e)
+        show(io::IO,e::$T) = print(io,$f(e))
     end
 end
 

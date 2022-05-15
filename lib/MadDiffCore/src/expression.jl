@@ -33,6 +33,8 @@ struct ExpressionSum{E <: Expression,I} <: Expression
     ExpressionSum(inner,es) = new{eltype(es),typeof(inner)}(inner,es,ref(inner))
 end
 
+@inline (::ExpressionNull)(x,p=nothing) = nothing
+@inline non_caching_eval(::ExpressionNull,x,p=nothing) = nothing
 @inline function (e::ExpressionSum{E,I})(x,p=nothing) where {E,I}
     inner(e)(x,p)
     @simd for i in eachindex(e.es)

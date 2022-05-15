@@ -46,7 +46,7 @@ function Expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int; subex = nothin
                     # else
                     return node.index == 1 ? (sum(exs), j) :
                         node.index == 3 ? (prod(exs), j) :
-                        get_multivariate_fun(node.index)(exs...), j
+                        (get_multivariate_fun(node.index)(exs...), j)
                     # end
                 else
                     return get_multivariate_fun(node.index)(ex1,ex2,ex3,ex4), j
@@ -73,12 +73,44 @@ function Expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int; subex = nothin
         
     elseif typ == MOI.Nonlinear.NODE_SUBEXPRESSION
         return subex[node.index], j
+        
+    elseif typ == MOI.Nonlinear.NODE_COMPARISON
+        ex1, j = Expression(ex, j, i; subex=subex)
+        ex2, j = Expression(ex, j, i; subex=subex)
+        return get_comparison(node.index, ex1, ex2), j
+        
+    elseif typ == MOI.Nonlinear.NODE_LOGIC
+        ex1, j = Expression(ex, j, i; subex=subex)
+        ex2, j = Expression(ex, j, i; subex=subex)
+        if node.index == 1
+            return MadDiffCore.and(ex1,ex2), j
+        elseif node.index == 2
+            return MadDiffCore.or(ex1,ex2), j
+        else
+            error("Unknown logic index")
+        end
     else
-        # TODO: NODE_LOGIC and NODE_COMPARISON
-        # NODE_VARIABLE # only used in SpasreReverseDiff
-        error("node type not supported")
+        # NODE_VARIABLE is only used in SpasreReverseDiff
+        error("Node type not supported")
     end
 
+end
+
+function get_comparison(index,ex1,ex2)
+
+    if index == 1
+        return ex1 <= ex2
+    elseif index == 2
+        return ex1 == ex2
+    elseif index == 3
+        return ex1 >= ex2
+    elseif index == 4
+        return ex1 < ex2
+    elseif index == 5
+        return ex1 > ex2
+    else
+        error("Unknown comparison index")
+    end
 end
 
 
@@ -95,7 +127,7 @@ function NLPCore(nlp_data::MathOptInterface.Nonlinear.Model)
     end
     
     obj = Expression(nlp_data.objective; subex = subex)
-    
+
     return NLPCore(obj,con)
 end
 

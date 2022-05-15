@@ -12,10 +12,6 @@ inner(e) = e.inner
 ref(e) = e.ref
 ref1(e) = e.ref1
 ref2(e) = e.ref2
-# ref11(e) = e.ref11
-# ref12(e) = e.ref12
-# ref21(e) = e.ref21
-# ref22(e) = e.ref22
 refval(e) = e.ref.x
 frefval(e) = e.fref.x
 frefval1(e) = e.fref1.x
@@ -30,8 +26,6 @@ setrefval(e,val) = ref(e)[] = val
 setrefval1(e,val) = ref1(e)[] = val
 setrefval2(e,val) = ref2(e)[] = val
 addrefval(e,val) = ref(e)[] += val
-# addrefval1(e,val) = ref1(e)[] += val
-# addrefval2(e,val) = ref2(e)[] += val
 
 # non-caching variants
 @inline non_caching_eval(f::Sink{Field},y,x,p=nothing) = inner(f)(y,x,p)

@@ -31,7 +31,9 @@ end
 
 for (f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
     @eval begin
-        $f(e1::E1,e2::E2) where {E1,E2} = Expression2($f,e1,e2)
+        $f(e1::E1,e2::E2) where {E1 <: Expression,E2 <: Expression} = Expression2($f,e1,e2)
+        $f(e1::E1,e2::E2) where {E1 <: Expression,E2 <: Real} = Expression2($f,e1,e2)
+        $f(e1::E1,e2::E2) where {E1 <: Real,E2 <: Expression} = Expression2($f,e1,e2)
         
         @inline (e::Expression2{typeof($f),F1,F2})(x,p=nothing) where {F1,F2} = setrefval(e,$f(e.e1(x,p),e.e2(x,p)))
         @inline (e::Expression2{typeof($f),F1,F2})(x,p=nothing) where {F1<:Real,F2} = setrefval(e,$f(e.e1,e.e2(x,p)))

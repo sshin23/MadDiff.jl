@@ -7,6 +7,15 @@ struct FMOne2 <: Function end; @inline (::FMOne2)(x1,x2)=-1.;  f_mone2 = FMOne2(
 struct FX1 <: Function end; @inline (::FX1)(x1,x2)=x1;  f_x1 = FX1()
 struct FX2 <: Function end; @inline (::FX2)(x1,x2)=x2;  f_x2 = FX2()
 
+and(x::Bool,y::Bool) = x && y
+or(x::Bool,y::Bool) = x || y
+and(x::Real,y::Bool) = x==1 && y
+or(x::Real,y::Bool) = x==1 || y
+and(x::Bool,y::Real) = x && y==1
+or(x::Bool,y::Real) = x || y==1
+and(x::Real,y::Real) = x==1 && y==1
+or(x::Real,y::Real) = x==1 || y==1
+
 const f_nargs_1 = [
     (
         :+,
@@ -280,6 +289,8 @@ const f_nargs_1 = [
     )
 ]
 
+
+
 const f_nargs_2 = [
     (
         :+,
@@ -335,5 +346,61 @@ const f_nargs_2 = [
         (x1,x2) -> trigamma(x1) + -trigamma(x1 + x2),
         (x1,x2) -> -trigamma(x1 + x2),
         (x1,x2) -> trigamma(x2) + -trigamma(x1 + x2)
-    )
+    ),
+    (
+        :(<=),
+        f_zero2,
+        f_zero2,
+        f_zero2,
+        f_zero2,
+        f_zero2
+    ),
+    (
+        :(>=),
+        f_zero2,
+        f_zero2,
+        f_zero2,
+        f_zero2,
+        f_zero2
+    ),
+    (
+        :(==),
+        f_zero2,
+        f_zero2,
+        f_zero2,
+        f_zero2,
+        f_zero2
+    ),
+    (
+        :<,
+        f_zero2,
+        f_zero2,
+        f_zero2,
+        f_zero2,
+        f_zero2
+    ),
+    (
+        :>,
+        f_zero2,
+        f_zero2,
+        f_zero2,
+        f_zero2,
+        f_zero2
+    ),
+        (
+        :and,
+        f_zero2,
+        f_zero2,
+        f_zero2,
+        f_zero2,
+        f_zero2
+    ),
+    (
+        :or,
+        f_zero2,
+        f_zero2,
+        f_zero2,
+        f_zero2,
+        f_zero2
+    ),
 ]

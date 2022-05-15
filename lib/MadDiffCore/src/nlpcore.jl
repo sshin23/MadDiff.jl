@@ -68,6 +68,7 @@ struct NLPCore
     jac_sparsity::Vector{Tuple{Int,Int}}
     hess_sparsity::Vector{Tuple{Int,Int}}
 end
+
 NLPCore(obj::Expression,con::Sink{Field}) = NLPCore(obj,con.inner)
 function NLPCore(obj::Expression,con::Field)
     grad = Gradient(obj)

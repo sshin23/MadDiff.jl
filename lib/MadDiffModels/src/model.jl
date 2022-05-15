@@ -1,13 +1,3 @@
-struct Equality{E<:Expression} e::E end
-struct Inequality{E<:Expression} e::E end
-for (T1,T2) in [(Expression,Expression),(Expression,Real),(Real,Expression)]
-    @eval begin
-        ==(e1::T1,e2::T2) where {T1 <: $T1, T2 <: $T2} = Equality(e1-e2)
-        >=(e1::T1,e2::T2) where {T1 <: $T1, T2 <: $T2} = Inequality(e1-e2)
-        <=(e1::T1,e2::T2) where {T1 <: $T1, T2 <: $T2} = Inequality(e2-e1)
-    end
-end
-
 mutable struct MadDiffModel{T} <: AbstractNLPModel{T,Vector{T}}
     con::Sink{Field}
     obj::Expression
@@ -26,9 +16,10 @@ mutable struct MadDiffModel{T} <: AbstractNLPModel{T,Vector{T}}
     gl::Vector{T}
     gu::Vector{T}
 
-    meta::Union{Nothing,NLPModelMeta{T, Vector{T}}}
+    instantiated::Bool
+    meta::Union{Nothing, NLPModels.AbstractNLPModelMeta{T, Vector{T}}}
     nlpcore::Union{Nothing,NLPCore}
-    counters::Union{Nothing,NLPModelsCounters}
+    counters::Union{Nothing,NLPModels.Counters}
     
     ext::Dict{Symbol,Any}
     opt::Dict{Symbol,Any}
@@ -52,11 +43,7 @@ for (f,df1,df2,ddf1,ddf12,ddf22) in f_nargs_2
     @eval $f(e1::T,e2) where T <: ModelComponent = $f(inner(e1),e2)
     @eval $f(e1,e2::T) where T <: ModelComponent = $f(e1,inner(e2))
 end
-for o in [:(==),:(>=),:(<=)]
-    @eval $o(e1::T1,e2::T2) where {T1 <: ModelComponent, T2 <: ModelComponent} = $o(inner(e1),inner(e2))
-    @eval $o(e1::T1,e2) where {T1 <: ModelComponent} = $o(inner(e1),e2)
-    @eval $o(e1,e2::T2) where {T2 <: ModelComponent} = $o(e1,inner(e2))
-end
+
 add_sum(a::E,b::ModelComponent{C}) where {C,E<:ExpressionSum} = add_sum(a,b.inner)
 add_sum(a::ModelComponent{C},b::E) where {C,E<:ExpressionSum} = add_sum(a.inner,b)
 add_sum(a::ModelComponent{C},b::ModelComponent{C}) where C = add_sum(a.inner,b.inner)
@@ -71,10 +58,11 @@ setindex!(m::MadDiffModel,val,idx::Symbol) = setindex!(m.ext,val,idx)
 MadDiffModel(;opt...) =MadDiffModel(
     Field(),ExpressionNull(),0,0,0,
     Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],
-    nothing,nothing,nothing,
+    false, nothing, nothing, nothing,
     Dict{Symbol,Any}(),Dict{Symbol,Any}(name=>option for (name,option) in opt))
 
 function variable(m::MadDiffModel;lb=-Inf,ub=Inf,start=0.,name=nothing)
+    m.instantiated = false
     m.n += 1
     push!(m.x,start)
     push!(m.xl,lb)
@@ -85,12 +73,14 @@ function variable(m::MadDiffModel;lb=-Inf,ub=Inf,start=0.,name=nothing)
 end
 
 function parameter(m::MadDiffModel,val=0.;name=nothing)
+    m.instantiated = false
     m.q += 1
     push!(m.p,val)
     ModelComponent(m,Parameter(m.q))
 end
 
 function constraint(m::MadDiffModel,e::E;lb=0.,ub=0.) where E <: Expression
+    m.instantiated = false
     m.m += 1
     m.con[m.m] = e
     push!(m.l,0.)
@@ -99,13 +89,30 @@ function constraint(m::MadDiffModel,e::E;lb=0.,ub=0.) where E <: Expression
     Constraint(m,m.m)
 end
 
-constraint(m,eq::Equality{E}) where {E<:Expression} = constraint(m,eq.e)
-constraint(m,eq::Inequality{E}) where {E<:Expression} = constraint(m,eq.e;ub=Inf)
-
 function objective(m::MadDiffModel,e::E) where E <: Expression
+    m.instantiated = false
     m.obj = e
     nothing
 end
+
+constraint(m::MadDiffModel,eq::Expression2{typeof(==),E1,E2}) where {E1<:Expression, E2<:Expression} =
+    constraint(m,eq.e1-eq.e2)
+constraint(m::MadDiffModel,eq::Expression2{typeof(<=),E1,E2}) where {E1<:Expression, E2<:Expression} =
+    constraint(m,eq.e1-eq.e2;ub=Inf)
+constraint(m::MadDiffModel,eq::Expression2{typeof(>=),E1,E2}) where {E1<:Expression, E2<:Expression} =
+    constraint(m,eq.e1-eq.e2;lb=-Inf)
+constraint(m::MadDiffModel,eq::Expression2{typeof(==),E1,E2}) where {E1<:Expression, E2<:Real} =
+    constraint(m,eq.e1; lb=eq.e2, ub=eq.e2)
+constraint(m::MadDiffModel,eq::Expression2{typeof(<=),E1,E2}) where {E1<:Expression, E2<:Real} =
+    constraint(m,eq.e1; lb=-Inf, ub=eq.e2)
+constraint(m::MadDiffModel,eq::Expression2{typeof(>=),E1,E2}) where {E1<:Expression, E2<:Real} =
+    constraint(m,eq.e1; lb=eq.e2, ub=Inf)
+constraint(m::MadDiffModel,eq::Expression2{typeof(==),E1,E2}) where {E1<:Real, E2<:Expression} =
+    constraint(m,eq.e2; lb=eq.e1, ub=eq.e1)
+constraint(m::MadDiffModel,eq::Expression2{typeof(<=),E1,E2}) where {E1<:Real, E2<:Expression} =
+    constraint(m,eq.e2; lb=eq.e1, ub=Inf)
+constraint(m::MadDiffModel,eq::Expression2{typeof(>=),E1,E2}) where {E1<:Real, E2<:Expression} =
+    constraint(m,eq.e2; lb=-Inf, ub=eq.e1)
 
 value(e::ModelComponent{C}) where C = non_caching_eval(inner(e),parent(e).x,parent(e).p)
 setvalue(e::ModelComponent{V},val) where V <: Variable = parent(e).x[index(e)] = val
@@ -156,10 +163,11 @@ end
 end
 
 function instantiate!(m::MadDiffModel)
-    
+
     m.nlpcore = NLPCore(
         m.obj,m.con
     )
+    
     m.meta = NLPModelMeta(
         m.n,
         x0 = m.x,
@@ -173,9 +181,12 @@ function instantiate!(m::MadDiffModel)
         nnzh = length(m.nlpcore.hess_sparsity),
         minimize = true
     )
-    m.counters = NLPModelsCounters()
+
+    m.counters = NLPModels.Counters()
     
-    return 
+    m.instantiated = true
+    
+    return m
 end
 
 @inline function jac_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T}) where T
@@ -213,7 +224,7 @@ end
 end
 
 @inline function fill_sparsity!(I,J,tuples)
-    @simd for l in eachindex(tuples)
+    for l in eachindex(tuples)
         (i,j) = tuples[l]
         @inbounds I[l] = i
         @inbounds J[l] = j
@@ -221,3 +232,16 @@ end
 end
 
 
+
+
+function show(io::IO, m::MadDiffModel)
+    if m.instantiated 
+        println(io, "A MadDiffModel (instantiated).")
+        show(io, m.meta)
+        show(io, m.counters)
+    else
+        println(io, "A MadDiffModel (not instantiated).")
+    end
+end
+
+show(io::IO, m::ModelComponent{C}) where C = show(io,inner(m))

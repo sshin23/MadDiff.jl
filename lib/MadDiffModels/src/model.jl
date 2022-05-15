@@ -1,6 +1,6 @@
 mutable struct MadDiffModel{T} <: AbstractNLPModel{T,Vector{T}}
     con::Sink{Field}
-    obj::Expression
+    obj::Union{Nothing,Expression}
 
     n::Int # num vars
     q::Int # num pars
@@ -17,9 +17,9 @@ mutable struct MadDiffModel{T} <: AbstractNLPModel{T,Vector{T}}
     gu::Vector{T}
 
     instantiated::Bool
-    meta::Union{Nothing, NLPModels.AbstractNLPModelMeta{T, Vector{T}}}
+    meta::Union{Nothing,NLPModelMeta{T, Vector{T}}}
     nlpcore::Union{Nothing,NLPCore}
-    counters::Union{Nothing,NLPModels.Counters}
+    counters::Union{Nothing,NLPModelsCounters}
     
     ext::Dict{Symbol,Any}
     opt::Dict{Symbol,Any}
@@ -43,6 +43,14 @@ for (f,df1,df2,ddf1,ddf12,ddf22) in f_nargs_2
     @eval $f(e1::T,e2) where T <: ModelComponent = $f(inner(e1),e2)
     @eval $f(e1,e2::T) where T <: ModelComponent = $f(e1,inner(e2))
 end
+for o in [:(==),:(>=),:(<=)]
+    @eval $o(e1::T1,e2::T2) where {T1 <: ModelComponent, T2 <: ModelComponent} = $o(inner(e1),inner(e2))
+    @eval $o(e1::T1,e2) where {T1 <: ModelComponent} = $o(inner(e1),e2)
+    @eval $o(e1,e2::T2) where {T2 <: ModelComponent} = $o(e1,inner(e2))
+end
+
+
+
 
 add_sum(a::E,b::ModelComponent{C}) where {C,E<:ExpressionSum} = add_sum(a,b.inner)
 add_sum(a::ModelComponent{C},b::E) where {C,E<:ExpressionSum} = add_sum(a.inner,b)
@@ -58,7 +66,7 @@ setindex!(m::MadDiffModel,val,idx::Symbol) = setindex!(m.ext,val,idx)
 MadDiffModel(;opt...) =MadDiffModel(
     Field(),ExpressionNull(),0,0,0,
     Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],
-    false, nothing, nothing, nothing,
+    false,nothing,nothing,nothing,
     Dict{Symbol,Any}(),Dict{Symbol,Any}(name=>option for (name,option) in opt))
 
 function variable(m::MadDiffModel;lb=-Inf,ub=Inf,start=0.,name=nothing)
@@ -138,11 +146,14 @@ num_variables(m::MadDiffModel) = m.n
 num_constraints(m::MadDiffModel) = m.m
 
 function instantiate!(m::MadDiffModel)
-
+    
+    # grad = Gradient(m.obj)
+    # jac,jac_sparsity = SparseJacobian(m.con)
+    # hess,hess_sparsity = SparseLagrangianHessian(m.obj,grad,inner(m.con),jac)
+    
     m.nlpcore = NLPCore(
         m.obj,m.con
     )
-    
     m.meta = NLPModelMeta(
         m.n,
         x0 = m.x,
@@ -156,10 +167,9 @@ function instantiate!(m::MadDiffModel)
         nnzh = length(m.nlpcore.hess_sparsity),
         minimize = true
     )
-
-    m.counters = NLPModels.Counters()
+    m.counters = NLPModelsCounters()
     
-    m.instantiated = true
+    m.instantiated=true
     
     return m
 end
@@ -194,7 +204,7 @@ end
 end
 @inline function NLPModels.hess_coord!(m::MadDiffModel,x::AbstractVector,lag::AbstractVector,z::AbstractVector; obj_weight = 1.0)
     increment!(m, :neval_hess)
-    hess_coord!(m.nlpcore,x,lag,z,m.p; obj_weight = 1.0)
+    hess_coord!(m.nlpcore,x,lag,z,m.p; obj_weight = obj_weight)
     return 
 end
 
@@ -205,9 +215,6 @@ end
         @inbounds J[l] = j
     end
 end
-
-
-
 
 function show(io::IO, m::MadDiffModel)
     if m.instantiated 
@@ -220,3 +227,4 @@ function show(io::IO, m::MadDiffModel)
 end
 
 show(io::IO, m::ModelComponent{C}) where C = show(io,inner(m))
+

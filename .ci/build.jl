@@ -17,3 +17,4 @@ pkgs = [
 
 Pkg.add.(deps)
 Pkg.develop.(pkgs)
+Pkg.instantiate()

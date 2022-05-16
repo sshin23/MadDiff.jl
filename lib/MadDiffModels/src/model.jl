@@ -160,8 +160,8 @@ upper_bound(e::Constraint) = parent(e).gu[index(e)]
 dual(c::Constraint) = parent(c).l[index(c)]
 objective_value(m::MadDiffModel) = non_caching_eval(m.obj,m.x,m.p)
 
-# num_variables(m::MadDiffModel) = m.n
-# num_constraints(m::MadDiffModel) = m.m
+num_variables(m::MadDiffModel) = m.n
+num_constraints(m::MadDiffModel) = m.m
 
 function instantiate!(m::MadDiffModel)
     

@@ -41,17 +41,17 @@ end
     end
 end
 
-@inline non_caching_eval(e::Variable,x,p=nothing)  = @inbounds getindex(x,index(e))
-@inline non_caching_eval(e::Parameter,x,p=nothing)  = @inbounds getindex(p,index(e))
-@inline non_caching_eval(e::Constant,x,p=nothing)  = refval(e)
-@inline function non_caching_eval(e::ExpressionSum{E,I},x,p=nothing) where {E,I}
+@inline non_caching_eval(e::Variable{T},x,p=nothing) where {T <: AbstractFloat}  = @inbounds getindex(x,index(e))
+@inline non_caching_eval(e::Parameter{T},x,p=nothing) where {T <: AbstractFloat} = @inbounds getindex(p,index(e))
+@inline non_caching_eval(e::Constant{T},x,p=nothing) where {T <: AbstractFloat}  = refval(e)
+@inline function non_caching_eval(e::ExpressionSum{T,E,I},x,p=nothing) where {T,E,I}
     res = non_caching_eval(e.inner,x,p)
     @simd for i in eachindex(e.es)
         @inbounds res = add_sum(res,non_caching_eval(e.es[i],x,p))
     end
     return res
 end
-@inline function non_caching_eval(e::ExpressionSum{E,Nothing},x,p=nothing) where E
+@inline function non_caching_eval(e::ExpressionSum{T,E,Nothing},x,p=nothing) where {T,E}
     res = non_caching_eval(e.es[1],x,p)
     @simd for i in 2:length(e.es)
         @inbounds res = add_sum(res,non_caching_eval(e.es[i],x,p))

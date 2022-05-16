@@ -7,7 +7,7 @@ struct Gradient1{F,D1 <: Gradient} <: Gradient
     d1::D1
     fref1::MyRef{Float64}
     ref::MyRef{Float64}
-    function Gradient1(e::Expression1{F,E1}, indexer = nothing) where {F,E1}
+    function Gradient1(e::Expression1{T,F,E1}, indexer = nothing) where {T,F,E1}
         d1 = Gradient(e.e1,indexer)
         return new{F,typeof(d1)}(d1,ref(e.e1),MyRef(1.))
     end
@@ -17,7 +17,7 @@ struct Gradient2F1{F,D1 <: Gradient, R<: Real} <: Gradient
     d1::D1
     fref1::MyRef{Float64}
     ref::MyRef{Float64}
-    function Gradient2F1(e::Expression2{F,E1,E2}, indexer = nothing) where {F,E1<:Real,E2}
+    function Gradient2F1(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1<:Real,E2}
         g1 = Gradient(e.e2,indexer)
         return new{F,typeof(g1),typeof(e.e1)}(e.e1,g1,ref(e.e2),MyRef(0.))
     end
@@ -27,7 +27,7 @@ struct Gradient2F2{F,D1 <: Gradient, R<: Real} <: Gradient
     d1::D1
     fref1::MyRef{Float64}
     ref::MyRef{Float64}
-    function Gradient2F2(e::Expression2{F,E1,E2}, indexer = nothing) where {F,E1,E2<:Real}
+    function Gradient2F2(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1,E2<:Real}
         g1 = Gradient(e.e1,indexer)
         return new{F,typeof(g1),typeof(e.e2)}(e.e2,g1,ref(e.e1),MyRef(0.))
     end
@@ -39,7 +39,7 @@ struct Gradient2{F,D1 <: Gradient,D2 <: Gradient} <: Gradient
     fref2::MyRef{Float64}
     ref1::MyRef{Float64}
     ref2::MyRef{Float64}
-    function Gradient2(e::Expression2{F,E1,E2}, indexer = nothing) where {F,E1,E2}
+    function Gradient2(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1,E2}
         g1 = Gradient(e.e1,indexer)
         g2 = Gradient(e.e2,indexer)
         return new{F,typeof(g1),typeof(g2)}(g1,g2,ref(e.e1),ref(e.e2),MyRef(0.),MyRef(0.))
@@ -75,10 +75,9 @@ Gradient(e::V,::Nothing) where V <: Variable = Gradient0(index(e),index(e))
 Gradient(e::V,::Tuple{Int,Nothing}) where V <: Variable = Gradient0(index(e),index(e))
 Gradient(e::P,::T) where {P<:Parameter,T} = GRADIENT_NULL
 Gradient(e::C, indexer = nothing ) where {C<:Constant,T} = GRADIENT_NULL
-Gradient(e::ExpressionNull) = GRADIENT_NULL
-Gradient(e::ExpressionSum{E,I},indexer = nothing) where {E,I} = GradientSum(Gradient(inner(e),indexer),[Gradient(ee,indexer) for ee in e.es])
-Gradient(e::ExpressionSum{E,Nothing},indexer = nothing) where {E,I} = GradientSum(nothing,[Gradient(ee,indexer) for ee in e.es])
-Gradient(e::Expression1{F,E}, indexer = nothing) where {F,E} = Gradient1(e,indexer)
-Gradient(e::Expression2{F,E1,E2}, indexer = nothing) where {F,E1,E2} = Gradient2(e,indexer)
-Gradient(e::Expression2{F,E1,E2}, indexer = nothing) where {F,E1<:Real,E2} = Gradient2F1(e,indexer)
-Gradient(e::Expression2{F,E1,E2}, indexer = nothing) where {F,E1,E2<:Real} = Gradient2F2(e,indexer)
+Gradient(e::ExpressionSum{T,E,I},indexer = nothing) where {T,E,I} = GradientSum(Gradient(inner(e),indexer),[Gradient(ee,indexer) for ee in e.es])
+Gradient(e::ExpressionSum{T,E,Nothing},indexer = nothing) where {T,E,I} = GradientSum(nothing,[Gradient(ee,indexer) for ee in e.es])
+Gradient(e::Expression1{T,F,E}, indexer = nothing) where {T,F,E} = Gradient1(e,indexer)
+Gradient(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1,E2} = Gradient2(e,indexer)
+Gradient(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1<:Real,E2} = Gradient2F1(e,indexer)
+Gradient(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1,E2<:Real} = Gradient2F2(e,indexer)

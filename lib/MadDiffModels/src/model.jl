@@ -12,7 +12,7 @@ where `f:R^n -> R` and `g(·):R^n -> R^m`.
 """
 Base.@kwdef mutable struct MadDiffModel{T <: Real} <: AbstractNLPModel{T,Vector{T}}
     con::Sink{Field} = Field()
-    obj::Union{Nothing,Expression} = ExpressionNull()
+    obj::Expression = Constant(0.)
 
     n::Int = 0 # num vars
     q::Int = 0 # num pars
@@ -95,14 +95,14 @@ function variable(m::MadDiffModel;lb=-Inf,ub=Inf,start=0.,name=nothing)
     push!(m.xu,ub)
     push!(m.zl,1.)
     push!(m.zu,1.)
-    ModelComponent(m,Variable(m.n))
+    ModelComponent(m,Variable{Float64}(m.n))
 end
 
 function parameter(m::MadDiffModel,val=0.;name=nothing)
     m.instantiated = false
     m.q += 1
     push!(m.p,val)
-    ModelComponent(m,Parameter(m.q))
+    ModelComponent(m,Parameter{Float64}(m.q))
 end
 
 function constraint(m::MadDiffModel,e::E;lb=0.,ub=0.) where E <: Expression
@@ -121,23 +121,23 @@ function objective(m::MadDiffModel,e::E) where E <: Expression
     nothing
 end
 
-constraint(m::MadDiffModel,eq::Expression2{typeof(==),E1,E2}) where {E1<:Expression, E2<:Expression} =
+constraint(m::MadDiffModel,eq::Expression2{T,typeof(==),E1,E2}) where {T <: AbstractFloat, E1<:Expression, E2<:Expression} =
     constraint(m,eq.e1-eq.e2)
-constraint(m::MadDiffModel,eq::Expression2{typeof(<=),E1,E2}) where {E1<:Expression, E2<:Expression} =
+constraint(m::MadDiffModel,eq::Expression2{T,typeof(<=),E1,E2}) where {T <: AbstractFloat, E1<:Expression, E2<:Expression} =
     constraint(m,eq.e1-eq.e2;ub=Inf)
-constraint(m::MadDiffModel,eq::Expression2{typeof(>=),E1,E2}) where {E1<:Expression, E2<:Expression} =
+constraint(m::MadDiffModel,eq::Expression2{T,typeof(>=),E1,E2}) where {T <: AbstractFloat, E1<:Expression, E2<:Expression} =
     constraint(m,eq.e1-eq.e2;lb=-Inf)
-constraint(m::MadDiffModel,eq::Expression2{typeof(==),E1,E2}) where {E1<:Expression, E2<:Real} =
+constraint(m::MadDiffModel,eq::Expression2{T,typeof(==),E1,E2}) where {T <: AbstractFloat, E1<:Expression, E2<:Real} =
     constraint(m,eq.e1; lb=eq.e2, ub=eq.e2)
-constraint(m::MadDiffModel,eq::Expression2{typeof(<=),E1,E2}) where {E1<:Expression, E2<:Real} =
+constraint(m::MadDiffModel,eq::Expression2{T,typeof(<=),E1,E2}) where {T <: AbstractFloat, E1<:Expression, E2<:Real} =
     constraint(m,eq.e1; lb=-Inf, ub=eq.e2)
-constraint(m::MadDiffModel,eq::Expression2{typeof(>=),E1,E2}) where {E1<:Expression, E2<:Real} =
+constraint(m::MadDiffModel,eq::Expression2{T,typeof(>=),E1,E2}) where {T <: AbstractFloat, E1<:Expression, E2<:Real} =
     constraint(m,eq.e1; lb=eq.e2, ub=Inf)
-constraint(m::MadDiffModel,eq::Expression2{typeof(==),E1,E2}) where {E1<:Real, E2<:Expression} =
+constraint(m::MadDiffModel,eq::Expression2{T,typeof(==),E1,E2}) where {T <: AbstractFloat, E1<:Real, E2<:Expression} =
     constraint(m,eq.e2; lb=eq.e1, ub=eq.e1)
-constraint(m::MadDiffModel,eq::Expression2{typeof(<=),E1,E2}) where {E1<:Real, E2<:Expression} =
+constraint(m::MadDiffModel,eq::Expression2{T,typeof(<=),E1,E2}) where {T <: AbstractFloat, E1<:Real, E2<:Expression} =
     constraint(m,eq.e2; lb=eq.e1, ub=Inf)
-constraint(m::MadDiffModel,eq::Expression2{typeof(>=),E1,E2}) where {E1<:Real, E2<:Expression} =
+constraint(m::MadDiffModel,eq::Expression2{T,typeof(>=),E1,E2}) where {T <: AbstractFloat, E1<:Real, E2<:Expression} =
     constraint(m,eq.e2; lb=-Inf, ub=eq.e1)
 
 value(e::ModelComponent{C}) where C = non_caching_eval(inner(e),parent(e).x,parent(e).p)

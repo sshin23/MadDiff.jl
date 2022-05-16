@@ -1,7 +1,7 @@
 function_evaluator(f::E) where E <: Expression = @inline (x,p=nothing) -> non_caching_eval(f,x,p)
 field_evaluator(f::F) where F <: Field = @inline (y,x,p=nothing) -> non_caching_eval(f,y,x,p)
 
-function gradient_evaluator(f::Expression)
+function gradient_evaluator(f::Expression{T}) where T <: AbstractFloat
     d = Gradient(f)
     @inline function (y,x,p=nothing)
         y.=0
@@ -9,7 +9,7 @@ function gradient_evaluator(f::Expression)
         non_caching_eval(d,y,x,p)
     end
 end
-function sparse_gradient_evaluator(f::Expression)
+function sparse_gradient_evaluator(f::Expression{T}) where T <: AbstractFloat
     d,sparsity = SparseGradient(f)
     (@inline function (y,x,p=nothing)
         y.=0
@@ -17,7 +17,7 @@ function sparse_gradient_evaluator(f::Expression)
         non_caching_eval(d,y,x,p)
     end), sparsity
 end
-function hessian_evaluator(f::Expression)
+function hessian_evaluator(f::Expression{T}) where T <: AbstractFloat
     d = Gradient(f)
     h = Hessian(f,d)
 
@@ -28,7 +28,7 @@ function hessian_evaluator(f::Expression)
         h(z,x,p)
     end
 end
-function sparse_hessian_evaluator(f::Expression)
+function sparse_hessian_evaluator(f::Expression{T}) where T <: AbstractFloat
     d = Gradient(f)
     h,sparsity = SparseHessian(f,d)
 

@@ -3,8 +3,8 @@
 
 for (f,df,ddf) in f_nargs_1
     @eval begin
-        $f(e::E) where E <: Expression = Expression1($f,e)
-        @inline (e::Expression1{typeof($f),E})(x,p=nothing) where {E} = setrefval(e,$f(e.e1(x,p)))
+        $f(e::E) where {T <: AbstractFloat, E <: Expression{T}} = Expression1{T}($f,e)
+        @inline (e::Expression1{T,typeof($f),E})(x,p=nothing) where {T,E} = setrefval(e,$f(e.e1(x,p)))
         
         @inline function (d::Gradient1{typeof($f),F1})(y,x,p=nothing,d0=1.) where {F1}
             setrefval(d,$df(frefval1(d)))
@@ -18,7 +18,7 @@ for (f,df,ddf) in f_nargs_1
             return
         end
         
-        @inline non_caching_eval(e::Expression1{typeof($f),E},x,p=nothing) where {E} = $f(non_caching_eval(e.e1,x,p))
+        @inline non_caching_eval(e::Expression1{T,typeof($f),E},x,p=nothing) where {T,E} = $f(non_caching_eval(e.e1,x,p))
         @inline function non_caching_eval(d::Gradient1{typeof($f),D1},y,x,p=nothing,d0=1.)  where D1
             non_caching_eval(d.d1,y,x,p,d0*$df(frefval1(d)))
             return 
@@ -31,14 +31,16 @@ end
 
 for (f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
     @eval begin
-        # $f(e1::E1,e2::E2) where {E1,E2} = Expression2($f,e1,e2)
-        $f(e1::E1,e2::E2) where {E1 <: Expression,E2 <: Expression} = Expression2($f,e1,e2)
-        $f(e1::E1,e2::E2) where {E1 <: Expression,E2 <: Real} = Expression2($f,e1,e2)
-        $f(e1::E1,e2::E2) where {E1 <: Real,E2 <: Expression} = Expression2($f,e1,e2)
+        $f(e1::E1,e2::E2) where {T <: AbstractFloat, E1 <: Expression{T},E2 <: Expression{T}} =
+            Expression2{T}($f,e1,e2)
+        $f(e1::E1,e2::E2) where {T <: AbstractFloat, E1 <: Expression{T},E2 <: Real} =
+            Expression2{T}($f,e1,e2)
+        $f(e1::E1,e2::E2) where {T <: AbstractFloat, E1 <: Real,E2 <: Expression{T}} =
+            Expression2{T}($f,e1,e2)
 
-        @inline (e::Expression2{typeof($f),F1,F2})(x,p=nothing) where {F1,F2} = setrefval(e,$f(e.e1(x,p),e.e2(x,p)))
-        @inline (e::Expression2{typeof($f),F1,F2})(x,p=nothing) where {F1<:Real,F2} = setrefval(e,$f(e.e1,e.e2(x,p)))
-        @inline (e::Expression2{typeof($f),F1,F2})(x,p=nothing) where {F1,F2<:Real} = setrefval(e,$f(e.e1(x,p),e.e2))
+        @inline (e::Expression2{T,typeof($f),F1,F2})(x,p=nothing) where {T,F1,F2} = setrefval(e,$f(e.e1(x,p),e.e2(x,p)))
+        @inline (e::Expression2{T,typeof($f),F1,F2})(x,p=nothing) where {T,F1<:Real,F2} = setrefval(e,$f(e.e1,e.e2(x,p)))
+        @inline (e::Expression2{T,typeof($f),F1,F2})(x,p=nothing) where {T,F1,F2<:Real} = setrefval(e,$f(e.e1(x,p),e.e2))
 
         @inline function (d::Gradient2F1{typeof($f),F1,R})(y,x,p=nothing,d0=1.) where {F1,R}
             setrefval(d,$df2(d.a,frefval1(d)))
@@ -78,9 +80,9 @@ for (f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
             return
         end
 
-        @inline non_caching_eval(e::Expression2{typeof($f),F1,F2},x,p=nothing) where {F1,F2} = $f(non_caching_eval(e.e1,x,p),non_caching_eval(e.e2,x,p))
-        @inline non_caching_eval(e::Expression2{typeof($f),F1,F2},x,p=nothing) where {F1<:Real,F2} = $f(e.e1,non_caching_eval(e.e2,x,p))
-        @inline non_caching_eval(e::Expression2{typeof($f),F1,F2},x,p=nothing) where {F1,F2<:Real} = $f(non_caching_eval(e.e1,x,p),e.e2)
+        @inline non_caching_eval(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1,F2} = $f(non_caching_eval(e.e1,x,p),non_caching_eval(e.e2,x,p))
+        @inline non_caching_eval(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1<:Real,F2} = $f(e.e1,non_caching_eval(e.e2,x,p))
+        @inline non_caching_eval(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1,F2<:Real} = $f(non_caching_eval(e.e1,x,p),e.e2)
         
         @inline function non_caching_eval(d::Gradient2F1{typeof($f),D1,R},y,x,p=nothing,d0=1.) where {D1,R}
             non_caching_eval(d.d1,y,x,p,d0*$df2(d.a,frefval1(d)))
@@ -108,9 +110,9 @@ for (f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
     end
 end
 
-add_sum(e1::E,e2) where E <: Expression = add_sum(ExpressionSum([e1]),e2)
-add_sum(e1::ExpressionSum{E,I},e2) where {E,I} = _add_sum(e1,e2) ? e1 : ExpressionSum(e1,[e2])
-function _add_sum(e1::ExpressionSum{E,I},e2) where {E,I}
+add_sum(e1::E,e2) where {T <: AbstractFloat, E <: Expression{T}} = add_sum(ExpressionSum{T}([e1]),e2)
+add_sum(e1::ExpressionSum{T,E,I},e2) where {T,E,I} = _add_sum(e1,e2) ? e1 : ExpressionSum{T}(e1,[e2])
+function _add_sum(e1::ExpressionSum{T,E,I},e2) where {T,E,I}
     if e2 isa eltype(e1.es)
         push!(e1.es,e2)
         return true
@@ -118,7 +120,7 @@ function _add_sum(e1::ExpressionSum{E,I},e2) where {E,I}
         return _add_sum(inner(e1),e2)
     end
 end
-function _add_sum(e1::ExpressionSum{E,Nothing},e2) where E
+function _add_sum(e1::ExpressionSum{T,E,Nothing},e2) where {T,E}
     if e2 isa eltype(e1.es)
         push!(e1.es,e2)
         return true

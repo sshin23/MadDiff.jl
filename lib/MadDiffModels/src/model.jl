@@ -1,39 +1,56 @@
 """
-    MadDiffModel
-A mathematical model of a nonlinaer program.
+    MadDiffModel{T <: Real}
+
+A mathematical model of a nonlinaer program of the following form:
+
+```
+min  f(x)
+s.t. xl <=   x  <= xu
+     gl <= g(x) <= gu,
+```
+where `f:R^n -> R` and `g(·):R^n -> R^m`.
 """
-mutable struct MadDiffModel{T} <: AbstractNLPModel{T,Vector{T}}
-    con::Sink{Field}
-    obj::Union{Nothing,Expression}
+Base.@kwdef mutable struct MadDiffModel{T <: Real} <: AbstractNLPModel{T,Vector{T}}
+    con::Sink{Field} = Field()
+    obj::Union{Nothing,Expression} = ExpressionNull()
 
-    n::Int # num vars
-    q::Int # num pars
-    m::Int # num cons
+    n::Int = 0 # num vars
+    q::Int = 0 # num pars
+    m::Int = 0 # num cons
 
-    x::Vector{T}
-    p::Vector{T}
-    l::Vector{T}
-    zl::Vector{T}
-    zu::Vector{T}
-    xl::Vector{T}
-    xu::Vector{T}
-    gl::Vector{T}
-    gu::Vector{T}
-
-    instantiated::Bool
-    meta::Union{Nothing,NLPModelMeta{T, Vector{T}}}
-    nlpcore::Union{Nothing,NLPCore}
-    counters::Union{Nothing,NLPModelsCounters}
     
-    ext::Dict{Symbol,Any}
-    opt::Dict{Symbol,Any}
+    x::Vector{T} = Float64[]
+    p::Vector{T} = Float64[]
+    l::Vector{T} = Float64[]
+    zl::Vector{T} = Float64[]
+    zu::Vector{T} = Float64[]
+    xl::Vector{T} = Float64[]
+    xu::Vector{T} = Float64[]
+    gl::Vector{T} = Float64[]
+    gu::Vector{T} = Float64[]
+
+    instantiated::Bool = false
+    meta::Union{Nothing,NLPModelMeta{T, Vector{T}}} = nothing
+    nlpcore::Union{Nothing,NLPCore} = nothing
+    counters::Union{Nothing,NLPModelsCounters} = nothing
+    
+    ext::Dict{Symbol,Any} = Dict{Symbol,Any}()
+    opt::Dict{Symbol,Any} = Dict{Symbol,Any}()
 end
 
+"""
+    Constraint
+A constraint index of MadDiffModel.
+"""
 struct Constraint
     parent::MadDiffModel
     index::Int
 end
 
+"""
+    ModelComponent
+A model component (variable or parameter) of MadDiffModel.
+"""
 struct ModelComponent{C <: Union{Variable,Parameter}}
     parent::MadDiffModel
     inner::C
@@ -59,11 +76,16 @@ convert(::Type{Expression},e::ModelComponent{C}) where C = inner(e)
 getindex(m::MadDiffModel,idx::Symbol) = m.ext[idx]
 setindex!(m::MadDiffModel,val,idx::Symbol) = setindex!(m.ext,val,idx)
 
-MadDiffModel(;opt...) =MadDiffModel(
-    Field(),ExpressionNull(),0,0,0,
-    Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],Float64[],
-    false,nothing,nothing,nothing,
-    Dict{Symbol,Any}(),Dict{Symbol,Any}(name=>option for (name,option) in opt))
+"""
+    MadDiffModel(; options...)
+
+Creates a `MadDiffModel` with optional solver options.
+
+**Example**
+`MadDiffModel(linear_solver = "ma27")`
+"""
+MadDiffModel(; options...)=
+    MadDiffModel{Float64}(opt = Dict{Symbol,Any}(name=>option for (name,option) in options))
 
 function variable(m::MadDiffModel;lb=-Inf,ub=Inf,start=0.,name=nothing)
     m.instantiated = false
@@ -138,8 +160,8 @@ upper_bound(e::Constraint) = parent(e).gu[index(e)]
 dual(c::Constraint) = parent(c).l[index(c)]
 objective_value(m::MadDiffModel) = non_caching_eval(m.obj,m.x,m.p)
 
-num_variables(m::MadDiffModel) = m.n
-num_constraints(m::MadDiffModel) = m.m
+# num_variables(m::MadDiffModel) = m.n
+# num_constraints(m::MadDiffModel) = m.m
 
 function instantiate!(m::MadDiffModel)
     

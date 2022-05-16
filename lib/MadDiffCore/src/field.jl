@@ -6,7 +6,7 @@ struct Field1{E,I}  <: Field
     Field1(inner::F,es::Vector{E}) where {E,F} = new{E,typeof(inner)}(inner,es)
     Field1(::Nothing,es::Vector{E}) where E = new{E,Nothing}(nothing,es)
 end
-struct IndexedExpression{E <: Expression} <: Entry
+struct IndexedExpression{T <: AbstractFloat, E <: Expression{T}} <: Entry{T}
     index::Int
     e::E
 end
@@ -25,7 +25,7 @@ end
         F.es[i](y,x,p)
     end
 end
-@inline (e::IndexedExpression{E})(y,x,p=nothing) where {E} = (y[e.index] = e.e(x,p))
+@inline (e::IndexedExpression{T,E})(y,x,p=nothing) where {T,E} = (y[e.index] = e.e(x,p))
 
 Field() = Sink{Field}(FIELD_NULL)
 # Field(e::E) where E <: IndexedExpression= Field1([e])

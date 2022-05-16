@@ -12,7 +12,7 @@ for (f,df,ddf) in f_nargs_1
             return 
         end
         
-        @inline function (h::Hessian11{typeof($f),H1,H11})(z,x,p=nothing,h0=1) where {H1,H11}
+        @inline function (h::Hessian11{T,typeof($f),H1,H11})(z,x,p=nothing,h0=1) where {T,H1,H11}
             h.h1(z,x,p,h0*refval(h))
             h.h11(z,x,p,h0*$ddf(frefval(h)))
             return
@@ -59,17 +59,17 @@ for (f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
             d.d2(y,x,p,d0*refval2(d))
             return
         end
-        @inline function (h::Hessian11F1{typeof($f),H1,H11,R})(z,x,p=nothing,h0=1) where {H1,H11,R}
+        @inline function (h::Hessian11F1{T,typeof($f),H1,H11,R})(z,x,p=nothing,h0=1) where {T,H1,H11,R}
             h.h1(z,x,p,h0*refval(h))
             h.h11(z,x,p,h0*$ddf22(h.a,frefval(h)))
             return
         end
-        @inline function (h::Hessian11F2{typeof($f),H1,H11,R})(z,x,p=nothing,h0=1) where {H1,H11,R}
+        @inline function (h::Hessian11F2{T,typeof($f),H1,H11,R})(z,x,p=nothing,h0=1) where {T,H1,H11,R}
             h.h1(z,x,p,h0*refval(h))
             h.h11(z,x,p,h0*$ddf11(frefval(h),h.a))
             return
         end
-        @inline function (h::Hessian22{typeof($f),H1,H2,H11,H12,H22})(z,x,p=nothing,h0=1) where {H1,H2,H11,H12,H22}
+        @inline function (h::Hessian22{T,typeof($f),H1,H2,H11,H12,H22})(z,x,p=nothing,h0=1) where {T,H1,H2,H11,H12,H22}
             ddf12 = $ddf12(frefval1(h),frefval2(h))
             h.h1(z,x,p,h0*refval1(h))
             h.h2(z,x,p,h0*refval2(h))

@@ -8,9 +8,9 @@ export Constant, Variable, Parameter, Field, Gradient, Jacobian, Hessian, Sparse
 
 abstract type Expression{T <: AbstractFloat} end
 abstract type Gradient{T <: AbstractFloat} end
-abstract type Hessian end
+abstract type Hessian{T <: AbstractFloat} end
 abstract type Field end
-abstract type Entry end
+abstract type Entry{T <: AbstractFloat} end
 
 mutable struct MyRef{T}
     x::T
@@ -28,7 +28,6 @@ include("sourcesink.jl")
 include("nlpcore.jl")
 include("sparse.jl")
 include("rules.jl")
-include("template.jl")
 include("utils.jl")
 include("evaluator.jl")
 include("print.jl")

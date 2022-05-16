@@ -1,5 +1,5 @@
 # Jacobian
-struct JacobianEntry{E} <: Entry
+struct JacobianEntry{T,E <: Gradient{T}} <: Entry{T}
     index::Int
     e::E
 end
@@ -20,13 +20,13 @@ end
 #         d((j,y),x,p)
 #     end
 # end
-@inline (e::JacobianEntry{E})(y,x,p=nothing) where {E} = e.e((index(e),y),x,p)
+@inline (e::JacobianEntry{T,E})(y,x,p=nothing) where {T,E} = e.e((index(e),y),x,p)
 # Jacobian(s::Sink{Field}) = Jacobian(inner(s))
 Jacobian(f::Field1{G,I},indexer = nothing) where {G,I} = Field1(Jacobian(inner(f),indexer),[JacobianEntry(index(ie),Gradient(ie.e,(index(ie),indexer))) for ie in f.es])
 Jacobian(f::Field1{G,Nothing},indexer = nothing) where G = Field1(nothing,[JacobianEntry(index(ie),Gradient(ie.e,(index(ie),indexer))) for ie in f.es])
 
 # Lagrangian Hessian
-struct LagrangianEntry{E} <: Entry
+struct LagrangianEntry{T,E <: Hessian{T}} <: Entry{T}
     index::Int
     e::E
 end
@@ -57,6 +57,8 @@ end
 function _LagrangianHessian(obj,grad,con::FieldNull,jac::FieldNull,indexer = nothing) where {E1,E2}
     Hessian(obj,grad,indexer)
 end
+
+Field1(inner,::Vector{LagrangianEntry{HessianNull{T}}}) where T = inner
 
 # NLPCore
 struct NLPCore

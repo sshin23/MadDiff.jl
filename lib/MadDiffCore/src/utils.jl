@@ -59,17 +59,17 @@ end
     return res
 end
 
-@inline non_caching_eval(::GradientNull,z,x,p=nothing,d0=1) = nothing
-@inline non_caching_eval(d::Gradient0,y,x,p=nothing,d0=1) = (@inbounds y[d.offset] += d0; nothing)
-@inline non_caching_eval(d::Gradient0,(j,y)::Tuple{Int,M},x,p=nothing,d0=1) where M <: AbstractMatrix = (@inbounds y[j,d.offset] += d0; nothing)
-@inline non_caching_eval(d::Gradient0,(j,y)::Tuple{Int,M},x,p=nothing,d0=1) where M <: AbstractVector = (@inbounds y[d.offset] += d0; nothing)
-@inline function non_caching_eval(d::GradientSum{D,I} where {D,I},y,x,p=nothing,d0=1)
+@inline non_caching_eval(::GradientNull{T},z,x,p=nothing,d0=1) where T = nothing
+@inline non_caching_eval(d::Gradient0{T},y,x,p=nothing,d0=1) where T = (@inbounds y[d.offset] += d0; nothing)
+@inline non_caching_eval(d::Gradient0{T},(j,y)::Tuple{Int,M},x,p=nothing,d0=1) where {T, M <: AbstractMatrix} = (@inbounds y[j,d.offset] += d0; nothing)
+@inline non_caching_eval(d::Gradient0{T},(j,y)::Tuple{Int,M},x,p=nothing,d0=1) where {T, M <: AbstractVector} = (@inbounds y[d.offset] += d0; nothing)
+@inline function non_caching_eval(d::GradientSum{T,D,I},y,x,p=nothing,d0=1) where {T,D,I}
     non_caching_eval(inner(d),y,x,p,d0)
     @simd for i in eachindex(d.ds)
         non_caching_eval(d.ds[i],y,x,p,d0)
     end
 end
-@inline function non_caching_eval(d::GradientSum{D,Nothing} where D,y,x,p=nothing,d0=1)
+@inline function non_caching_eval(d::GradientSum{T,D,Nothing},y,x,p=nothing,d0=1)  where {T,D}
     @simd for i in eachindex(d.ds)
         non_caching_eval(d.ds[i],y,x,p,d0)
     end

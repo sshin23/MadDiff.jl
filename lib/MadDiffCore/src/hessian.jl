@@ -191,24 +191,24 @@ end
     return
 end
 
-Hessian(e::ExpressionSum{T,E,I1},d::GradientSum{D,I2},indexer = nothing) where {T,E,D,I1,I2} = HessianSum(Hessian(inner(e),inner(d),indexer),[Hessian(e,d,indexer) for (e,d) in zip(e.es,d.ds)])
-Hessian(e::ExpressionSum{T,E,Nothing},d::GradientSum{D,Nothing},indexer = nothing) where {T,E,D} = HessianSum(nothing,[Hessian(e,d,indexer) for (e,d) in zip(e.es,d.ds)])
+Hessian(e::ExpressionSum{T,E,I1},d::GradientSum{T,D,I2},indexer = nothing) where {T,E,D,I1,I2} = HessianSum(Hessian(inner(e),inner(d),indexer),[Hessian(e,d,indexer) for (e,d) in zip(e.es,d.ds)])
+Hessian(e::ExpressionSum{T,E,Nothing},d::GradientSum{T,D,Nothing},indexer = nothing) where {T,E,D} = HessianSum(nothing,[Hessian(e,d,indexer) for (e,d) in zip(e.es,d.ds)])
 Hessian(e::Variable{T},::G,indexer)  where {T <: AbstractFloat, G <: Gradient} = HESSIAN_NULL
 Hessian(e::Parameter{T},::G,indexer) where {T <: AbstractFloat, G <: Gradient} = HESSIAN_NULL
 Hessian(e::Constant{T},::G,indexer) where {T <: AbstractFloat, G <: Gradient} = HESSIAN_NULL
-Hessian(d1::G,d2::GradientNull,indexer) where G <: Gradient = HESSIAN_NULL
-Hessian(d1::GradientNull,d2::G,indexer) where G <: Gradient = HESSIAN_NULL
-Hessian(d1::GradientNull,d2::GradientNull,indexer) = HESSIAN_NULL
-Hessian(d1::Gradient0,d2::Gradient0,indexer)= HessianD00S(index(d1)>=index(d2) ? set_indexer!(indexer,index(d1),index(d2)) : 0,index(d1) >= index(d2))
-Hessian(d1::Gradient0,d2::Gradient0,::Nothing) = HessianD00(index(d1),index(d2),index(d1) >= index(d2))
-Hessian(d1::Gradient0,d2::G1, indexer = nothing) where G1 <: Union{Gradient1,Gradient2F1,Gradient2F2} = HessianD10(Hessian(d1,d2.d1,indexer),ref(d2))
-Hessian(d1::G1,d2::Gradient0, indexer = nothing) where G1 <: Union{Gradient1,Gradient2F1,Gradient2F2} = HessianD10(Hessian(d1.d1,d2,indexer),ref(d1))
+Hessian(d1::G,d2::GradientNull{T},indexer) where {T,G <: Gradient} = HESSIAN_NULL
+Hessian(d1::GradientNull{T},d2::G,indexer) where {T,G <: Gradient} = HESSIAN_NULL
+Hessian(d1::GradientNull{T},d2::GradientNull{T},indexer) where T = HESSIAN_NULL
+Hessian(d1::Gradient0{T},d2::Gradient0{T},indexer) where T = HessianD00S(index(d1)>=index(d2) ? set_indexer!(indexer,index(d1),index(d2)) : 0,index(d1) >= index(d2))
+Hessian(d1::Gradient0{T},d2::Gradient0{T},::Nothing) where T = HessianD00(index(d1),index(d2),index(d1) >= index(d2))
+Hessian(d1::Gradient0{T},d2::G1, indexer = nothing) where {T, G1 <: Union{Gradient1,Gradient2F1,Gradient2F2}} = HessianD10(Hessian(d1,d2.d1,indexer),ref(d2))
+Hessian(d1::G1,d2::Gradient0{T}, indexer = nothing) where {T, G1 <: Union{Gradient1,Gradient2F1,Gradient2F2}} = HessianD10(Hessian(d1.d1,d2,indexer),ref(d1))
 Hessian(d1::G1,d2::G2, indexer = nothing) where {G1 <: Union{Gradient1,Gradient2F1,Gradient2F2}, G2 <: Union{Gradient1,Gradient2F1,Gradient2F2}}= HessianD11(Hessian(d1.d1,d2.d1,indexer),ref(d1),ref(d2))
 Hessian(d1::G1,d2::G2, indexer = nothing) where {G1 <: Union{Gradient1,Gradient2F1,Gradient2F2}, G2 <: Gradient2} = HessianD21(Hessian(d1.d1,d2.d1,indexer),Hessian(d1.d1,d2.d2,indexer),ref(d1),ref1(d2),ref2(d2))
 Hessian(d1::G1,d2::G2, indexer = nothing) where {G1 <: Gradient2, G2 <: Union{Gradient1,Gradient2F1,Gradient2F2}} = HessianD21(Hessian(d1.d1,d2.d1,indexer),Hessian(d1.d2,d2.d1,indexer),ref(d2),ref1(d1),ref2(d1))
-Hessian(d1::Gradient0,d2::Gradient2{F,F1,F2}, indexer = nothing) where {F,F1,F2} = HessianD20(Hessian(d1,d2.d1,indexer),Hessian(d1,d2.d2,indexer),ref1(d2),ref2(d2))
-Hessian(d1::Gradient2{F,F1,F2},d2::Gradient0, indexer = nothing) where {F,F1,F2} = HessianD20(Hessian(d1.d1,d2,indexer),Hessian(d1.d2,d2,indexer),ref1(d1),ref2(d1))
-Hessian(d1::Gradient2{F,F1,F2} where {F,F1,F2},d2::Gradient2{F,F1,F2} where {F,F1,F2}, indexer = nothing) = Hessian02(Hessian(d1.d1,d2.d1,indexer),Hessian(d1.d1,d2.d2,indexer),Hessian(d1.d2,d2.d1,indexer),Hessian(d1.d2,d2.d2,indexer),ref1(d1),ref2(d1),ref1(d2),ref2(d2))
+Hessian(d1::Gradient0{T},d2::Gradient2{T,F,F1,F2}, indexer = nothing) where {T,F,F1,F2} = HessianD20(Hessian(d1,d2.d1,indexer),Hessian(d1,d2.d2,indexer),ref1(d2),ref2(d2))
+Hessian(d1::Gradient2{T,F,F1,F2},d2::Gradient0, indexer = nothing) where {T,F,F1,F2} = HessianD20(Hessian(d1.d1,d2,indexer),Hessian(d1.d2,d2,indexer),ref1(d1),ref2(d1))
+Hessian(d1::Gradient2{T,F1,F11,F12},d2::Gradient2{T,F2,F21,F22}, indexer = nothing) where {T,F1,F11,F12,F2,F21,F22} = Hessian02(Hessian(d1.d1,d2.d1,indexer),Hessian(d1.d1,d2.d2,indexer),Hessian(d1.d2,d2.d1,indexer),Hessian(d1.d2,d2.d2,indexer),ref1(d1),ref2(d1),ref1(d2),ref2(d2))
 Hessian(e::Expression1{T,F,E},d, indexer = nothing) where {T,F,E} = Hessian11(e,d,indexer)
 Hessian(e::Expression2{T,F,E1,E2},d,indexer = nothing) where {T,F,E1,E2} = Hessian22(e,d,indexer)
 Hessian(e::Expression2{T,F,E1,E2}, d,indexer = nothing) where {T,F,E1 <: Real,E2} = Hessian11F1(e,d,indexer)
@@ -219,7 +219,7 @@ Hessian(e::Expression2{T,F,E1,E2}, d,indexer = nothing) where {T,F<:Union{typeof
 Hessian(e::Expression2{T,F,E1,E2}, d,indexer = nothing) where {T,F<:Union{typeof(+),typeof(-),typeof(*),typeof(/)},E1 <: Expression,E2 <: Real} = Hessian11a(Hessian(e.e1,d.d1,indexer),ref(d))
 
 # performance killer ---------------
-function Hessian(d1::GradientSum{D1,I1},d2::GradientSum{D2,I2},indexer = nothing) where {D1,D2,I1,I2}
+function Hessian(d1::GradientSum{T,D1,I1},d2::GradientSum{T,D2,I2},indexer = nothing) where {T,D1,D2,I1,I2}
     @warn "This operation is expensive"
     hinner = Hessian(inner(d1),d2,indexer)
     hs = [Hessian(d,d2,indexer) for d in d1.ds]
@@ -230,7 +230,7 @@ function Hessian(d1::GradientSum{D1,I1},d2::GradientSum{D2,I2},indexer = nothing
         end
     end
 end
-function Hessian(d1::GradientSum{D1,Nothing},d2::GradientSum{D2,I2},indexer = nothing) where {D1,D2,I2}
+function Hessian(d1::GradientSum{T,D1,Nothing},d2::GradientSum{T,D2,I2},indexer = nothing) where {T,D1,D2,I2}
     @warn "This operation is expensive"
     hs = [Hessian(d,d2,indexer) for d in d1.ds]
     @inline function (z,x,p=nothing,h0=1)
@@ -239,27 +239,7 @@ function Hessian(d1::GradientSum{D1,Nothing},d2::GradientSum{D2,I2},indexer = no
         end
     end
 end
-function Hessian(d1::GradientSum{D1,I1},d2::GradientSum{D2,Nothing},indexer = nothing) where {D1,D2,I1}
-    @warn "This operation is expensive"
-    hinner = Hessian(inner(d1),d2,indexer)
-    hs = [Hessian(d,d2,indexer) for d in d1.ds]
-    @inline function (z,x,p=nothing,h0=1)
-        hinner(z,x,p,h0)
-        @simd for i in eachindex(hs)
-            @inbounds hs[i](z,x,p,h0)
-        end
-    end
-end
-function Hessian(d1::GradientSum{D1,Nothing},d2::GradientSum{D2,Nothing},indexer = nothing) where {D1,D2}
-    @warn "This operation is expensive"
-    hs = [Hessian(d,d2,indexer) for d in d1.ds]
-    @inline function (z,x,p=nothing,h0=1)
-        @simd for i in eachindex(hs)
-            @inbounds hs[i](z,x,p,h0)
-        end
-    end
-end
-function Hessian(d1::GradientSum{D1,I1},d2::G,indexer = nothing) where {D1,D2,I1,I2,G <: Gradient}
+function Hessian(d1::GradientSum{T,D1,I1},d2::GradientSum{T,D2,Nothing},indexer = nothing) where {T,D1,D2,I1}
     @warn "This operation is expensive"
     hinner = Hessian(inner(d1),d2,indexer)
     hs = [Hessian(d,d2,indexer) for d in d1.ds]
@@ -270,7 +250,7 @@ function Hessian(d1::GradientSum{D1,I1},d2::G,indexer = nothing) where {D1,D2,I1
         end
     end
 end
-function Hessian(d1::GradientSum{D1,Nothing},d2::G,indexer = nothing) where {D1,D2,I2,G <: Gradient}
+function Hessian(d1::GradientSum{T,D1,Nothing},d2::GradientSum{T,D2,Nothing},indexer = nothing) where {T,D1,D2}
     @warn "This operation is expensive"
     hs = [Hessian(d,d2,indexer) for d in d1.ds]
     @inline function (z,x,p=nothing,h0=1)
@@ -279,7 +259,27 @@ function Hessian(d1::GradientSum{D1,Nothing},d2::G,indexer = nothing) where {D1,
         end
     end
 end
-function Hessian(d1::G,d2::GradientSum{D2,I2},indexer = nothing) where {G <: Gradient,D2,I2}
+function Hessian(d1::GradientSum{T,D1,I1},d2::G,indexer = nothing) where {T,D1,D2,I1,I2,G <: Gradient}
+    @warn "This operation is expensive"
+    hinner = Hessian(inner(d1),d2,indexer)
+    hs = [Hessian(d,d2,indexer) for d in d1.ds]
+    @inline function (z,x,p=nothing,h0=1)
+        hinner(z,x,p,h0)
+        @simd for i in eachindex(hs)
+            @inbounds hs[i](z,x,p,h0)
+        end
+    end
+end
+function Hessian(d1::GradientSum{T,D1,Nothing},d2::G,indexer = nothing) where {T,D1,D2,I2,G <: Gradient}
+    @warn "This operation is expensive"
+    hs = [Hessian(d,d2,indexer) for d in d1.ds]
+    @inline function (z,x,p=nothing,h0=1)
+        @simd for i in eachindex(hs)
+            @inbounds hs[i](z,x,p,h0)
+        end
+    end
+end
+function Hessian(d1::G,d2::GradientSum{T,D2,I2},indexer = nothing) where {T,G <: Gradient,D2,I2}
     @warn "This operation is expensive"
     hinner = Hessian(d1,inner(d2),indexer)
     hs = [Hessian(d1,d,indexer) for d in d2.ds]
@@ -290,7 +290,7 @@ function Hessian(d1::G,d2::GradientSum{D2,I2},indexer = nothing) where {G <: Gra
         end
     end
 end
-function Hessian(d1::G,d2::GradientSum{D2,Nothing},indexer = nothing) where {G <: Gradient, D2}
+function Hessian(d1::G,d2::GradientSum{T,D2,Nothing},indexer = nothing) where {T, G <: Gradient, D2}
     @warn "This operation is expensive"
     hs = [Hessian(d1,d,indexer) for d in d2.ds]
     @inline function (z,x,p=nothing,h0=1)

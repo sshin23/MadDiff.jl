@@ -70,4 +70,4 @@ optimize!(m; differentiation_backend = MadDiffAD())
 MadDiff.jl constructs first and second derivative functions off-line (i.e., prior to calling the optimization solver) by applying operator overloading-based automatic differentiation on _functions_. The exact _derivative functions_ can be obtained as results. A benchmark code can be found [here](https://github.com/sshin23/MadDiff.jl/blob/main/benchmark/benchmark.jl).
 
 ## Bug reports and support
-Please report issues and feature requests via the [Github issue tracker](https://github.com/sshin23/MadDiffModels.jl/issues). 
+Please report issues and feature requests via the [Github issue tracker](https://github.com/sshin23/MadDiff.jl/issues). 

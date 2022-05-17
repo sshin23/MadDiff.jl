@@ -6,11 +6,12 @@ import SpecialFunctions: erfi, bessely, besselj, loggamma, erfcinv, hankelh2, ha
 
 export Constant, Variable, Parameter, Field, Gradient, Jacobian, Hessian, SparseHessian, SparseJacobian, SparseGradient, function_evaluator, gradient_evaluator, sparse_gradient_evaluator, hessian_evaluator, sparse_hessian_evaluator, field_evaluator, jacobian_evaluator, sparse_jacobian_evaluator, obj, cons!, grad!, jac_coord!, hess_coord!
 
-abstract type Expression{T <: AbstractFloat} end
-abstract type Gradient{T <: AbstractFloat} end
-abstract type Hessian{T <: AbstractFloat} end
-abstract type Field end
-abstract type Entry{T <: AbstractFloat} end
+abstract type Term{T <: AbstractFloat} end 
+abstract type Expression{T <: AbstractFloat} <: Term{T} end
+abstract type Gradient{T <: AbstractFloat} <: Term{T} end
+abstract type Hessian{T <: AbstractFloat} <: Term{T} end
+abstract type Field{T <: AbstractFloat} <: Term{T} end
+abstract type Entry{T <: AbstractFloat} <: Term{T} end
 
 mutable struct MyRef{T}
     x::T

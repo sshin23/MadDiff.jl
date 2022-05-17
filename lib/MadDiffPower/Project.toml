@@ -1,0 +1,4 @@
+name = "MadDiffPower"
+uuid = "22c7c2a9-0eb3-49a9-9811-2f4258fcd025"
+authors = ["Sungho Shin <sshin@anl.gov>"]
+version = "0.1.0"

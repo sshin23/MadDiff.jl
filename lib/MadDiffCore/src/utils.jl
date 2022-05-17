@@ -28,14 +28,14 @@ setrefval2(e,val) = ref2(e)[] = val
 addrefval(e,val) = ref(e)[] += val
 
 # non-caching variants
-@inline non_caching_eval(f::Sink{Field},y,x,p=nothing) = inner(f)(y,x,p)
-@inline function non_caching_eval(f::Field1{E,I},y,x,p=nothing) where {E,I}
+@inline non_caching_eval(f::Sink{Field{T}},y,x,p=nothing) where T = inner(f)(y,x,p)
+@inline function non_caching_eval(f::Field1{T,E,I},y,x,p=nothing) where {T,E,I}
     non_caching_eval(inner(f),y,x,p)
     @simd for i in eachindex(f.es)
         non_caching_eval(f.es[i],y,x,p)
     end
 end
-@inline function non_caching_eval(f::Field1{E,Nothing},y,x,p=nothing) where E
+@inline function non_caching_eval(f::Field1{T,E,Nothing},y,x,p=nothing) where {T,E}
     @simd for i in eachindex(f.es)
         non_caching_eval(f.es[i],y,x,p)
     end
@@ -76,4 +76,4 @@ end
 end
 @inline non_caching_eval(e::IndexedExpression{E},y,x,p=nothing) where {E} = (y[index(e)] = non_caching_eval(e.e,x,p))
 @inline non_caching_eval(e::JacobianEntry{E},y,x,p=nothing) where {E} = non_caching_eval(e.e,(index(e),y),x,p)
-@inline non_caching_eval(e::FieldNull,y,x,p=nothing) = nothing
+@inline non_caching_eval(e::FieldNull{T},y,x,p=nothing) where T = nothing

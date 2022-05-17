@@ -9,7 +9,7 @@ struct Gradient1{T <: AbstractFloat, F, D1 <: Gradient} <: Gradient{T}
     ref::MyRef{T}
     function Gradient1(e::Expression1{T,F,E1}, indexer = nothing) where {T,F,E1 <: Expression{T}}
         d1 = Gradient(e.e1,indexer)
-        return new{T,F,typeof(d1)}(d1,ref(e.e1),MyRef(1.))
+        return new{T,F,typeof(d1)}(d1,ref(e.e1),MyRef{T}(1.))
     end
 end
 struct Gradient2F1{T <: AbstractFloat, F, D1 <: Gradient, R<: Real} <: Gradient{T}
@@ -19,7 +19,7 @@ struct Gradient2F1{T <: AbstractFloat, F, D1 <: Gradient, R<: Real} <: Gradient{
     ref::MyRef{T}
     function Gradient2F1(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1<:Real,E2 <: Expression{T}}
         g1 = Gradient(e.e2,indexer)
-        return new{T,F,typeof(g1),typeof(e.e1)}(e.e1,g1,ref(e.e2),MyRef(0.))
+        return new{T,F,typeof(g1),typeof(e.e1)}(e.e1,g1,ref(e.e2),MyRef{T}(0.))
     end
 end
 struct Gradient2F2{T <: AbstractFloat, F,D1 <: Gradient, R<: Real} <: Gradient{T}
@@ -29,7 +29,7 @@ struct Gradient2F2{T <: AbstractFloat, F,D1 <: Gradient, R<: Real} <: Gradient{T
     ref::MyRef{T}
     function Gradient2F2(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1 <: Expression{T},E2<:Real}
         g1 = Gradient(e.e1,indexer)
-        return new{T,F,typeof(g1),typeof(e.e2)}(e.e2,g1,ref(e.e1),MyRef(0.))
+        return new{T,F,typeof(g1),typeof(e.e2)}(e.e2,g1,ref(e.e1),MyRef{T}(0.))
     end
 end
 struct Gradient2{T <: AbstractFloat, F,D1 <: Gradient,D2 <: Gradient} <: Gradient{T}
@@ -42,17 +42,17 @@ struct Gradient2{T <: AbstractFloat, F,D1 <: Gradient,D2 <: Gradient} <: Gradien
     function Gradient2(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1 <: Expression{T},E2 <: Expression{T}}
         g1 = Gradient(e.e1,indexer)
         g2 = Gradient(e.e2,indexer)
-        return new{T,F,typeof(g1),typeof(g2)}(g1,g2,ref(e.e1),ref(e.e2),MyRef(0.),MyRef(0.))
+        return new{T,F,typeof(g1),typeof(g2)}(g1,g2,ref(e.e1),ref(e.e2),MyRef{T}(0.),MyRef{T}(0.))
     end
     function Gradient2(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1 <: Expression{T},E2}
         g1 = Gradient(e.e1,indexer)
         g2 = Gradient(e.e2,indexer)
-        return new{T,F,typeof(g1),typeof(g2)}(g1,g2,ref(e.e1),ref(e.e2),MyRef(0.),MyRef(0.))
+        return new{T,F,typeof(g1),typeof(g2)}(g1,g2,ref(e.e1),ref(e.e2),MyRef{T}(0.),MyRef{T}(0.))
     end
     function Gradient2(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1,E2 <: Expression{T}}
         g1 = Gradient(e.e1,indexer)
         g2 = Gradient(e.e2,indexer)
-        return new{T,F,typeof(g1),typeof(g2)}(g1,g2,ref(e.e1),ref(e.e2),MyRef(0.),MyRef(0.))
+        return new{T,F,typeof(g1),typeof(g2)}(g1,g2,ref(e.e1),ref(e.e2),MyRef{T}(0.),MyRef{T}(0.))
     end
 end
 struct GradientSum{T <: AbstractFloat,D <: Gradient{T},I} <: Gradient{T}

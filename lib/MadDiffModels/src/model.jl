@@ -10,33 +10,60 @@ s.t. xl <=   x  <= xu
 ```
 where `f:R^n -> R` and `g(·):R^n -> R^m`.
 """
-Base.@kwdef mutable struct MadDiffModel{T <: Real} <: AbstractNLPModel{T,Vector{T}}
-    con::Sink{Field} = Field()
-    obj::Expression = Constant(0.)
+mutable struct MadDiffModel{T <: AbstractFloat} <: AbstractNLPModel{T,Vector{T}}
+    con::Sink
+    obj::Expression
 
-    n::Int = 0 # num vars
-    q::Int = 0 # num pars
-    m::Int = 0 # num cons
-
+    n::Int # num vars
+    q::Int # num pars
+    m::Int # num cons
     
-    x::Vector{T} = Float64[]
-    p::Vector{T} = Float64[]
-    l::Vector{T} = Float64[]
-    zl::Vector{T} = Float64[]
-    zu::Vector{T} = Float64[]
-    xl::Vector{T} = Float64[]
-    xu::Vector{T} = Float64[]
-    gl::Vector{T} = Float64[]
-    gu::Vector{T} = Float64[]
+    x::Vector{T}
+    p::Vector{T}
+    l::Vector{T}
+    zl::Vector{T}
+    zu::Vector{T}
+    xl::Vector{T}
+    xu::Vector{T}
+    gl::Vector{T}
+    gu::Vector{T}
 
-    instantiated::Bool = false
-    meta::Union{Nothing,NLPModelMeta{T, Vector{T}}} = nothing
-    nlpcore::Union{Nothing,NLPCore} = nothing
-    counters::Union{Nothing,NLPModelsCounters} = nothing
+    instantiated::Bool
+    meta::Union{Nothing,NLPModelMeta{T, Vector{T}}}
+    nlpcore::Union{Nothing,NLPCore}
+    counters::Union{Nothing,NLPModelsCounters}
     
-    ext::Dict{Symbol,Any} = Dict{Symbol,Any}()
-    opt::Dict{Symbol,Any} = Dict{Symbol,Any}()
+    ext::Dict{Symbol,Any}
+    opt::Dict{Symbol,Any}
 end
+
+"""
+    MadDiffModel{T}(; options...)
+
+Creates an empty `MadDiffModel{T}` with optional solver options.
+
+**Example**
+`MadDiffModel{Float32}(linear_solver = "ma27")`
+"""
+MadDiffModel{T}(; options...) where T = MadDiffModel{T}(
+    Field{T}(), Constant(0f0),
+    0, 0, 0,
+    T[], T[], T[], T[], T[], T[], T[], T[], T[], 
+    false, nothing, nothing, nothing,
+    Dict{Symbol,Any}(),
+    Dict{Symbol,Any}(name=>option for (name,option) in options)
+)
+
+"""
+    MadDiffModel(; options...)
+
+Creates an empty `MadDiffModel{Float64}` with optional solver options.
+
+**Example**
+`MadDiffModel(linear_solver = "ma27")`
+"""
+MadDiffModel(; options...)= MadDiffModel{Float64}(; options...)
+
 
 """
     Constraint
@@ -76,18 +103,7 @@ convert(::Type{Expression},e::ModelComponent{C}) where C = inner(e)
 getindex(m::MadDiffModel,idx::Symbol) = m.ext[idx]
 setindex!(m::MadDiffModel,val,idx::Symbol) = setindex!(m.ext,val,idx)
 
-"""
-    MadDiffModel(; options...)
-
-Creates a `MadDiffModel` with optional solver options.
-
-**Example**
-`MadDiffModel(linear_solver = "ma27")`
-"""
-MadDiffModel(; options...)=
-    MadDiffModel{Float64}(opt = Dict{Symbol,Any}(name=>option for (name,option) in options))
-
-function variable(m::MadDiffModel;lb=-Inf,ub=Inf,start=0.,name=nothing)
+function variable(m::MadDiffModel{T};lb=-Inf,ub=Inf,start=0.,name=nothing) where T
     m.instantiated = false
     m.n += 1
     push!(m.x,start)
@@ -95,14 +111,14 @@ function variable(m::MadDiffModel;lb=-Inf,ub=Inf,start=0.,name=nothing)
     push!(m.xu,ub)
     push!(m.zl,1.)
     push!(m.zu,1.)
-    ModelComponent(m,Variable{Float64}(m.n))
+    ModelComponent(m,Variable{T}(m.n))
 end
 
-function parameter(m::MadDiffModel,val=0.;name=nothing)
+function parameter(m::MadDiffModel{T},val=0.;name=nothing) where T
     m.instantiated = false
     m.q += 1
     push!(m.p,val)
-    ModelComponent(m,Parameter{Float64}(m.q))
+    ModelComponent(m,Parameter{T}(m.q))
 end
 
 function constraint(m::MadDiffModel,e::E;lb=0.,ub=0.) where E <: Expression
@@ -234,13 +250,13 @@ end
     end
 end
 
-function show(io::IO, m::MadDiffModel)
+function show(io::IO, m::MadDiffModel{T}) where T
     if m.instantiated 
-        println(io, "A MadDiffModel (instantiated).")
+        println(io, "MadDiffModel{$T} (instantiated).")
         show(io, m.meta)
         show(io, m.counters)
     else
-        println(io, "A MadDiffModel (not instantiated).")
+        println(io, "MadDiffModel{$T} (not instantiated).")
     end
 end
 

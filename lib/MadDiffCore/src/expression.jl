@@ -41,7 +41,7 @@ struct ExpressionSum{T <: AbstractFloat, E <: Expression{T}, I} <: Expression{T}
     inner::I
     es::Vector{E}
     ref::MyRef{T}
-    ExpressionSum(es::Vector{E}) where {T <: AbstractFloat, E <: Expression{T}} = new{T,eltype(es),Nothing}(nothing,es,MyRef(0.))
+    ExpressionSum(es::Vector{E}) where {T <: AbstractFloat, E <: Expression{T}} = new{T,eltype(es),Nothing}(nothing,es,MyRef{T}(0.))
     ExpressionSum(inner::Vector{E},es) where {T <: AbstractFloat, E <: Expression{T}} = new{T,eltype(es),typeof(inner)}(inner,es,ref(inner))
 end
 

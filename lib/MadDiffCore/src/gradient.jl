@@ -82,7 +82,7 @@ Gradient(e::V,(row,indexer)::Tuple{Int,Dict{Tuple{Int,Int},Int}}) where {T, V <:
 Gradient(e::V,indexer=nothing) where {T, V <: Variable{T}} = Gradient0{T}(index(e),set_indexer!(indexer,index(e)) )
 Gradient(e::V,::Nothing) where {T, V <: Variable{T}} = Gradient0{T}(index(e),index(e))
 Gradient(e::V,::Tuple{Int,Nothing}) where {T, V <: Variable{T}} = Gradient0{T}(index(e),index(e))
-Gradient(e::P,::T) where {P<:Parameter,T} = GradientNull{T}()
+Gradient(e::P,::N) where {T, P<:Parameter{T}, N} = GradientNull{T}()
 Gradient(e::C, indexer = nothing ) where {T, C<:Constant{T}} = GradientNull{T}()
 Gradient(e::ExpressionSum{T,E,I},indexer = nothing) where {T,E,I} = GradientSum(Gradient(inner(e),indexer),[Gradient(ee,indexer) for ee in e.es])
 Gradient(e::ExpressionSum{T,E,Nothing},indexer = nothing) where {T,E,I} = GradientSum(nothing,[Gradient(ee,indexer) for ee in e.es])

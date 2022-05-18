@@ -30,7 +30,7 @@ mutable struct MadDiffModel{T <: AbstractFloat} <: AbstractNLPModel{T,Vector{T}}
 
     instantiated::Bool
     meta::Union{Nothing,NLPModelMeta{T, Vector{T}}}
-    nlpcore::Union{Nothing,NLPCore}
+    nlpcore::Union{Nothing,MadDiffCore.NLPCore}
     counters::Union{Nothing,NLPModelsCounters}
     
     ext::Dict{Symbol,Any}
@@ -179,28 +179,42 @@ objective_value(m::MadDiffModel) = non_caching_eval(m.obj,m.x,m.p)
 num_variables(m::MadDiffModel) = m.n
 num_constraints(m::MadDiffModel) = m.m
 
-function instantiate!(m::MadDiffModel)
-    
-    # grad = Gradient(m.obj)
-    # jac,jac_sparsity = SparseJacobian(m.con)
-    # hess,hess_sparsity = SparseLagrangianHessian(m.obj,grad,inner(m.con),jac)
-    
-    m.nlpcore = NLPCore(
-        m.obj,m.con
-    )
-    m.meta = NLPModelMeta(
-        m.n,
-        x0 = m.x,
-        lvar = m.xl,
-        uvar = m.xu,
-        ncon = m.m,
-        y0 = m.l,
-        lcon = m.gl,
-        ucon = m.gu,
-        nnzj = length(m.nlpcore.jac_sparsity),
-        nnzh = length(m.nlpcore.hess_sparsity),
-        minimize = true
-    )
+function instantiate!(m::MadDiffModel; sparse = true)
+
+    if sparse 
+        m.nlpcore = MadDiffCore.SparseNLPCore(
+            m.obj,m.con
+        )
+        m.meta = NLPModelMeta(
+            m.n,
+            x0 = m.x,
+            lvar = m.xl,
+            uvar = m.xu,
+            ncon = m.m,
+            y0 = m.l,
+            lcon = m.gl,
+            ucon = m.gu,
+            nnzj = length(m.nlpcore.jac_sparsity),
+            nnzh = length(m.nlpcore.hess_sparsity),
+            minimize = true
+        )
+    else
+        m.nlpcore = MadDiffCore.DenseNLPCore(
+            m.obj,m.con
+        )
+        m.meta = NLPModelMeta(
+            m.n,
+            x0 = m.x,
+            lvar = m.xl,
+            uvar = m.xu,
+            ncon = m.m,
+            y0 = m.l,
+            lcon = m.gl,
+            ucon = m.gu,
+            minimize = true
+        )
+    end
+
     m.counters = NLPModelsCounters()
     
     m.instantiated=true

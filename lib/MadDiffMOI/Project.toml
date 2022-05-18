@@ -5,12 +5,10 @@ version = "0.1.0"
 
 [deps]
 MadDiffCore = "5ac3a7ac-a472-4f3e-93f4-0386471e765c"
-MadDiffModels = "3a0fffed-42e2-400f-bc9f-183fc4b91caf"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 
 [compat]
 MadDiffCore = "0.1.0"
-MadDiffModels = "0.1.0"
 SpecialFunctions = "1.3"
 MathOptInterface = "1.2"

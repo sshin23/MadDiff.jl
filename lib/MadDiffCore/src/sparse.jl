@@ -13,7 +13,7 @@ function SparseJacobian(f::Field1{G,I}) where {G,I}
     set_sparsity!(sparsity,indexer)
     return (jac,sparsity)
 end
-SparseJacobian(::FieldNull) = (FIELD_NULL,Tuple{Int,Int}[])
+SparseJacobian(f::FieldNull) = (f,Tuple{Int,Int}[])
 
 function SparseHessian(e::E,d::G) where {E,G}
     indexer = Dict{Tuple{Int,Int},Int}()

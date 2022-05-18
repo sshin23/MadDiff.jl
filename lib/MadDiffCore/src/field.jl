@@ -29,7 +29,6 @@ end
 Field(f::FieldNull{T},e::E) where {T, E <: IndexedExpression} = Field1([e])
 Field(f::F,e::E) where {F <: Field, E <: IndexedExpression} = _field(f,e) ? f : Field1(f,[e])
 
-
 function _field(F::Field1{T,E,I},e) where {T,E,I} 
     if e isa eltype(F.es)
         push!(F.es,e)

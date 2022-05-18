@@ -114,7 +114,7 @@ function get_comparison(index,ex1,ex2)
 end
 
 
-function NLPCore(nlp_data::MathOptInterface.Nonlinear.Model)
+function SparseNLPCore(nlp_data::MathOptInterface.Nonlinear.Model)
     
     subex = MadDiffCore.Field()
     con = MadDiffCore.Field()
@@ -128,7 +128,7 @@ function NLPCore(nlp_data::MathOptInterface.Nonlinear.Model)
     
     obj = Expression(nlp_data.objective; subex = subex)
 
-    return NLPCore(obj,con)
+    return SparseNLPCore(obj,con)
 end
 
 MOI.NLPBoundsPair(constraints) = [MOI.NLPBoundsPair(val.set) for (key,val) in constraints]
@@ -155,38 +155,38 @@ function MOI.Nonlinear.Evaluator(
     ::MadDiffAD,
     ::Vector{MathOptInterface.VariableIndex}
     )
-    backend = NLPCore(model)
+    backend = SparseNLPCore(model)
     bounds  = MOI.NLPBoundsPair(model.constraints)
     MadDiffEvaluator(backend,bounds,model.parameters,0.,0.,0.,0.,0.)
 end
 
 function MOI.eval_objective(evaluator::MadDiffEvaluator, x)
     start = time()
-    obj = MadDiffModels.obj(evaluator.backend, x, evaluator.parameters)
+    obj = MadDiffCore.obj(evaluator.backend, x, evaluator.parameters)
     evaluator.eval_objective_timer += time() - start
     return obj
 end
 function MOI.eval_objective_gradient(evaluator::MadDiffEvaluator, g, x)
     start = time()
-    MadDiffModels.grad!(evaluator.backend, x, g, evaluator.parameters)
+    MadDiffCore.grad!(evaluator.backend, x, g, evaluator.parameters)
     evaluator.eval_objective_gradient_timer += time() - start
     return
 end
 function MOI.eval_constraint(evaluator::MadDiffEvaluator, g, x)
     start = time()
-    MadDiffModels.cons!(evaluator.backend, x, g, evaluator.parameters)
+    MadDiffCore.cons!(evaluator.backend, x, g, evaluator.parameters)
     evaluator.eval_constraint_timer += time() - start
     return
 end
 function MOI.eval_constraint_jacobian(evaluator::MadDiffEvaluator, J, x)
     start = time()
-    MadDiffModels.jac_coord!(evaluator.backend, x, J, evaluator.parameters)
+    MadDiffCore.jac_coord!(evaluator.backend, x, J, evaluator.parameters)
     evaluator.eval_constraint_jacobian_timer += time() - start
     return
 end
 function MOI.eval_hessian_lagrangian(evaluator::MadDiffEvaluator, H, x, σ, μ)
     start = time()
-    MadDiffModels.hess_coord!(evaluator.backend, x, μ, H, evaluator.parameters; obj_weight = σ)
+    MadDiffCore.hess_coord!(evaluator.backend, x, μ, H, evaluator.parameters; obj_weight = σ)
     evaluator.eval_hessian_lagrangian_timer += time() - start
     return
 end

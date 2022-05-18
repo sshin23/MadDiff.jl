@@ -3,25 +3,7 @@ struct JacobianEntry{T,E <: Gradient{T}} <: Entry{T}
     index::Int
     e::E
 end
-# struct Jacobian{G <: Gradient, I}
-#     inner::I
-#     ds::Vector{Tuple{Int,G}}
-# end
-# @inline function (J::Jacobian{G,I})(y,x,p=nothing) where {G,I}
-#     inner(J)(y,x)
-#     @simd for i in eachindex(J.ds)
-#         (j,d) = J.ds[i]
-#         d((j,y),x,p)
-#     end
-# end
-# @inline function (J::Jacobian{G,Nothing})(y,x,p=nothing) where G
-#     @simd for i in eachindex(J.ds)
-#         (j,d) = J.ds[i]
-#         d((j,y),x,p)
-#     end
-# end
 @inline (e::JacobianEntry{T,E})(y,x,p=nothing) where {T,E} = e.e((index(e),y),x,p)
-# Jacobian(s::Sink{Field}) = Jacobian(inner(s))
 Jacobian(f::Field1{T,G,I},indexer = nothing) where {T,G,I} = Field1(Jacobian(inner(f),indexer),[JacobianEntry(index(ie),Gradient(ie.e,(index(ie),indexer))) for ie in f.es])
 Jacobian(f::Field1{T,G,Nothing},indexer = nothing) where {T,G} = Field1(nothing,[JacobianEntry(index(ie),Gradient(ie.e,(index(ie),indexer))) for ie in f.es])
 
@@ -30,6 +12,8 @@ struct LagrangianEntry{T,E <: Hessian{T}} <: Entry{T}
     index::Int
     e::E
 end
+Field1(inner,::Vector{LagrangianEntry{HessianNull{T}}}) where T = inner
+
 struct LagrangianHessian{F}
     f::F
 end
@@ -58,10 +42,18 @@ function _LagrangianHessian(obj,grad,con::FieldNull{T},jac::FieldNull{T},indexer
     Hessian(obj,grad,indexer)
 end
 
-Field1(inner,::Vector{LagrangianEntry{HessianNull{T}}}) where T = inner
-
 # NLPCore
-struct NLPCore
+abstract type NLPCore end
+
+struct DenseNLPCore <: NLPCore
+    obj::Expression
+    con::Field
+    grad::Gradient
+    jac::Field
+    hess::MadDiffCore.LagrangianHessian
+end
+
+struct SparseNLPCore <: NLPCore
     obj::Expression
     con::Field
     grad::Gradient
@@ -71,12 +63,20 @@ struct NLPCore
     hess_sparsity::Vector{Tuple{Int,Int}}
 end
 
-NLPCore(obj::Expression,con::Sink) = NLPCore(obj,con.inner)
-function NLPCore(obj::Expression,con::Field)
+DenseNLPCore(obj::Expression,con::Sink) = DenseNLPCore(obj,con.inner)
+function DenseNLPCore(obj::Expression,con::Field)
+    grad = Gradient(obj)
+    jac = Jacobian(con)
+    hess = LagrangianHessian(obj,grad,con,jac)
+    return DenseNLPCore(obj,con,grad,jac,hess)
+end
+
+SparseNLPCore(obj::Expression,con::Sink) = SparseNLPCore(obj,con.inner)
+function SparseNLPCore(obj::Expression,con::Field)
     grad = Gradient(obj)
     jac,jac_sparsity = SparseJacobian(con)
     hess,hess_sparsity = SparseLagrangianHessian(obj,grad,con,jac)
-    return NLPCore(obj,con,grad,jac,hess,jac_sparsity,hess_sparsity)
+    return SparseNLPCore(obj,con,grad,jac,hess,jac_sparsity,hess_sparsity)
 end
 
 @inline function obj(nlpcore::NLPCore,x,p)
@@ -101,7 +101,5 @@ end
     nlpcore.con(DUMMY,x,p)
     nlpcore.grad(DUMMY,x,p)
     nlpcore.jac(DUMMY,x,p)
-    nlpcore.hess(z,x,p,lag, obj_weight) ###
+    nlpcore.hess(z,x,p,lag, obj_weight)
 end
-
-

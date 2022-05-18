@@ -58,7 +58,7 @@ function jacobian_evaluator(f::Field)
     end
 end
 
-field_evaluator(f::Sink{Field}) = field_evaluator(inner(f))
-jacobian_evaluator(f::Sink{Field}) = jacobian_evaluator(inner(f))
-sparse_jacobian_evaluator(f::Sink{Field}) = sparse_jacobian_evaluator(inner(f))
+field_evaluator(f::Sink) = field_evaluator(inner(f))
+jacobian_evaluator(f::Sink) = jacobian_evaluator(inner(f))
+sparse_jacobian_evaluator(f::Sink) = sparse_jacobian_evaluator(inner(f))
 

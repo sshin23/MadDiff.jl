@@ -1,9 +1,3 @@
-# gfortran -fPIC -c -O3 -o ma27/ma27d.o ma27/ma27d.f
-# gfortran -fPIC -c -O3 -o ma27/ma27s.o ma27/ma27s.f
-# gfortran -fPIC -c -O3 -o common/deps.o common/deps.f
-# gfortran -olibhsl.so -shared -fPIC -O3 common/deps.o ma27/ma27d.o ma27/ma27s.o -fopenmp
-# $with_metis $with_blas
-
 using MadDiff, MadNLP, MadNLPHSL, MadNLPMumps, MadNLPGPU, SparseArrays
 
 T = Float32
@@ -37,13 +31,3 @@ madnlp(
     kkt_system = MadNLP.DENSE_KKT_SYSTEM,
     lapackcpu_algorithm = MadNLPLapackCPU.LU
 )
-# ips = MadNLP.InteriorPointSolver{
-#     T,MadNLP.SparseKKTSystem{T,SparseMatrixCSC{T,Int32}}
-# }(
-#     m,
-#     MadNLP.Options(linear_solver=MadNLPMa27, tol = 1e-4)
-# )
-
-# MadNLP.initialize!(ips.kkt)
-# @time MadNLP.optimize!(ips)
-

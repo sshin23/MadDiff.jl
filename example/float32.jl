@@ -1,6 +1,6 @@
 using MadDiff, MadNLP, MadNLPHSL, MadNLPMumps, MadNLPGPU, SparseArrays
 
-T = Float32
+T = Float64
 N= 20;
 m = MadDiffModel{T}(); 
 x = [variable(m; start=mod(i,2)==1 ? -1.2 : 1.) for i=1:N]
@@ -10,7 +10,6 @@ for i=1:N-2
 end
 
 import MadNLP: jac_dense!, hess_dense!
-
 
 @inline function MadNLP.jac_dense!(m::MadDiffModel,x::AbstractVector,J)
     MadDiffModels.increment!(m, :neval_jac)
@@ -23,11 +22,12 @@ end
     return 
 end
 
-instantiate!(m; sparse=false) 
-madnlp(
+instantiate!(m; sparse=false)
+ips = MadNLP.InteriorPointSolver(
     m;
-    linear_solver=MadNLPLapackGPU,
+    linear_solver=MadNLPLapackCPU,
     tol = 1e-4,
     kkt_system = MadNLP.DENSE_KKT_SYSTEM,
-    lapackcpu_algorithm = MadNLPLapackCPU.LU
 )
+MadNLP.initialize!(ips.kkt)
+MadNLP.optimize!(ips)

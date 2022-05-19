@@ -6,6 +6,7 @@ end
 @inline (e::JacobianEntry{T,E})(y,x,p=nothing) where {T,E} = e.e((index(e),y),x,p)
 Jacobian(f::Field1{T,G,I},indexer = nothing) where {T,G,I} = Field1(Jacobian(inner(f),indexer),[JacobianEntry(index(ie),Gradient(ie.e,(index(ie),indexer))) for ie in f.es])
 Jacobian(f::Field1{T,G,Nothing},indexer = nothing) where {T,G} = Field1(nothing,[JacobianEntry(index(ie),Gradient(ie.e,(index(ie),indexer))) for ie in f.es])
+Jacobian(::MadDiffCore.FieldNull{T}) where T = FieldNull{T}()
 
 # Lagrangian Hessian
 struct LagrangianEntry{T,E <: Hessian{T}} <: Entry{T}

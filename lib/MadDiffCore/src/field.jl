@@ -1,10 +1,10 @@
 struct FieldNull{T} <: Field{T} end
-struct Field1{T,E <: Term{T},I}  <: Field{T}
+struct Field1{T,E <: AbstractExpression{T},I}  <: Field{T}
     inner::I
     es::Vector{E}
-    Field1(es::Vector{E}) where {T, E <: Term{T}} = new{T,E,Nothing}(nothing,es)
-    Field1(inner::F,es::Vector{E}) where {T,E <: Term{T},F} = new{T,E,typeof(inner)}(inner,es)
-    Field1(::Nothing,es::Vector{E}) where {T,E <: Term{T}} = new{T,E,Nothing}(nothing,es)
+    Field1(es::Vector{E}) where {T, E <: AbstractExpression{T}} = new{T,E,Nothing}(nothing,es)
+    Field1(inner::F,es::Vector{E}) where {T,E <: AbstractExpression{T},F} = new{T,E,typeof(inner)}(inner,es)
+    Field1(::Nothing,es::Vector{E}) where {T,E <: AbstractExpression{T}} = new{T,E,Nothing}(nothing,es)
 end
 struct IndexedExpression{T <: AbstractFloat, E <: Expression{T}} <: Entry{T}
     index::Int

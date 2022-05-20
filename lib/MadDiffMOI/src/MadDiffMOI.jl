@@ -1,10 +1,13 @@
+"""
+    MadDiffMOI
+
+`MadDiffMOI` is a submodule of `MadDiff`. `MadDifMOI` allows solving nonlinear optimization problems specified by `MathOptInterface` (https://github.com/jump-dev/JuMP.jl/tree/od/moi-nonlinear).
+"""
 module MadDiffMOI
 
-using MadDiffCore: MadDiffCore, SparseNLPCore, Expression, Constant
+import MadDiffCore
 using SpecialFunctions
-using MathOptInterface
-
-export MadDiffAD
+using MathOptInterface: MathOptInterface, eval_objective
 
 include("moi_interface.jl")
 

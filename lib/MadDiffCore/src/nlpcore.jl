@@ -15,7 +15,7 @@ struct LagrangianEntry{T,E <: Hessian{T}} <: Entry{T}
 end
 Field1(inner,::Vector{LagrangianEntry{HessianNull{T}}}) where T = inner
 
-struct LagrangianHessian{F}
+struct LagrangianHessian{T,F <: AbstractExpression{T}}
     f::F
 end
 @inline (laghess::LagrangianHessian)(z,x,p,l,s) = _eval_laghess(laghess.f,z,x,p,l,s)
@@ -44,22 +44,22 @@ function _LagrangianHessian(obj,grad,con::FieldNull{T},jac::FieldNull{T},indexer
 end
 
 # NLPCore
-abstract type NLPCore end
+abstract type AbstractNLPCore{T <: AbstractFloat} end
 
-struct DenseNLPCore <: NLPCore
-    obj::Expression
-    con::Field
-    grad::Gradient
-    jac::Field
-    hess::MadDiffCore.LagrangianHessian
+struct DenseNLPCore{T <: AbstractFloat} <: AbstractNLPCore{T}
+    obj::Expression{T}
+    con::Field{T}
+    grad::Gradient{T}
+    jac::Field{T}
+    hess::LagrangianHessian{T}
 end
 
-struct SparseNLPCore <: NLPCore
-    obj::Expression
-    con::Field
-    grad::Gradient
-    jac::Field
-    hess::MadDiffCore.LagrangianHessian
+struct SparseNLPCore{T <: AbstractFloat} <: AbstractNLPCore{T}
+    obj::Expression{T}
+    con::Field{T}
+    grad::Gradient{T}
+    jac::Field{T}
+    hess::LagrangianHessian{T}
     jac_sparsity::Vector{Tuple{Int,Int}}
     hess_sparsity::Vector{Tuple{Int,Int}}
 end
@@ -80,23 +80,23 @@ function SparseNLPCore(obj::Expression,con::Field)
     return SparseNLPCore(obj,con,grad,jac,hess,jac_sparsity,hess_sparsity)
 end
 
-@inline function obj(nlpcore::NLPCore,x,p)
+@inline function obj(nlpcore::AbstractNLPCore,x,p)
     non_caching_eval(nlpcore.obj,x,p)
 end
-@inline function cons!(nlpcore::NLPCore,x,y,p)
+@inline function cons!(nlpcore::AbstractNLPCore,x,y,p)
     non_caching_eval(nlpcore.con,y,x,p)
 end
-@inline function grad!(nlpcore::NLPCore,x,y,p)
+@inline function grad!(nlpcore::AbstractNLPCore,x,y,p)
     y .= 0
     nlpcore.obj(x,p)
     non_caching_eval(nlpcore.grad,y,x,p)
 end
-@inline function jac_coord!(nlpcore::NLPCore,x,J,p)
+@inline function jac_coord!(nlpcore::AbstractNLPCore,x,J,p)
     J .= 0
     nlpcore.con(DUMMY,x,p)
     non_caching_eval(nlpcore.jac,J,x,p)
 end
-@inline function hess_coord!(nlpcore::NLPCore,x,lag,z,p; obj_weight = 1.0)
+@inline function hess_coord!(nlpcore::AbstractNLPCore,x,lag,z,p; obj_weight = 1.0)
     z .= 0
     nlpcore.obj(x,p)
     nlpcore.con(DUMMY,x,p)

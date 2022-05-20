@@ -2,22 +2,17 @@ const MOI = MathOptInterface
 const X = MadDiffCore.Variable()
 const P = MadDiffCore.Parameter()
 
-import Base: sum, getindex
-getindex(f::MadDiffCore.Sink,i) = f.inner[i]
-function getindex(f::MadDiffCore.Field,i)
-    for ie in f.es
-        MadDiffCore.index(ie) == i && return ie.e
-    end
-    return f.inner[i]
-end
-sum(f::MadDiffCore.Sink) = sum(f.inner)
-sum(f::MadDiffCore.Field) = sum(ie.e for ie in f.es) + (f.inner == nothing ? 0. : sum(f.inner))
+"""
+Expression(ex::MOI.Nonlinear.Expression; subex = nothing)
 
-is_another_child(ex,i,j) = j <= length(ex.nodes) && ex.nodes[j].parent == i
-Expression(::Nothing; subex = nothing) = MadDiffCore.Constant(0.)
-Expression(ex::MOI.Nonlinear.Expression; subex = nothing) =
-    Expression(ex::MOI.Nonlinear.Expression, 1, -1; subex=subex)[1]
-function Expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int; subex = nothing)
+Create a `MadDiff.Expression` from `MOI.Expression`.
+
+"""
+MadDiffCore.Expression(ex::MOI.Nonlinear.Expression; subex = nothing) =
+    _convert_expression(ex::MOI.Nonlinear.Expression, 1, -1; subex=subex)[1]
+MadDiffCore.Expression(::Nothing; subex = nothing) = MadDiffCore.Constant(0.)
+
+function _convert_expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int; subex = nothing)
     j = i + 1
     node = ex.nodes[i]
     typ = node.type
@@ -27,27 +22,22 @@ function Expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int; subex = nothin
     end
     
     if typ == MOI.Nonlinear.NODE_CALL_MULTIVARIATE
-        ex1, j = Expression(ex, j, i; subex=subex)
-        ex2, j = Expression(ex, j, i; subex=subex)
+        ex1, j = _convert_expression(ex, j, i; subex=subex)
+        ex2, j = _convert_expression(ex, j, i; subex=subex)
         
-        if is_another_child(ex,i,j)
-            ex3, j = Expression(ex, j, i; subex=subex)
-            if is_another_child(ex,i,j)
-                ex4, j = Expression(ex, j, i; subex=subex)
-                if is_another_child(ex,i,j)
+        if _is_another_child(ex,i,j)
+            ex3, j = _convert_expression(ex, j, i; subex=subex)
+            if _is_another_child(ex,i,j)
+                ex4, j = _convert_expression(ex, j, i; subex=subex)
+                if _is_another_child(ex,i,j)
                     exs = Any[ex1,ex2,ex3,ex4]
-                    while is_another_child(ex,i,j)
-                        ex1, j = Expression(ex, j, i; subex=subex)
+                    while _is_another_child(ex,i,j)
+                        ex1, j = _convert_expression(ex, j, i; subex=subex)
                         push!(exs,ex1)
                     end
-
-                    # if length(exs)<=6
-                    #     return get_multivariate_fun(node.index)(exs...), j
-                    # else
                     return node.index == 1 ? (sum(exs), j) :
                         node.index == 3 ? (prod(exs), j) :
                         (get_multivariate_fun(node.index)(exs...), j)
-                    # end
                 else
                     return get_multivariate_fun(node.index)(ex1,ex2,ex3,ex4), j
                 end
@@ -59,7 +49,7 @@ function Expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int; subex = nothin
         end
             
     elseif typ == MOI.Nonlinear.NODE_CALL_UNIVARIATE
-        ex1, j = Expression(ex,j,i; subex=subex)
+        ex1, j = _convert_expression(ex,j,i; subex=subex)
         return get_univariate_fun(node.index)(ex1), j
         
     elseif typ == MOI.Nonlinear.NODE_MOI_VARIABLE
@@ -75,13 +65,13 @@ function Expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int; subex = nothin
         return subex[node.index], j
         
     elseif typ == MOI.Nonlinear.NODE_COMPARISON
-        ex1, j = Expression(ex, j, i; subex=subex)
-        ex2, j = Expression(ex, j, i; subex=subex)
-        return get_comparison(node.index, ex1, ex2), j
+        ex1, j = _convert_expression(ex, j, i; subex=subex)
+        ex2, j = _convert_expression(ex, j, i; subex=subex)
+        return _get_comparison(node.index, ex1, ex2), j
         
     elseif typ == MOI.Nonlinear.NODE_LOGIC
-        ex1, j = Expression(ex, j, i; subex=subex)
-        ex2, j = Expression(ex, j, i; subex=subex)
+        ex1, j = _convert_expression(ex, j, i; subex=subex)
+        ex2, j = _convert_expression(ex, j, i; subex=subex)
         if node.index == 1
             return MadDiffCore.and(ex1,ex2), j
         elseif node.index == 2
@@ -96,7 +86,9 @@ function Expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int; subex = nothin
 
 end
 
-function get_comparison(index,ex1,ex2)
+_is_another_child(ex,i,j) = j <= length(ex.nodes) && ex.nodes[j].parent == i
+
+function _get_comparison(index,ex1,ex2)
 
     if index == 1
         return ex1 <= ex2
@@ -114,21 +106,21 @@ function get_comparison(index,ex1,ex2)
 end
 
 
-function SparseNLPCore(nlp_data::MathOptInterface.Nonlinear.Model)
+function MadDiffCore.SparseNLPCore(nlp_data::MOI.Nonlinear.Model)
     
     subex = MadDiffCore.Field()
     con = MadDiffCore.Field()
     @simd for i=1:length(nlp_data.expressions)
-        @inbounds subex[i] = Expression(nlp_data.expressions[i])
+        @inbounds subex[i] = MadDiffCore.Expression(nlp_data.expressions[i])
     end
 
     for (key,val) in nlp_data.constraints
-        @inbounds con[key.value] = Expression(val.expression; subex = subex)
+        @inbounds con[key.value] = MadDiffCore.Expression(val.expression; subex = subex)
     end
     
-    obj = Expression(nlp_data.objective; subex = subex)
+    obj = MadDiffCore.Expression(nlp_data.objective; subex = subex)
 
-    return SparseNLPCore(obj,con)
+    return MadDiffCore.SparseNLPCore(obj,con)
 end
 
 MOI.NLPBoundsPair(constraints) = [MOI.NLPBoundsPair(val.set) for (key,val) in constraints]
@@ -137,10 +129,19 @@ MOI.NLPBoundsPair(set::MOI.GreaterThan) = MOI.NLPBoundsPair(set.lower, Inf)
 MOI.NLPBoundsPair(set::MOI.EqualTo) = MOI.NLPBoundsPair(set.value,set.value)
 MOI.NLPBoundsPair(set::MOI.Interval) = MOI.NLPBoundsPair(set.lower,set.upper)
 
+"""
+    MadDiffAD() <: MOI.Nonlinear.AbstractAutomaticDifferentiation
+
+A differentiation backend for MathOptInterface based on MadDiff
+"""
 struct MadDiffAD <: MOI.Nonlinear.AbstractAutomaticDifferentiation end
 
+"""
+    MadDiffEvaluator <: MOI.AbstractNLPEvaluator
+A type for callbacks for `MathOptInterface`'s nonlinear model.
+"""
 mutable struct MadDiffEvaluator <: MOI.AbstractNLPEvaluator
-    backend
+    backend::MadDiffCore.AbstractNLPCore
     bounds::Vector{MOI.NLPBoundsPair}
     parameters::Vector{Float64}
     eval_objective_timer::Float64
@@ -150,14 +151,14 @@ mutable struct MadDiffEvaluator <: MOI.AbstractNLPEvaluator
     eval_hessian_lagrangian_timer::Float64
 end
 
-function MOI.Nonlinear.Evaluator(
-    model::MathOptInterface.Nonlinear.Model,
-    ::MadDiffAD,
-    ::Vector{MathOptInterface.VariableIndex}
-    )
-    backend = SparseNLPCore(model)
+"""
+    MOI.Nonlinear.Evaluator(model::MOI.Nonlinear.Model, ::MadDiffAD, ::Vector{MOI.VariableIndex})
+Create a `MOI.Nonlinear.Evaluator` from `MOI.Nonlinear.Model` using `MadDiff`'s AD capability.
+"""
+function MOI.Nonlinear.Evaluator(model::MOI.Nonlinear.Model, ::MadDiffAD, ::Vector{MOI.VariableIndex})
+    backend = MadDiffCore.SparseNLPCore(model)
     bounds  = MOI.NLPBoundsPair(model.constraints)
-    MadDiffEvaluator(backend,bounds,model.parameters,0.,0.,0.,0.,0.)
+    MadDiffEvaluator(backend::MadDiffCore.AbstractNLPCore,bounds,model.parameters,0.,0.,0.,0.,0.)
 end
 
 function MOI.eval_objective(evaluator::MadDiffEvaluator, x)
@@ -203,10 +204,9 @@ function MOI.NLPBlockData(evaluator::MadDiffEvaluator)
     return MOI.NLPBlockData(
         evaluator.bounds,
         evaluator,
-        !(evaluator.backend.obj isa Constant && evaluator.backend.obj.ref.x == 0.), 
+        !(evaluator.backend.obj isa MadDiffCore.Constant && evaluator.backend.obj.ref.x == 0.), 
     )
 end
-
 
 MOI.features_available(::MadDiffEvaluator) = [:Grad,:Hess,:Jac]
 MOI.initialize(evaluator::MadDiffEvaluator,::Vector{Symbol}) = nothing

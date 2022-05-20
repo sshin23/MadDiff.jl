@@ -1,4 +1,5 @@
-using Test, SpecialFunctions, MadDiffCore, MadDiffModels, NLPModelsIpopt, MadNLP
+using Test, SpecialFunctions, NLPModelsIpopt, MadNLP
+using MadDiffModels: MadDiffModel, variable, parameter, constraint, objective, value, setvalue, lower_bound, upper_bound, set_lower_bound, set_upper_bound, instantiate!, get_nvar, get_ncon
 const eps = 1e-6
 
 compare(p1,p2) = maximum(abs.(p1 .- p2)) <= eps

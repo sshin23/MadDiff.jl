@@ -11,21 +11,6 @@ struct IndexedExpression{T <: AbstractFloat, E <: Expression{T}} <: Entry{T}
     e::E
 end
 
-@inline (F::FieldNull{T})(y,x,p=nothing) where T = nothing
-@inline function (F::Field1{T,E,I})(y,x,p=nothing) where {T,E,I}
-    inner(F)(y,x,p)
-    @simd for i in eachindex(F.es)
-        F.es[i](y,x,p)
-    end
-end
-@inline function (F::Field1{T,E,Nothing})(y,x,p=nothing) where {T,E}
-    @simd for i in eachindex(F.es)
-        F.es[i](y,x,p)
-    end
-end
-@inline (e::IndexedExpression{T,E})(y,x,p=nothing) where {T,E} = (y[e.index] = e.e(x,p))
-
-# Field(e::E) where E <: IndexedExpression= Field1([e])
 Field(f::FieldNull{T},e::E) where {T, E <: IndexedExpression} = Field1([e])
 Field(f::F,e::E) where {F <: Field, E <: IndexedExpression} = _field(f,e) ? f : Field1(f,[e])
 

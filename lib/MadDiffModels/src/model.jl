@@ -25,6 +25,7 @@ mutable struct MadDiffModel{T <: AbstractFloat} <: NLPModels.AbstractNLPModel{T,
     gl::Vector{T}
     gu::Vector{T}
 
+    threaded::Bool
     instantiated::Bool
     meta::NLPModels.AbstractNLPModelMeta{T, Vector{T}}
     nlpcore::MadDiffCore.AbstractNLPCore{T}
@@ -41,11 +42,11 @@ Creates an empty `MadDiffModel{T}`.
 **Example**
 `m = MadDiffModel{Float32}()`
 """
-MadDiffModel{T}() where T = MadDiffModel{T}(
+MadDiffModel{T}(;threaded = false) where T = MadDiffModel{T}(
     MadDiffCore.Field{T}(), MadDiffCore.Constant(zero(T)),
     0, 0, 0,
     T[], T[], T[], T[], T[], T[], T[], T[], T[], 
-    false, NullNLPModelMeta{T,Vector{T}}(), NullNLPCore{T}(), NLPModels.Counters(),
+    threaded, false, NullNLPModelMeta{T,Vector{T}}(), NullNLPCore{T}(), NLPModels.Counters(),
     Dict{Symbol,Any}()
 )
 
@@ -57,7 +58,7 @@ Creates an empty `MadDiffModel{Float64}`.
 **Example**
 `m = MadDiffModel(linear_solver = "ma27")`
 """
-MadDiffModel()= MadDiffModel{Float64}()
+MadDiffModel(;threaded = false)= MadDiffModel{Float64}(; threaded = threaded)
 
 
 """
@@ -262,26 +263,26 @@ end
 
 @inline function NLPModels.obj(m::MadDiffModel,x::AbstractVector)
     NLPModels.increment!(m, :neval_obj)
-    MadDiffCore.obj(m.nlpcore,x,m.p)
+    MadDiffCore.obj(m.nlpcore,x,m.p; threaded = m.threaded)
 end
 @inline function NLPModels.cons!(m::MadDiffModel,x::AbstractVector,y::AbstractVector)
     NLPModels.increment!(m, :neval_cons)
-    MadDiffCore.cons!(m.nlpcore,x,y,m.p)
+    MadDiffCore.cons!(m.nlpcore,x,y,m.p; threaded = m.threaded)
     return 
 end
 @inline function NLPModels.grad!(m::MadDiffModel,x::AbstractVector,y::AbstractVector)
     NLPModels.increment!(m, :neval_grad)
-    MadDiffCore.grad!(m.nlpcore,x,y,m.p)
+    MadDiffCore.grad!(m.nlpcore,x,y,m.p; threaded = m.threaded)
     return 
 end
 @inline function NLPModels.jac_coord!(m::MadDiffModel,x::AbstractVector,J::AbstractVector)
     NLPModels.increment!(m, :neval_jac)
-    MadDiffCore.jac_coord!(m.nlpcore,x,J,m.p)
+    MadDiffCore.jac_coord!(m.nlpcore,x,J,m.p; threaded = m.threaded)
     return 
 end
 @inline function NLPModels.hess_coord!(m::MadDiffModel,x::AbstractVector,lag::AbstractVector,z::AbstractVector; obj_weight = 1.0)
     NLPModels.increment!(m, :neval_hess)
-    MadDiffCore.hess_coord!(m.nlpcore,x,lag,z,m.p; obj_weight = obj_weight)
+    MadDiffCore.hess_coord!(m.nlpcore,x,lag,z,m.p; obj_weight = obj_weight, threaded = m.threaded)
     return 
 end
 

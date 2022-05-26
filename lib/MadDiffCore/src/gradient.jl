@@ -5,54 +5,54 @@ struct Gradient0{T <: AbstractFloat} <: Gradient{T}
 end
 struct Gradient1{T <: AbstractFloat, F, D1 <: Gradient} <: Gradient{T}
     d1::D1
-    fref1::MyRef{T}
-    ref::MyRef{T}
+    fref1::RefValue{T}
+    ref::RefValue{T}
     function Gradient1(e::Expression1{T,F,E1}, indexer = nothing) where {T,F,E1 <: Expression{T}}
         d1 = Gradient(e.e1,indexer)
-        return new{T,F,typeof(d1)}(d1,ref(e.e1),MyRef{T}(1.))
+        return new{T,F,typeof(d1)}(d1,ref(e.e1),RefValue{T}(1.))
     end
 end
 struct Gradient2F1{T <: AbstractFloat, F, D1 <: Gradient, R<: Real} <: Gradient{T}
     a::R
     d1::D1
-    fref1::MyRef{T}
-    ref::MyRef{T}
+    fref1::RefValue{T}
+    ref::RefValue{T}
     function Gradient2F1(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1<:Real,E2 <: Expression{T}}
         g1 = Gradient(e.e2,indexer)
-        return new{T,F,typeof(g1),typeof(e.e1)}(e.e1,g1,ref(e.e2),MyRef{T}(0.))
+        return new{T,F,typeof(g1),typeof(e.e1)}(e.e1,g1,ref(e.e2),RefValue{T}(0.))
     end
 end
 struct Gradient2F2{T <: AbstractFloat, F,D1 <: Gradient, R<: Real} <: Gradient{T}
     a::R
     d1::D1
-    fref1::MyRef{T}
-    ref::MyRef{T}
+    fref1::RefValue{T}
+    ref::RefValue{T}
     function Gradient2F2(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1 <: Expression{T},E2<:Real}
         g1 = Gradient(e.e1,indexer)
-        return new{T,F,typeof(g1),typeof(e.e2)}(e.e2,g1,ref(e.e1),MyRef{T}(0.))
+        return new{T,F,typeof(g1),typeof(e.e2)}(e.e2,g1,ref(e.e1),RefValue{T}(0.))
     end
 end
 struct Gradient2{T <: AbstractFloat, F,D1 <: Gradient,D2 <: Gradient} <: Gradient{T}
     d1::D1
     d2::D2
-    fref1::MyRef{T}
-    fref2::MyRef{T}
-    ref1::MyRef{T}
-    ref2::MyRef{T}
+    fref1::RefValue{T}
+    fref2::RefValue{T}
+    ref1::RefValue{T}
+    ref2::RefValue{T}
     function Gradient2(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1 <: Expression{T},E2 <: Expression{T}}
         g1 = Gradient(e.e1,indexer)
         g2 = Gradient(e.e2,indexer)
-        return new{T,F,typeof(g1),typeof(g2)}(g1,g2,ref(e.e1),ref(e.e2),MyRef{T}(0.),MyRef{T}(0.))
+        return new{T,F,typeof(g1),typeof(g2)}(g1,g2,ref(e.e1),ref(e.e2),RefValue{T}(0.),RefValue{T}(0.))
     end
     function Gradient2(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1 <: Expression{T},E2}
         g1 = Gradient(e.e1,indexer)
         g2 = Gradient(e.e2,indexer)
-        return new{T,F,typeof(g1),typeof(g2)}(g1,g2,ref(e.e1),ref(e.e2),MyRef{T}(0.),MyRef{T}(0.))
+        return new{T,F,typeof(g1),typeof(g2)}(g1,g2,ref(e.e1),ref(e.e2),RefValue{T}(0.),RefValue{T}(0.))
     end
     function Gradient2(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1,E2 <: Expression{T}}
         g1 = Gradient(e.e1,indexer)
         g2 = Gradient(e.e2,indexer)
-        return new{T,F,typeof(g1),typeof(g2)}(g1,g2,ref(e.e1),ref(e.e2),MyRef{T}(0.),MyRef{T}(0.))
+        return new{T,F,typeof(g1),typeof(g2)}(g1,g2,ref(e.e1),ref(e.e2),RefValue{T}(0.),RefValue{T}(0.))
     end
 end
 struct GradientSum{T <: AbstractFloat,D <: Gradient{T},I} <: Gradient{T}
@@ -60,23 +60,6 @@ struct GradientSum{T <: AbstractFloat,D <: Gradient{T},I} <: Gradient{T}
     ds::Vector{D}
 end
 
-
-@inline (::GradientNull{T})(z,x,p=nothing,d0=1) where T = nothing
-@inline (d::Gradient0{T})(y,x,p=nothing,d0=1) where T = (@inbounds y[d.offset] += d0; nothing)
-@inline (d::Gradient0{T})((j,y)::Tuple{Int,M},x,p=nothing,d0=1) where {T, M <: AbstractMatrix} = (@inbounds y[j,d.offset] += d0; nothing)
-@inline (d::Gradient0{T})((j,y)::Tuple{Int,M},x,p=nothing,d0=1) where {T, M <: AbstractVector} = (@inbounds y[d.offset] += d0; nothing)
-
-@inline function (d::GradientSum{T,D,I})(y,x,p=nothing,d0=1) where {T, D,I}
-    inner(d)(y,x,p,d0)
-    @simd for i in eachindex(d.ds)
-        @inbounds d.ds[i](y,x,p,d0)
-    end
-end
-@inline function (d::GradientSum{T,D,Nothing})(y,x,p=nothing,d0=1) where {T, D}
-    @simd for i in eachindex(d.ds)
-        @inbounds d.ds[i](y,x,p,d0)
-    end
-end
 
 Gradient(e::V,(row,indexer)::Tuple{Int,Dict{Tuple{Int,Int},Int}}) where {T, V <: Variable{T}} = Gradient0{T}(index(e),set_indexer!(indexer,row,index(e)))
 Gradient(e::V,indexer=nothing) where {T, V <: Variable{T}} = Gradient0{T}(index(e),set_indexer!(indexer,index(e)) )

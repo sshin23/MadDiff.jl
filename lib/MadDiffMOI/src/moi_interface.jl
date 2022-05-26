@@ -134,13 +134,16 @@ MOI.NLPBoundsPair(set::MOI.Interval) = MOI.NLPBoundsPair(set.lower,set.upper)
 
 A differentiation backend for MathOptInterface based on MadDiff
 """
-struct MadDiffAD <: MOI.Nonlinear.AbstractAutomaticDifferentiation end
+Base.@kwdef struct MadDiffAD <: MOI.Nonlinear.AbstractAutomaticDifferentiation
+    threaded::Bool = false
+end
 
 """
     MadDiffEvaluator <: MOI.AbstractNLPEvaluator
 A type for callbacks for `MathOptInterface`'s nonlinear model.
 """
 mutable struct MadDiffEvaluator <: MOI.AbstractNLPEvaluator
+    threaded::Bool
     backend::MadDiffCore.AbstractNLPCore
     bounds::Vector{MOI.NLPBoundsPair}
     parameters::Vector{Float64}
@@ -155,39 +158,42 @@ end
     MOI.Nonlinear.Evaluator(model::MOI.Nonlinear.Model, ::MadDiffAD, ::Vector{MOI.VariableIndex})
 Create a `MOI.Nonlinear.Evaluator` from `MOI.Nonlinear.Model` using `MadDiff`'s AD capability.
 """
-function MOI.Nonlinear.Evaluator(model::MOI.Nonlinear.Model, ::MadDiffAD, ::Vector{MOI.VariableIndex})
+function MOI.Nonlinear.Evaluator(model::MOI.Nonlinear.Model, ad::MadDiffAD, ::Vector{MOI.VariableIndex})
     backend = MadDiffCore.SparseNLPCore(model)
     bounds  = MOI.NLPBoundsPair(model.constraints)
-    MadDiffEvaluator(backend::MadDiffCore.AbstractNLPCore,bounds,model.parameters,0.,0.,0.,0.,0.)
+    MadDiffEvaluator(
+        ad.threaded,backend::MadDiffCore.AbstractNLPCore,bounds,model.parameters,
+        0.,0.,0.,0.,0.)
 end
 
 function MOI.eval_objective(evaluator::MadDiffEvaluator, x)
     start = time()
-    obj = MadDiffCore.obj(evaluator.backend, x, evaluator.parameters)
+    obj = MadDiffCore.obj(evaluator.backend, x, evaluator.parameters; threaded = evaluator.threaded)
     evaluator.eval_objective_timer += time() - start
     return obj
 end
 function MOI.eval_objective_gradient(evaluator::MadDiffEvaluator, g, x)
     start = time()
-    MadDiffCore.grad!(evaluator.backend, x, g, evaluator.parameters)
+    MadDiffCore.grad!(evaluator.backend, x, g, evaluator.parameters; threaded = evaluator.threaded)
     evaluator.eval_objective_gradient_timer += time() - start
     return
 end
 function MOI.eval_constraint(evaluator::MadDiffEvaluator, g, x)
     start = time()
-    MadDiffCore.cons!(evaluator.backend, x, g, evaluator.parameters)
+    MadDiffCore.cons!(evaluator.backend, x, g, evaluator.parameters; threaded = evaluator.threaded)
     evaluator.eval_constraint_timer += time() - start
     return
 end
 function MOI.eval_constraint_jacobian(evaluator::MadDiffEvaluator, J, x)
     start = time()
-    MadDiffCore.jac_coord!(evaluator.backend, x, J, evaluator.parameters)
+    MadDiffCore.jac_coord!(evaluator.backend, x, J, evaluator.parameters; threaded = evaluator.threaded)
     evaluator.eval_constraint_jacobian_timer += time() - start
     return
 end
 function MOI.eval_hessian_lagrangian(evaluator::MadDiffEvaluator, H, x, σ, μ)
     start = time()
-    MadDiffCore.hess_coord!(evaluator.backend, x, μ, H, evaluator.parameters; obj_weight = σ)
+    MadDiffCore.hess_coord!(evaluator.backend, x, μ, H, evaluator.parameters;
+                            obj_weight = σ, threaded = evaluator.threaded)
     evaluator.eval_hessian_lagrangian_timer += time() - start
     return
 end

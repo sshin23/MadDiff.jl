@@ -3,7 +3,6 @@ struct JacobianEntry{T,E <: Gradient{T}} <: Entry{T}
     index::Int
     e::E
 end
-@inline (e::JacobianEntry{T,E})(y,x,p=nothing) where {T,E} = e.e((index(e),y),x,p)
 Jacobian(f::Field1{T,G,I},indexer = nothing) where {T,G,I} = Field1(Jacobian(inner(f),indexer),[JacobianEntry(index(ie),Gradient(ie.e,(index(ie),indexer))) for ie in f.es])
 Jacobian(f::Field1{T,G,Nothing},indexer = nothing) where {T,G} = Field1(nothing,[JacobianEntry(index(ie),Gradient(ie.e,(index(ie),indexer))) for ie in f.es])
 Jacobian(::MadDiffCore.FieldNull{T}) where T = FieldNull{T}()
@@ -18,15 +17,6 @@ Field1(inner,::Vector{LagrangianEntry{HessianNull{T}}}) where T = inner
 struct LagrangianHessian{T,F <: AbstractExpression{T}}
     f::F
 end
-@inline (laghess::LagrangianHessian)(z,x,p,l,s) = _eval_laghess(laghess.f,z,x,p,l,s)
-@inline function _eval_laghess(f::Field1{E,I},z,x,p,l,s) where {E,I}
-    _eval_laghess(inner(f),z,x,p,l,s)
-    @simd for i in eachindex(f.es)
-        f.es[i](z,x,p,l)
-    end
-end
-@inline _eval_laghess(h::H,z,x,p,l,s) where H <: Hessian = h(z,x,p,s)
-@inline (lagentry::LagrangianEntry{E})(z,x,p,l) where E = lagentry.e(z,x,p,l[index(lagentry)])
 
 LagrangianHessian(obj,grad,con,jac,indexer=nothing) = LagrangianHessian(_LagrangianHessian(obj,grad,con,jac,indexer))
 
@@ -80,27 +70,53 @@ function SparseNLPCore(obj::Expression,con::Field)
     return SparseNLPCore(obj,con,grad,jac,hess,jac_sparsity,hess_sparsity)
 end
 
-@inline function obj(nlpcore::AbstractNLPCore,x,p)
-    non_caching_eval(nlpcore.obj,x,p)
+@inline function obj(nlpcore::AbstractNLPCore,x,p; threaded = false)
+    if threaded 
+        non_caching_eval_threaded(nlpcore.obj,x,p)
+    else
+        non_caching_eval(nlpcore.obj,x,p)
+    end
 end
-@inline function cons!(nlpcore::AbstractNLPCore,x,y,p)
-    non_caching_eval(nlpcore.con,y,x,p)
+@inline function cons!(nlpcore::AbstractNLPCore,x,y,p; threaded = false)
+    if threaded 
+        non_caching_eval_threaded(nlpcore.con,y,x,p)
+    else
+        non_caching_eval(nlpcore.con,y,x,p)
+    end
 end
-@inline function grad!(nlpcore::AbstractNLPCore,x,y,p)
+@inline function grad!(nlpcore::AbstractNLPCore,x,y,p; threaded = false)
     y .= 0
-    nlpcore.obj(x,p)
-    non_caching_eval(nlpcore.grad,y,x,p)
+    if threaded 
+        default_eval_threaded(nlpcore.obj,x,p)
+        non_caching_eval_threaded(nlpcore.grad,y,x,p)
+    else
+        default_eval(nlpcore.obj,x,p)
+        non_caching_eval(nlpcore.grad,y,x,p)
+    end
 end
-@inline function jac_coord!(nlpcore::AbstractNLPCore,x,J,p)
+@inline function jac_coord!(nlpcore::AbstractNLPCore,x,J,p; threaded = false)
     J .= 0
-    nlpcore.con(DUMMY,x,p)
-    non_caching_eval(nlpcore.jac,J,x,p)
+    if threaded 
+        default_eval_threaded(nlpcore.con,DUMMY,x,p)
+        non_caching_eval_threaded(nlpcore.jac,J,x,p)
+    else
+        default_eval(nlpcore.con,DUMMY,x,p)
+        non_caching_eval(nlpcore.jac,J,x,p)
+    end
 end
-@inline function hess_coord!(nlpcore::AbstractNLPCore,x,lag,z,p; obj_weight = 1.0)
+@inline function hess_coord!(nlpcore::AbstractNLPCore,x,lag,z,p; obj_weight = 1.0, threaded = false)
     z .= 0
-    nlpcore.obj(x,p)
-    nlpcore.con(DUMMY,x,p)
-    nlpcore.grad(DUMMY,x,p)
-    nlpcore.jac(DUMMY,x,p)
-    nlpcore.hess(z,x,p,lag, obj_weight)
+    if threaded 
+        default_eval_threaded(nlpcore.obj,x,p)
+        default_eval_threaded(nlpcore.con,DUMMY,x,p)
+        default_eval_threaded(nlpcore.grad,DUMMY,x,p)
+        default_eval_threaded(nlpcore.jac,DUMMY,x,p)
+        non_caching_eval_threaded(nlpcore.hess,z,x,p,lag, obj_weight)
+    else
+        default_eval(nlpcore.obj,x,p)
+        default_eval(nlpcore.con,DUMMY,x,p)
+        default_eval(nlpcore.grad,DUMMY,x,p)
+        default_eval(nlpcore.jac,DUMMY,x,p)
+        non_caching_eval(nlpcore.hess,z,x,p,lag, obj_weight)
+    end
 end

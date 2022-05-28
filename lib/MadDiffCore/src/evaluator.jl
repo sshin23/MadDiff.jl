@@ -1,4 +1,4 @@
-for fname in [:default_eval, :default_eval_threaded]
+for fname in [:default_eval]
     @eval begin
         @inline $fname(e::Variable{T},x,p=nothing) where {T <: Real} = setrefval(e,getindex(x,index(e)))
         @inline $fname(e::Parameter{T},x,p=nothing) where {T <: AbstractFloat} = setrefval(e,getindex(p,index(e)))
@@ -46,7 +46,7 @@ for fname in [:default_eval, :default_eval_threaded]
 end
 
 
-for fname in [:non_caching_eval, :non_caching_eval_threaded]
+for fname in [:non_caching_eval]
     @eval begin
         @inline $fname(e::Variable{T},x,p=nothing) where {T <: AbstractFloat}  = @inbounds getindex(x,index(e))
         @inline $fname(e::Parameter{T},x,p=nothing) where {T <: AbstractFloat} = @inbounds getindex(p,index(e))
@@ -170,7 +170,7 @@ for fname in [:non_caching_eval, :non_caching_eval_threaded]
 end
 
 
-for fname in [:default_eval, :default_eval_threaded, :non_caching_eval, :non_caching_eval_threaded]
+for fname in [:default_eval, :non_caching_eval]
     @eval begin 
         @inline $fname(e::Constant{T},x,p=nothing) where {T <: AbstractFloat}  = refval(e)
         @inline $fname(::GradientNull{T},z,x,p=nothing,d0=1) where T = nothing
@@ -183,8 +183,7 @@ for fname in [:default_eval, :default_eval_threaded, :non_caching_eval, :non_cac
     end
 end
 
-for (fname, fname_threaded) in [(:default_eval, :default_eval_threaded),
-                                (:non_caching_eval, :non_caching_eval_threaded)]
+for fname in [:default_eval, :non_caching_eval]
     @eval begin
         @inline function $fname(d::GradientSum{T,D,I},y,x,p=nothing,d0=1) where {T,D,I}
             $fname(inner(d),y,x,p,d0)
@@ -207,29 +206,6 @@ for (fname, fname_threaded) in [(:default_eval, :default_eval_threaded),
         @inline function $fname(f::Field1{T,E,Nothing},y,x,p=nothing) where {T,E}
             @simd for i in eachindex(f.es)
                 $fname(f.es[i],y,x,p)
-            end
-        end
-
-        @inline function $fname_threaded(d::GradientSum{T,D,I},y,x,p=nothing,d0=1) where {T,D,I}
-            $fname_threaded(inner(d),y,x,p,d0)
-            Threads.@threads for i in eachindex(d.ds)
-                $fname_threaded(d.ds[i],y,x,p,d0)
-            end
-        end
-        @inline function $fname_threaded(d::GradientSum{T,D,Nothing},y,x,p=nothing,d0=1)  where {T,D}
-            Threads.@threads for i in eachindex(d.ds)
-                $fname_threaded(d.ds[i],y,x,p,d0)
-            end
-        end
-        @inline function $fname_threaded(f::Field1{T,E,I},y,x,p=nothing) where {T,E,I}
-            $fname_threaded(inner(f),y,x,p)
-            Threads.@threads for i in eachindex(f.es)
-                $fname_threaded(f.es[i],y,x,p)
-            end
-        end
-        @inline function $fname_threaded(f::Field1{T,E,Nothing},y,x,p=nothing) where {T,E}
-            Threads.@threads for i in eachindex(f.es)
-                $fname_threaded(f.es[i],y,x,p)
             end
         end
     end
@@ -255,26 +231,6 @@ end
         @inbounds non_caching_eval(h.hs[i],z,x,p,h0)
     end
 end
-@inline function non_caching_eval_threaded(f::Field1{T,E,I},z,x,p,l,s) where {T,E,I}
-    non_caching_eval_threaded(inner(f),z,x,p,l,s)
-    Threads.@threads for i in eachindex(f.es)
-        non_caching_eval_threaded(f.es[i],z,x,p,l)
-    end
-end
-@inline function non_caching_eval_threaded(h::HessianSum{T,I,H},z,x,p=nothing,h0=1) where {T,I,H} 
-    non_caching_eval_threaded(inner(h),z,x,p,h0)
-    Threads.@threads for i in eachindex(h.hs)
-        @inbounds non_caching_eval_threaded(h.hs[i],z,x,p,h0)
-    end
-end
-@inline function non_caching_eval_threaded(h::HessianSum{T,Nothing,H},z,x,p=nothing,h0=1) where {T,H}
-    Threads.@threads for i in eachindex(h.hs)
-        @inbounds non_caching_eval_threaded(h.hs[i],z,x,p,h0)
-    end
-end
-
-
-
 @inline function default_eval(e::ExpressionSum{T,E,Nothing},x,p=nothing) where {T,E}
     setrefval(e,.0)
     @simd for i in eachindex(e.es)
@@ -303,32 +259,3 @@ end
     end
     return res
 end
-@inline function default_eval_threaded(e::ExpressionSum{T,E,Nothing},x,p=nothing) where {T,E}
-    setrefval(e,.0)
-    Threads.@threads for i in eachindex(e.es)
-        @inbounds addrefval(e,default_eval_threaded(e.es[i],x,p))
-    end
-    return refval(e)
-end
-@inline function non_caching_eval_threaded(e::ExpressionSum{T,E,Nothing},x,p=nothing) where {T,E}
-    res = non_caching_eval_threaded(e.es[1],x,p)
-    Threads.@threads for i in 2:length(e.es)
-        @inbounds res = add_sum(res,non_caching_eval_threaded(e.es[i],x,p))
-    end
-    return res
-end
-@inline function default_eval_threaded(e::ExpressionSum{T,E,I},x,p=nothing) where {T,E,I}
-    default_eval_threaded(inner(e),x,p)
-    Threads.@threads for i in eachindex(e.es)
-        @inbounds addrefval(e,default_eval_threaded(e.es[i],x,p))
-    end
-    return refval(e)
-end
-@inline function non_caching_eval_threaded(e::ExpressionSum{T,E,I},x,p=nothing) where {T,E,I}
-    res = non_caching_eval_threaded(e.inner,x,p)
-    Threads.@threads for i in eachindex(e.es)
-        @inbounds res = add_sum(res,non_caching_eval_threaded(e.es[i],x,p))
-    end
-    return res
-end
-

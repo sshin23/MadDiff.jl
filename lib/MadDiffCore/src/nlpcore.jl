@@ -107,11 +107,11 @@ end
 @inline function hess_coord!(nlpcore::AbstractNLPCore,x,lag,z,p; obj_weight = 1.0, threaded = false)
     z .= 0
     if threaded 
-        default_eval_threaded(nlpcore.obj,x,p)
-        default_eval_threaded(nlpcore.con,DUMMY,x,p)
-        default_eval_threaded(nlpcore.grad,DUMMY,x,p)
-        default_eval_threaded(nlpcore.jac,DUMMY,x,p)
-        non_caching_eval_threaded(nlpcore.hess,z,x,p,lag, obj_weight)
+        @time default_eval_threaded(nlpcore.obj,x,p)
+        @time default_eval_threaded(nlpcore.con,DUMMY,x,p)
+        @time default_eval_threaded(nlpcore.grad,DUMMY,x,p)
+        @time default_eval_threaded(nlpcore.jac,DUMMY,x,p)
+        @time non_caching_eval_threaded(nlpcore.hess,z,x,p,lag, obj_weight)
     else
         default_eval(nlpcore.obj,x,p)
         default_eval(nlpcore.con,DUMMY,x,p)

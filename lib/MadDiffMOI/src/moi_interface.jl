@@ -1,3 +1,4 @@
+using MadDiff
 const MOI = MathOptInterface
 const X = MadDiffCore.Variable()
 const P = MadDiffCore.Parameter()
@@ -168,32 +169,32 @@ end
 
 function MOI.eval_objective(evaluator::MadDiffEvaluator, x)
     start = time()
-    obj = MadDiffCore.obj(evaluator.backend, x, evaluator.parameters; threaded = evaluator.threaded)
+    obj = MadDiffCore.obj(evaluator.backend, x, evaluator.parameters)
     evaluator.eval_objective_timer += time() - start
     return obj
 end
 function MOI.eval_objective_gradient(evaluator::MadDiffEvaluator, g, x)
     start = time()
-    MadDiffCore.grad!(evaluator.backend, x, g, evaluator.parameters; threaded = evaluator.threaded)
+    MadDiffCore.grad!(evaluator.backend, x, g, evaluator.parameters)
     evaluator.eval_objective_gradient_timer += time() - start
     return
 end
 function MOI.eval_constraint(evaluator::MadDiffEvaluator, g, x)
     start = time()
-    MadDiffCore.cons!(evaluator.backend, x, g, evaluator.parameters; threaded = evaluator.threaded)
+    MadDiffCore.cons!(evaluator.backend, x, g, evaluator.parameters)
     evaluator.eval_constraint_timer += time() - start
     return
 end
 function MOI.eval_constraint_jacobian(evaluator::MadDiffEvaluator, J, x)
     start = time()
-    MadDiffCore.jac_coord!(evaluator.backend, x, J, evaluator.parameters; threaded = evaluator.threaded)
+    MadDiffCore.jac_coord!(evaluator.backend, x, J, evaluator.parameters)
     evaluator.eval_constraint_jacobian_timer += time() - start
     return
 end
 function MOI.eval_hessian_lagrangian(evaluator::MadDiffEvaluator, H, x, σ, μ)
     start = time()
     MadDiffCore.hess_coord!(evaluator.backend, x, μ, H, evaluator.parameters;
-                            obj_weight = σ, threaded = evaluator.threaded)
+                            obj_weight = σ)
     evaluator.eval_hessian_lagrangian_timer += time() - start
     return
 end

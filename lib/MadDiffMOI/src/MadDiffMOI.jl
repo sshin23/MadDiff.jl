@@ -5,7 +5,7 @@
 """
 module MadDiffMOI
 
-import MadDiffCore
+import MadDiffCore: MadDiffCore, ifelse
 using SpecialFunctions
 using MathOptInterface: MathOptInterface, eval_objective
 

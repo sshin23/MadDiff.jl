@@ -59,6 +59,21 @@ struct GradientSum{T <: AbstractFloat,D <: Gradient{T},I} <: Gradient{T}
     inner::I
     ds::Vector{D}
 end
+struct GradientIfElse{T, G1, G2} <: Gradient{T}
+    d1::G1
+    d2::G2
+    bref::RefValue{Bool}
+    function GradientIfElse(e::E, indexer = nothing) where {T, E <: ExpressionIfElse{T}}
+        d1 = Gradient(e.e1,indexer)
+        d2 = Gradient(e.e2,indexer)
+        return new{T,typeof(d1),typeof(d2)}(
+            d1,
+            d2,
+            e.bref
+        )
+    end
+end
+
 
 
 Gradient(e::V,(row,indexer)::Tuple{Int,Dict{Tuple{Int,Int},Int}}) where {T, V <: Variable{T}} = Gradient0{T}(index(e),set_indexer!(indexer,row,index(e)))
@@ -73,3 +88,4 @@ Gradient(e::Expression1{T,F,E}, indexer = nothing) where {T,F,E} = Gradient1(e,i
 Gradient(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1,E2} = Gradient2(e,indexer)
 Gradient(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1<:Real,E2} = Gradient2F1(e,indexer)
 Gradient(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1,E2<:Real} = Gradient2F2(e,indexer)
+Gradient(e::E, indexer = nothing) where {E <: ExpressionIfElse} = GradientIfElse(e)

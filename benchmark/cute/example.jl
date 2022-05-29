@@ -4,7 +4,6 @@ const CUTE_DIR = "/home/sshin/git/nl-benchmark/cute/text/"
 
 cases = readdir(CUTE_DIR)
 
-# djtl.nl: ifelse
 # dual2.nl: summation compilation issue 
 
 function replace_ad_backend(m,ad)

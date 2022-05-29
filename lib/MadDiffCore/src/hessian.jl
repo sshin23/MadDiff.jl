@@ -120,6 +120,11 @@ struct HessianSum{T,I,H <: Hessian{T}} <: Hessian{T}
     inner::I
     hs::Vector{H}
 end
+struct HessianIfElse{T,H1 <: Hessian{T},H2 <: Hessian{T}} <: Hessian{T}
+    h1::H1
+    h2::H2
+    bref::RefValue{Bool}
+end
 
 
 Hessian(e::ExpressionSum{T,E,I1},d::GradientSum{T,D,I2},indexer = nothing) where {T,E,D,I1,I2} = HessianSum(Hessian(inner(e),inner(d),indexer),[Hessian(e,d,indexer) for (e,d) in zip(e.es,d.ds)])
@@ -200,4 +205,4 @@ function Hessian(d1::G,d2::GradientSum{T,D2,Nothing},indexer = nothing) where {T
 	  return HessianSum(nothing, hs)
 end
 
-islower(h) = h.islower
+Hessian(e::E,d,indexer = nothing) where E <: ExpressionIfElse = HessianIfElse(Hessian(e.e1,d.d1,indexer),Hessian(e.e2,d.d2,indexer),e.bref)

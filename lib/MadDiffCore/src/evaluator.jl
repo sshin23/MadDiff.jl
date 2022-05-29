@@ -2,9 +2,8 @@ for fname in [:default_eval]
     @eval begin
         @inline $fname(e::Variable{T},x,p=nothing) where {T <: Real} = setrefval(e,getindex(x,index(e)))
         @inline $fname(e::Parameter{T},x,p=nothing) where {T <: AbstractFloat} = setrefval(e,getindex(p,index(e)))
-        @inline function $fname(e::E, x, p = nothing) where {E <: ExpressionIfElse}
-            setrefval(e,non_caching_eval(e.e0,x,p)) ? $fname(e.e1,x,p) : $fname(e.e2,x,p)
-        end
+        @inline $fname(e::E, x, p = nothing) where {E <: ExpressionIfElse} =
+            setrefval(e,setbrefval(e,non_caching_eval(e.e0,x,p)) ? $fname(e.e1,x,p) : $fname(e.e2,x,p))
     end
 
 
@@ -56,7 +55,8 @@ for fname in [:non_caching_eval]
         @inline $fname(laghess::LagrangianHessian,z,x,p,l,s) = $fname(laghess.f,z,x,p,l,s)
         @inline $fname(h::H,z,x,p,l,s) where H <: Hessian = $fname(h,z,x,p,s)
         @inline $fname(lagentry::LagrangianEntry{T,E},z,x,p,l) where {T,E} = $fname(lagentry.e,z,x,p,l[index(lagentry)])
-
+        @inline $fname(e::E, x, p = nothing) where {E <: ExpressionIfElse} =
+            non_caching_eval(e.e0,x,p) ? $fname(e.e1,x,p) : $fname(e.e2,x,p)
 
 
         @inline $fname(::HessianNull{T},z,x,p=nothing,h0=1) where T = nothing
@@ -108,6 +108,7 @@ for fname in [:non_caching_eval]
             $fname(h.h21,z,x,p,h0)
             return
         end
+        @inline $fname(h::H,z,x,p=nothing,h0=1.) where {H <: HessianIfElse } = brefval(h) ? $fname(h.h1,z,x,p,h0) : $fname(h.h2,z,x,p,h0)
     end
 
     for (f0,f,df,ddf) in f_nargs_1
@@ -180,6 +181,8 @@ for fname in [:default_eval, :non_caching_eval]
         @inline $fname(d::Gradient0{T},y,x,p=nothing,d0=1) where T = (@inbounds y[d.offset] += d0; nothing)
         @inline $fname(d::Gradient0{T},(j,y)::Tuple{Int,M},x,p=nothing,d0=1) where {T, M <: AbstractMatrix} = (@inbounds y[j,d.offset] += d0; nothing)
         @inline $fname(d::Gradient0{T},(j,y)::Tuple{Int,M},x,p=nothing,d0=1) where {T, M <: AbstractVector} = (@inbounds y[d.offset] += d0; nothing)
+        @inline $fname(d::G,y,x,p=nothing,d0=1.) where {G <: GradientIfElse} = brefval(d) ? $fname(d.d1,y,x,p,d0) : $fname(d.d2,y,x,p,d0)
+        
         @inline $fname(e::FieldNull{T},y,x,p=nothing) where T = nothing
         @inline $fname(e::JacobianEntry{T,E},y,x,p=nothing) where {T,E} = $fname(e.e,(index(e),y),x,p)
         @inline $fname(e::IndexedExpression{T,E},y,x,p=nothing) where {T,E} = (y[e.index] = $fname(e.e,x,p))

@@ -1,23 +1,23 @@
 using Documenter, MadDiff
 
 makedocs(
-    sitename = "MadDiff.jl",
+    sitename = "MadDiff",
     modules = [MadDiff],
     authors = "Sungho Shin, Francois Pacaud, and contributors.",
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true",
         sidebar_sitename = true,
+        collapselevel = 1,
     ),
     pages = [
         "Home" => "index.md",
-        "User Guide" => [
-            "Getting Started"=>"guide.md",
-            "Examples" => "examples.md",
-        ],
+        "Quick Start"=>"guide.md",
         "How it works?" => "algorithms.md",
-        "Citing MadDiff" => "citation.md",
-        "Contributing" => "contrib.md",
-        "API Reference" => "api.md",
+        "API Manual" => [
+            "MadDiffCore" => "core.md",
+            "MadDiffModels" => "models.md",
+            "MadDiffMOI" => "moi.md",
+        ]
     ],
 )
 

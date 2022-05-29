@@ -80,3 +80,15 @@ dual(c::Constraint) = c.parent.l[c.index]
     dual(c::Constraint)
 Retrun the objective value of MadDiffModel `m`.
 """
+
+for field in fieldnames(NLPModels.NLPModelMeta)
+    meth = Symbol("get_", field)
+    @eval begin
+        import NLPModels: $meth
+        """
+            $($meth)(m::MadDiffModel)
+        Return the value $($(QuoteNode(field))) from MadDiffModel.
+        """
+        $meth
+    end
+end

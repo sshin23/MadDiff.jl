@@ -22,7 +22,7 @@ module MadDiffModels
 import Base: ==, >=, <=, <, >, getproperty, getindex, setindex!, add_sum, copyto!, ndims, size, copyto!, convert, string, print, show, log2, max, csch, acoth, tanh, asecd, ^, *, cospi, csc, abs, hypot, /, rem2pi, -, acos, min, exp10, tan, acsc, log10, log1p, \, acotd, sin, -, exp2, acot, acosh, atan, mod, cotd, atanh, sind, rem, mod2pi, secd, atan, sinh, +, cot, cosh, acsch, sinpi, atand, cos, acosd, rad2deg, +, tand, cscd, asinh, cbrt, asin, transpose, inv, acscd, expm1, log, deg2rad, asec, asind, cosd, abs2, sech, sqrt, asech, sec, exp, coth
 
 import MadDiffCore
-import NLPModels: NLPModels, jac_structure!, hess_structure!, obj, cons!, grad!, jac_coord!, hess_coord!, get_nvar, get_ncon, get_nnzh, get_nnzj, get_x0, get_y0, get_lvar, get_uvar, get_lcon, get_ucon
+import NLPModels: NLPModels, jac_structure!, hess_structure!, obj, cons!, grad!, jac_coord!, hess_coord!
 
 include("model.jl")
 include("api.jl")

@@ -6,8 +6,6 @@ import Base: zero, one, ==, >=, <=, >, <, getindex, setindex!, add_sum, copyto!,
 
 import SpecialFunctions: SpecialFunctions, erfi, bessely, besselj, loggamma, erfcinv, hankelh2, hankelh1, erfcx, besselk, beta, invdigamma, bessely1, besselj1, dawson, airyaiprime, erf, digamma, gamma, airyai, airybi, erfinv, bessely0, erfc, trigamma, besseli, polygamma, logbeta, airybiprime, besselj0
 
-export Source, Sink, Constant, Expression, Variable, Parameter, Field, Gradient, Jacobian, Hessian, SparseHessian, SparseJacobian, SparseGradient, function_evaluator, gradient_evaluator, sparse_gradient_evaluator, hessian_evaluator, sparse_hessian_evaluator, field_evaluator, jacobian_evaluator, sparse_jacobian_evaluator, obj, cons!, grad!, jac_coord!, hess_coord!
-
 abstract type AbstractExpression{T <: AbstractFloat} end 
 abstract type Expression{T <: AbstractFloat} <: AbstractExpression{T} end
 abstract type Gradient{T <: AbstractFloat} <: AbstractExpression{T} end

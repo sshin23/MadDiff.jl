@@ -1,6 +1,6 @@
 module MadDiffCore
 
-import NaNMath: sin, cos, tan, asin, acos, acosh, atanh, log, log2, log10, lgamma, log1p, pow, sqrt
+import NaNMath: NaNMath, sin, cos, tan, asin, acos, acosh, atanh, log, log2, log10, lgamma, log1p, pow, sqrt
 
 import Base: zero, one, ==, >=, <=, >, <, getindex, setindex!, add_sum, copyto!, ndims, size, copyto!, convert, string, print, show, max, csch, acoth, tanh, asecd, ^, *, cospi, csc, abs, hypot, /, rem2pi, -, min, exp10, acsc, \, acotd, -, exp2, acot, atan, mod, cotd, sind, rem, mod2pi, secd, atan, sinh, +, cot, cosh, acsch, sinpi, atand, acosd, rad2deg, +, tand, cscd, asinh, cbrt, transpose, inv, acscd, expm1, deg2rad, asec, asind, cosd, abs2, sech, asech, sec, exp, coth, RefValue
 

@@ -25,7 +25,6 @@ mutable struct MadDiffModel{T <: AbstractFloat} <: NLPModels.AbstractNLPModel{T,
     gl::Vector{T}
     gu::Vector{T}
 
-    threaded::Bool
     instantiated::Bool
     meta::NLPModels.AbstractNLPModelMeta{T, Vector{T}}
     nlpcore::MadDiffCore.AbstractNLPCore{T}
@@ -42,11 +41,11 @@ Creates an empty `MadDiffModel{T}`.
 **Example**
 `m = MadDiffModel{Float32}()`
 """
-MadDiffModel{T}(;threaded = false) where T = MadDiffModel{T}(
+MadDiffModel{T}() where T = MadDiffModel{T}(
     MadDiffCore.Field{T}(), MadDiffCore.Constant(zero(T)),
     0, 0, 0,
     T[], T[], T[], T[], T[], T[], T[], T[], T[], 
-    threaded, false, NullNLPModelMeta{T,Vector{T}}(), NullNLPCore{T}(), NLPModels.Counters(),
+    false, NullNLPModelMeta{T,Vector{T}}(), NullNLPCore{T}(), NLPModels.Counters(),
     Dict{Symbol,Any}()
 )
 
@@ -58,7 +57,7 @@ Creates an empty `MadDiffModel{Float64}`.
 **Example**
 `m = MadDiffModel(linear_solver = "ma27")`
 """
-MadDiffModel(;threaded = false)= MadDiffModel{Float64}(; threaded = threaded)
+MadDiffModel()= MadDiffModel{Float64}()
 
 
 """
@@ -79,13 +78,17 @@ struct ModelComponent{C <: Union{MadDiffCore.Variable,MadDiffCore.Parameter}}
     inner::C
 end
 
-for (f,df,ddf) in MadDiffCore.f_nargs_1
-    @eval $f(e1::T) where T <: ModelComponent = $f(e1.inner) 
+for (f0,f,df,ddf) in MadDiffCore.f_nargs_1
+    @eval MadDiffCore.$f0(e1::T) where T <: ModelComponent = MadDiffCore.$f0(e1.inner) 
 end
-for (f,df1,df2,ddf1,ddf12,ddf22) in MadDiffCore.f_nargs_2
-    @eval $f(e1::T1,e2::T2) where {T1 <: ModelComponent,T2 <: ModelComponent} = $f(e1.inner,e2.inner)
-    @eval $f(e1::T,e2) where T <: ModelComponent = $f(e1.inner,e2)
-    @eval $f(e1,e2::T) where T <: ModelComponent = $f(e1,e2.inner)
+for (f0,f,df,ddf) in MadDiffCore.f_base
+    @eval $f0(e1::T) where T <: ModelComponent = $f0(e1.inner) 
+end
+for (f0,f,df1,df2,ddf1,ddf12,ddf22) in MadDiffCore.f_nargs_2
+    @eval MadDiffCore.$f0(e1::T1,e2::T2) where {T1 <: ModelComponent,T2 <: ModelComponent} =
+        $f0(e1.inner,e2.inner)
+    @eval MadDiffCore.$f0(e1::T,e2) where T <: ModelComponent = MadDiffCore.$f0(e1.inner,e2)
+    @eval MadDiffCore.$f0(e1,e2::T) where T <: ModelComponent = MadDiffCore.$f0(e1,e2.inner)
 end
 add_sum(a::E,b::ModelComponent{C}) where {C,E<:MadDiffCore.ExpressionSum} = add_sum(a,b.inner)
 add_sum(a::ModelComponent{C},b::E) where {C,E<:MadDiffCore.ExpressionSum} = add_sum(a.inner,b)

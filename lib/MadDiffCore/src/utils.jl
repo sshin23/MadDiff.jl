@@ -24,7 +24,6 @@ refval12(e) = e.ref12.x
 refval21(e) = e.ref21.x
 refval22(e) = e.ref22.x
 setrefval(e,val) = ref(e)[] = val
-setrefval(e,val) = ref(e)[] = val
 setrefval1(e,val) = ref1(e)[] = val
 setrefval2(e,val) = ref2(e)[] = val
 setbrefval(e,val) = e.bref[] = val

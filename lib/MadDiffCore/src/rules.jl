@@ -2,7 +2,9 @@ for (f0,f,df,ddf) in f_nargs_1
     @eval $f0(e::E) where {E <: Expression} = Expression1($f,e)
 end
 
-
+for (f0,f,df,ddf) in f_base
+    @eval $f0(e::E) where {E <: Expression} = Expression1($f,e)
+end
 
 for (f0,f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
     @eval begin

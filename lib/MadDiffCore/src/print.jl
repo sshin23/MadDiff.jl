@@ -56,7 +56,7 @@ for (f0,f,df,ddf) in f_nargs_1
 end
 
 for (f0,f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
-    f in [:+,:-,:*,:^,:/,:(<=),:(==),:(>=)] && continue
+    f0 in [:+,:-,:*,:^,:/,:(<=),:(==),:(>=)] && continue
     @eval begin
         push!(printlist,(:(Expression2{T,$(typeof($f)),E1,E2} where {T,E1,E2}),e->"$(string($f))($(string(e.e1)),$(string(e.e2)))"))
     end

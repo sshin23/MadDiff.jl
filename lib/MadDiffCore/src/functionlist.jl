@@ -35,7 +35,7 @@ const f_nargs_1 = [
     (
         :abs,
         abs,
-        x->(ifelse(x >= 0, one(x), -one(x))),
+        x->(Base.ifelse(x >= 0, one(x), -one(x))),
         zero
     ),
     (

@@ -2,10 +2,13 @@ for fname in [:default_eval]
     @eval begin
         @inline $fname(e::Variable{T},x,p=nothing) where {T <: Real} = setrefval(e,getindex(x,index(e)))
         @inline $fname(e::Parameter{T},x,p=nothing) where {T <: AbstractFloat} = setrefval(e,getindex(p,index(e)))
+        @inline function $fname(e::E, x, p = nothing) where {E <: ExpressionIfElse}
+            setrefval(e,non_caching_eval(e.e0,x,p)) ? $fname(e.e1,x,p) : $fname(e.e2,x,p)
+        end
     end
 
 
-    for (f,df,ddf) in f_nargs_1
+    for (f0,f,df,ddf) in f_nargs_1
         @eval begin
             @inline $fname(e::Expression1{T,typeof($f),E},x,p=nothing) where {T,E} = setrefval(e,$f($fname(e.e1,x,p)))
             
@@ -18,7 +21,7 @@ for fname in [:default_eval]
         end
     end
 
-    for (f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
+    for (f0,f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
         @eval begin
             @inline $fname(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1,F2} = setrefval(e,$f($fname(e.e1,x,p),$fname(e.e2,x,p)))
             @inline $fname(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1<:Real,F2} = setrefval(e,$f(e.e1,$fname(e.e2,x,p)))
@@ -107,7 +110,7 @@ for fname in [:non_caching_eval]
         end
     end
 
-    for (f,df,ddf) in f_nargs_1
+    for (f0,f,df,ddf) in f_nargs_1
         @eval begin
             @inline $fname(e::Expression1{T,typeof($f),E},x,p=nothing) where {T,E} = $f($fname(e.e1,x,p))
             @inline function $fname(d::Gradient1{T,typeof($f),D1},y,x,p=nothing,d0=1.)  where {T,D1}
@@ -124,7 +127,7 @@ for fname in [:non_caching_eval]
     end
 
 
-    for (f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
+    for (f0,f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
         @eval begin
             @inline $fname(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1,F2} = $f($fname(e.e1,x,p),$fname(e.e2,x,p))
             @inline $fname(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1<:Real,F2} = $f(e.e1,$fname(e.e2,x,p))
@@ -180,11 +183,6 @@ for fname in [:default_eval, :non_caching_eval]
         @inline $fname(e::FieldNull{T},y,x,p=nothing) where T = nothing
         @inline $fname(e::JacobianEntry{T,E},y,x,p=nothing) where {T,E} = $fname(e.e,(index(e),y),x,p)
         @inline $fname(e::IndexedExpression{T,E},y,x,p=nothing) where {T,E} = (y[e.index] = $fname(e.e,x,p))
-    end
-end
-
-for fname in [:default_eval, :non_caching_eval]
-    @eval begin
         @inline function $fname(d::GradientSum{T,D,I},y,x,p=nothing,d0=1) where {T,D,I}
             $fname(inner(d),y,x,p,d0)
             @simd for i in eachindex(d.ds)

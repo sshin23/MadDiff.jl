@@ -129,6 +129,7 @@ Hessian(e::Parameter{T},::G,indexer) where {T <: AbstractFloat, G <: Gradient} =
 Hessian(e::Constant{T},::G,indexer) where {T <: AbstractFloat, G <: Gradient} = HessianNull{T}()
 Hessian(d1::G,d2::GradientNull{T},indexer) where {T,G <: Gradient} = HessianNull{T}()
 Hessian(d1::GradientNull{T},d2::G,indexer) where {T,G <: Gradient} = HessianNull{T}()
+Hessian(d1::GradientNull{T},d2::GradientSum,indexer) where {T,G <: Gradient} = HessianNull{T}()
 Hessian(d1::GradientNull{T},d2::GradientNull{T},indexer) where T = HessianNull{T}()
 Hessian(d1::Gradient0{T},d2::Gradient0{T},indexer) where T = HessianD00S{T}(index(d1)>=index(d2) ? set_indexer!(indexer,index(d1),index(d2)) : 0,index(d1) >= index(d2))
 Hessian(d1::Gradient0{T},d2::Gradient0{T},::Nothing) where T = HessianD00{T}(index(d1),index(d2),index(d1) >= index(d2))
@@ -153,86 +154,50 @@ Hessian22a(::HessianNull{T},::HessianNull{T},::RefValue{T},::RefValue{T}) where 
 Hessian22a(::HessianNull{T},h2::H,::RefValue{T},ref2::RefValue{T}) where {T,H<:Hessian} = Hessian11a(h2,ref2)
 Hessian22a(h1::H,::HessianNull{T},ref1::RefValue{T},::RefValue{T}) where {T,H<:Hessian} = Hessian11a(h1,ref1)
 
-# performance killer ---------------
 function Hessian(d1::GradientSum{T,D1,I1},d2::GradientSum{T,D2,I2},indexer = nothing) where {T,D1,D2,I1,I2}
-    @warn "This operation is expensive"
     hinner = Hessian(inner(d1),d2,indexer)
     hs = [Hessian(d,d2,indexer) for d in d1.ds]
-    @inline function (z,x,p=nothing,h0=1)
-        hinner(z,x,p,h0)
-        @simd for i in eachindex(hs)
-            @inbounds hs[i](z,x,p,h0)
-        end
-    end
-end
-function Hessian(d1::GradientSum{T,D1,Nothing},d2::GradientSum{T,D2,I2},indexer = nothing) where {T,D1,D2,I2}
-    @warn "This operation is expensive"
-    hs = [Hessian(d,d2,indexer) for d in d1.ds]
-    @inline function (z,x,p=nothing,h0=1)
-        @simd for i in eachindex(hs)
-            @inbounds hs[i](z,x,p,h0)
-        end
-    end
+
+    return HessianSum(hinner,hs)
 end
 function Hessian(d1::GradientSum{T,D1,I1},d2::GradientSum{T,D2,Nothing},indexer = nothing) where {T,D1,D2,I1}
-    @warn "This operation is expensive"
     hinner = Hessian(inner(d1),d2,indexer)
     hs = [Hessian(d,d2,indexer) for d in d1.ds]
-    @inline function (z,x,p=nothing,h0=1)
-        hinner(z,x,p,h0)
-        @simd for i in eachindex(hs)
-            @inbounds hs[i](z,x,p,h0)
-        end
-    end
-end
-function Hessian(d1::GradientSum{T,D1,Nothing},d2::GradientSum{T,D2,Nothing},indexer = nothing) where {T,D1,D2}
-    @warn "This operation is expensive"
-    hs = [Hessian(d,d2,indexer) for d in d1.ds]
-    @inline function (z,x,p=nothing,h0=1)
-        @simd for i in eachindex(hs)
-            @inbounds hs[i](z,x,p,h0)
-        end
-    end
+    
+    return HessianSum(hinner,hs)
 end
 function Hessian(d1::GradientSum{T,D1,I1},d2::G,indexer = nothing) where {T,D1,D2,I1,I2,G <: Gradient}
-    @warn "This operation is expensive"
     hinner = Hessian(inner(d1),d2,indexer)
     hs = [Hessian(d,d2,indexer) for d in d1.ds]
-    @inline function (z,x,p=nothing,h0=1)
-        hinner(z,x,p,h0)
-        @simd for i in eachindex(hs)
-            @inbounds hs[i](z,x,p,h0)
-        end
-    end
-end
-function Hessian(d1::GradientSum{T,D1,Nothing},d2::G,indexer = nothing) where {T,D1,D2,I2,G <: Gradient}
-    @warn "This operation is expensive"
-    hs = [Hessian(d,d2,indexer) for d in d1.ds]
-    @inline function (z,x,p=nothing,h0=1)
-        @simd for i in eachindex(hs)
-            @inbounds hs[i](z,x,p,h0)
-        end
-    end
+    
+    return HessianSum(hinner,hs)
 end
 function Hessian(d1::G,d2::GradientSum{T,D2,I2},indexer = nothing) where {T,G <: Gradient,D2,I2}
-    @warn "This operation is expensive"
     hinner = Hessian(d1,inner(d2),indexer)
     hs = [Hessian(d1,d,indexer) for d in d2.ds]
-    @inline function (z,x,p=nothing,h0=1)
-        hinner(z,x,p,h0)
-        @simd for i in eachindex(hs)
-            @inbounds hs[i](z,x,p,h0)
-        end
-    end
+    
+    return HessianSum(hinner,hs)
+end
+
+function Hessian(d1::GradientSum{T,D1,Nothing},d2::GradientSum{T,D2,I2},indexer = nothing) where {T,D1,D2,I2}
+    hs = [Hessian(d,d2,indexer) for d in d1.ds]
+    
+	  return HessianSum(nothing, hs)
+end
+function Hessian(d1::GradientSum{T,D1,Nothing},d2::GradientSum{T,D2,Nothing},indexer = nothing) where {T,D1,D2}
+    hs = [Hessian(d,d2,indexer) for d in d1.ds]
+    
+	  return HessianSum(nothing, hs)
+end
+function Hessian(d1::GradientSum{T,D1,Nothing},d2::G,indexer = nothing) where {T,D1,D2,I2,G <: Gradient}
+    hs = [Hessian(d,d2,indexer) for d in d1.ds]
+    
+	  return HessianSum(nothing, hs)
 end
 function Hessian(d1::G,d2::GradientSum{T,D2,Nothing},indexer = nothing) where {T, G <: Gradient, D2}
-    @warn "This operation is expensive"
     hs = [Hessian(d1,d,indexer) for d in d2.ds]
-    @inline function (z,x,p=nothing,h0=1)
-        @simd for i in eachindex(hs)
-            @inbounds hs[i](z,x,p,h0)
-        end
-    end
+    
+	  return HessianSum(nothing, hs)
 end
 
 islower(h) = h.islower

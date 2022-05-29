@@ -37,6 +37,14 @@ struct Expression2{T <: AbstractFloat, F <: Function,E1, E2} <: Expression{T}
         E2
     } = new{T,F,E1,E2}(e1,e2,RefValue{T}(0.))
 end
+struct ExpressionIfElse{T,E0 <: Expression{T}, E1, E2} <: Expression{T}
+    e0::E0
+    e1::E1
+    e2::E2
+    ref::RefValue{Bool}
+    ExpressionIfElse(e0::E0,e1::E1,e2::E2) where {T, E0 <: Expression{T}, E1, E2} = new{T,E0,E1,E2}(e0,e1,e2,RefValue{Bool}(true))
+end
+
 struct ExpressionSum{T <: AbstractFloat, E <: Expression{T}, I} <: Expression{T}
     inner::I
     es::Vector{E}

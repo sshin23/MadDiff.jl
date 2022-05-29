@@ -1,4 +1,3 @@
-using MadDiff
 const MOI = MathOptInterface
 const X = MadDiffCore.Variable()
 const P = MadDiffCore.Parameter()
@@ -87,7 +86,7 @@ function _convert_expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int; subex
 
 end
 
-_is_another_child(ex,i,j) = j <= length(ex.nodes) && ex.nodes[j].parent == i
+_is_another_child(ex,i,j) = (j <= length(ex.nodes) && ex.nodes[j].parent == i)
 
 function _get_comparison(index,ex1,ex2)
 

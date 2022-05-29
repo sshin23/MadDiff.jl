@@ -62,6 +62,7 @@ function DenseNLPCore(obj::Expression,con::Field)
     return DenseNLPCore(obj,con,grad,jac,hess)
 end
 
+SparseNLPCore(obj::Real,con) = SparseNLPCore(Constant(obj),con)
 SparseNLPCore(obj::Expression,con::Sink) = SparseNLPCore(obj,con.inner)
 function SparseNLPCore(obj::Expression,con::Field)
     grad = Gradient(obj)

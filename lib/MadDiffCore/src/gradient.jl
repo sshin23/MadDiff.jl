@@ -1,4 +1,13 @@
+"""
+    GradientNull{T <: AbstractFloat} <: Gradient{T}
+`Gradient` of `Parameter` or `Constant`.
+"""
 struct GradientNull{T <: AbstractFloat} <: Gradient{T} end
+
+"""
+    Gradient0{T <: AbstractFloat} <: Gradient{T}
+`Gradient` of `Variable`.
+"""
 struct Gradient0{T <: AbstractFloat} <: Gradient{T}
     index::Int
     offset::Int

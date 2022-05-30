@@ -9,6 +9,12 @@ import MadDiffCore: MadDiffCore, ifelse
 using SpecialFunctions
 using MathOptInterface: MathOptInterface, eval_objective
 
+const MOI = MathOptInterface
+const X = MadDiffCore.Variable()
+const P = MadDiffCore.Parameter()
+const _UNIDICT = [eval(f) for f in MOI.Nonlinear.DEFAULT_UNIVARIATE_OPERATORS]
+const _MULTIDICT = [eval(f) for f in MOI.Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS]
+
 include("moi_interface.jl")
 
 end # module

@@ -257,7 +257,7 @@ end
 
 """
     NLPModels.jac_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T})
-Evaluate the structure of the constraints Jacobian in sparse coordinate format in place.
+Evaluate the structure of the constraints Jacobian and store the result in `I` and `J` in sparse coordinate format.
 """
 @inline function NLPModels.jac_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T}) where T
     fill_sparsity!(I,J,m.nlpcore.jac_sparsity)
@@ -266,7 +266,7 @@ end
 
 """
     NLPModels.hess_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T})
-Evaluate the structure of the constraints Hessian in sparse coordinate format in place.
+Evaluate the structure of the Lagrangian Hessian and store the result in `I` and `J` in sparse coordinate format.
 """
 @inline function NLPModels.hess_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T}) where T
     fill_sparsity!(I,J,m.nlpcore.hess_sparsity)
@@ -284,7 +284,7 @@ end
 
 """
     NLPModels.cons!(m::MadDiffModel,x::AbstractVector,y::AbstractVector)
-Evaluate the constraints of `m` at `x` in place. 
+Evaluate the constraints of `m` at `x` and store the result in the vector `y`. 
 """
 @inline function NLPModels.cons!(m::MadDiffModel,x::AbstractVector,y::AbstractVector)
     NLPModels.increment!(m, :neval_cons)
@@ -294,7 +294,7 @@ end
 
 """
     NLPModels.grad!(m::MadDiffModel,x::AbstractVector,y::AbstractVector)
-Evaluate the gradient of `m` at `x` in place.
+Evaluate the gradient of `m` at `x` and store the result in the vector `y`.
 """
 @inline function NLPModels.grad!(m::MadDiffModel,x::AbstractVector,y::AbstractVector)
     NLPModels.increment!(m, :neval_grad)
@@ -304,7 +304,7 @@ end
 
 """
     NLPModels.jac_coord!(m::MadDiffModel,x::AbstractVector,J::AbstractVector)
-Evaluate the constraints Jacobian of `m` at `x` in sparse coordinate format in place.
+Evaluate the constraints Jacobian of `m` at `x` and store the result in the vector `J` in sparse coordinate format.
 """
 @inline function NLPModels.jac_coord!(m::MadDiffModel,x::AbstractVector,J::AbstractVector)
     NLPModels.increment!(m, :neval_jac)
@@ -314,7 +314,7 @@ end
 
 """
     NLPModels.hess_coord!(m::MadDiffModel,x::AbstractVector,lag::AbstractVector,z::AbstractVector; obj_weight = 1.0)
-Evaluate the Lagrangian Hessian of `m` at `x`, `lag` with `obj_weight` in sparse coordinate format in place.
+Evaluate the Lagrangian Hessian of `m` at primal `x`, dual `lag`, and objective weight `obj_weight` and store the result in the vector `z`in sparse coordinate format.
 """
 @inline function NLPModels.hess_coord!(m::MadDiffModel,x::AbstractVector,lag::AbstractVector,z::AbstractVector; obj_weight = 1.0)
     NLPModels.increment!(m, :neval_hess)

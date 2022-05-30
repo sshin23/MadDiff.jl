@@ -7,7 +7,7 @@ for fname in [:default_eval]
     end
 
 
-    for (f0,f,df,ddf) in f_nargs_1
+    for (f0,f,df,ddf) in _F_NARGS_1
         @eval begin
             @inline $fname(e::Expression1{T,typeof($f),E},x,p=nothing) where {T,E} = setrefval(e,$f($fname(e.e1,x,p)))
             
@@ -20,7 +20,7 @@ for fname in [:default_eval]
         end
     end
 
-    for (f0,f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
+    for (f0,f,df1,df2,ddf11,ddf12,ddf22) in _F_NARGS_2
         @eval begin
             @inline $fname(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1,F2} = setrefval(e,$f($fname(e.e1,x,p),$fname(e.e2,x,p)))
             @inline $fname(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1<:Real,F2} = setrefval(e,$f(e.e1,$fname(e.e2,x,p)))
@@ -111,7 +111,7 @@ for fname in [:non_caching_eval]
         @inline $fname(h::H,z,x,p=nothing,h0=1.) where {H <: HessianIfElse } = brefval(h) ? $fname(h.h1,z,x,p,h0) : $fname(h.h2,z,x,p,h0)
     end
 
-    for (f0,f,df,ddf) in f_nargs_1
+    for (f0,f,df,ddf) in _F_NARGS_1
         @eval begin
             @inline $fname(e::Expression1{T,typeof($f),E},x,p=nothing) where {T,E} = $f($fname(e.e1,x,p))
             @inline function $fname(d::Gradient1{T,typeof($f),D1},y,x,p=nothing,d0=1.)  where {T,D1}
@@ -128,7 +128,7 @@ for fname in [:non_caching_eval]
     end
 
 
-    for (f0,f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
+    for (f0,f,df1,df2,ddf11,ddf12,ddf22) in _F_NARGS_2
         @eval begin
             @inline $fname(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1,F2} = $f($fname(e.e1,x,p),$fname(e.e2,x,p))
             @inline $fname(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1<:Real,F2} = $f(e.e1,$fname(e.e2,x,p))
@@ -176,7 +176,7 @@ end
 
 for fname in [:default_eval, :non_caching_eval]
     @eval begin 
-        @inline $fname(e::Constant{T},x,p=nothing) where {T <: AbstractFloat}  = refval(e)
+        @inline $fname(e::Constant{T},x,p=nothing) where {T <: AbstractFloat}  = e.x
         @inline $fname(::GradientNull{T},z,x,p=nothing,d0=1) where T = nothing
         @inline $fname(d::Gradient0{T},y,x,p=nothing,d0=1) where T = (@inbounds y[d.offset] += d0; nothing)
         @inline $fname(d::Gradient0{T},(j,y)::Tuple{Int,M},x,p=nothing,d0=1) where {T, M <: AbstractMatrix} = (@inbounds y[j,d.offset] += d0; nothing)

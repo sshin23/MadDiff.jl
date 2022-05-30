@@ -49,13 +49,13 @@ const printlist = [
 ]
 
 
-for (f0,f,df,ddf) in f_nargs_1
+for (f0,f,df,ddf) in _F_NARGS_1
     @eval begin
         push!(printlist,(:(Expression1{T,$(typeof($f)),E} where {T,E}),e->"$(string($f))($(string(e.e1)))"))
     end
 end
 
-for (f0,f,df1,df2,ddf11,ddf12,ddf22) in f_nargs_2
+for (f0,f,df1,df2,ddf11,ddf12,ddf22) in _F_NARGS_2
     f0 in [:+,:-,:*,:^,:/,:(<=),:(==),:(>=)] && continue
     @eval begin
         push!(printlist,(:(Expression2{T,$(typeof($f)),E1,E2} where {T,E1,E2}),e->"$(string($f))($(string(e.e1)),$(string(e.e2)))"))

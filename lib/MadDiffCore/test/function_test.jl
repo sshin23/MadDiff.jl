@@ -113,7 +113,7 @@ function test_function_2(forig,name,xpoints,ppoints)
     end
 end
 
-for (f,~,~) in MadDiffCore.f_nargs_1
+for (f,~,~) in MadDiffCore._F_NARGS_1
     forig = @eval (x,p)->$f(x[1])
     name = "basic-function-test-$f"
     test_function_1(forig,name, f != :acoth ? xpoints1 : xpoints2, ppoints)

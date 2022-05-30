@@ -4,7 +4,7 @@ for (mod,meths) in [
     (
         :MadDiffCore,
         [
-            :Source, :Sink, :Constant, :Expression, :Variable, :Parameter, :Field, :Gradient, :Jacobian, :Hessian, :SparseHessian, :SparseJacobian, :SparseGradient, :function_evaluator, :gradient_evaluator, :sparse_gradient_evaluator, :hessian_evaluator, :sparse_hessian_evaluator, :field_evaluator, :jacobian_evaluator, :sparse_jacobian_evaluator, :obj, :cons!, :grad!, :jac_coord!, :hess_coord!
+            :Source, :Sink, :Constant, :Expression, :Variable, :Parameter, :Field, :Gradient, :Jacobian, :Hessian, :SparseHessian, :SparseJacobian, :SparseGradient, :function_evaluator, :gradient_evaluator, :sparse_gradient_evaluator, :hessian_evaluator, :sparse_hessian_evaluator, :field_evaluator, :jacobian_evaluator, :sparse_jacobian_evaluator, :obj, :cons!, :grad!, :jac_coord!, :hess_coord!, :non_caching_eval, :default_eval, :ifelse
         ]
     ),
     (

@@ -78,13 +78,13 @@ struct ModelComponent{C <: Union{MadDiffCore.Variable,MadDiffCore.Parameter}}
     inner::C
 end
 
-for (f0,f,df,ddf) in MadDiffCore.f_nargs_1
+for (f0,f,df,ddf) in MadDiffCore._F_NARGS_1
     @eval MadDiffCore.$f0(e1::T) where T <: ModelComponent = MadDiffCore.$f0(e1.inner) 
 end
-for (f0,f,df,ddf) in MadDiffCore.f_base
+for (f0,f,df,ddf) in MadDiffCore._F_BASE
     @eval $f0(e1::T) where T <: ModelComponent = $f0(e1.inner) 
 end
-for (f0,f,df1,df2,ddf1,ddf12,ddf22) in MadDiffCore.f_nargs_2
+for (f0,f,df1,df2,ddf1,ddf12,ddf22) in MadDiffCore._F_NARGS_2
     @eval MadDiffCore.$f0(e1::T1,e2::T2) where {T1 <: ModelComponent,T2 <: ModelComponent} =
         $f0(e1.inner,e2.inner)
     @eval MadDiffCore.$f0(e1::T,e2) where T <: ModelComponent = MadDiffCore.$f0(e1.inner,e2)

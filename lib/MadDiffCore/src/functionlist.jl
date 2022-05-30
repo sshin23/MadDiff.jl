@@ -1,19 +1,19 @@
-@inline mone(x)=-one(x) 
-@inline one(x1,x2)=one(x1)
-@inline zero(x1,x2)=zero(x1)
-@inline mone(x1,x2)=-one(x1)
-@inline x1(x1,x2)=x1
-@inline x2(x1,x2)=x2
-@inline and(x::Bool,y::Bool) = x && y
-@inline or(x::Bool,y::Bool) = x || y
-@inline and(x,y::Bool) = x==1 && y
-@inline or(x,y::Bool) = x==1 || y
-@inline and(x::Bool,y) = x && y==1
-@inline or(x::Bool,y) = x || y==1
-@inline and(x,y) = x==1 && y==1
-@inline or(x,y) = x==1 || y==1
+@inline _mone(x)=-one(x) 
+@inline _one(x1,x2)=one(x1)
+@inline _zero(x1,x2)=zero(x1)
+@inline _mone(x1,x2)=-one(x1)
+@inline _x1(x1,x2)=x1
+@inline _x2(x1,x2)=x2
+@inline _and(x::Bool,y::Bool) = x && y
+@inline _or(x::Bool,y::Bool) = x || y
+@inline _and(x,y::Bool) = x==1 && y
+@inline _or(x,y::Bool) = x==1 || y
+@inline _and(x::Bool,y) = x && y==1
+@inline _or(x::Bool,y) = x || y==1
+@inline _and(x,y) = x==1 && y==1
+@inline _or(x,y) = x==1 || y==1
 
-const f_nargs_1 = [
+const _F_NARGS_1 = [
     (
         :+,
         +,
@@ -23,7 +23,7 @@ const f_nargs_1 = [
     (
         :-,
         -,
-        mone,
+        _mone,
         zero
     ),
     (
@@ -372,33 +372,33 @@ const f_nargs_1 = [
 
 
 
-const f_nargs_2 = [
+const _F_NARGS_2 = [
     (
         :+,
         +,
-        one,
-        one,
-        zero,
-        zero,
-        zero
+        _one,
+        _one,
+        _zero,
+        _zero,
+        _zero
     ),
     (
         :-,
         -,
-        one,
-        mone,
-        zero,
-        zero,
-        zero
+        _one,
+        _mone,
+        _zero,
+        _zero,
+        _zero
     ),
     (
         :*,
         *,
-        x2,
-        x1,
-        zero,
-        one,
-        zero
+        _x2,
+        _x1,
+        _zero,
+        _one,
+        _zero
     ),
     (
         :^,
@@ -413,7 +413,7 @@ const f_nargs_2 = [
         /,
         ((x1,x2)  -> 1/x2),
         ((x1,x2)  -> -x1/x2^2),
-        zero,
+        _zero,
         ((x1,x2)  -> -1/x2^2),
         ((x1,x2)  -> 2x1/x2^3)
     ),
@@ -438,70 +438,70 @@ const f_nargs_2 = [
     (
         :(<=),
         (<=),
-        zero,
-        zero,
-        zero,
-        zero,
-        zero
+        _zero,
+        _zero,
+        _zero,
+        _zero,
+        _zero
     ),
     (
         :(>=),
         (>=),
-        zero,
-        zero,
-        zero,
-        zero,
-        zero
+        _zero,
+        _zero,
+        _zero,
+        _zero,
+        _zero
     ),
     (
         :(==),
         (==),
-        zero,
-        zero,
-        zero,
-        zero,
-        zero
+        _zero,
+        _zero,
+        _zero,
+        _zero,
+        _zero
     ),
     (
         :<,
         <,
-        zero,
-        zero,
-        zero,
-        zero,
-        zero
+        _zero,
+        _zero,
+        _zero,
+        _zero,
+        _zero
     ),
     (
         :>,
         >,
-        zero,
-        zero,
-        zero,
-        zero,
-        zero
+        _zero,
+        _zero,
+        _zero,
+        _zero,
+        _zero
     ),
     (
         :and,
-        and,
-        zero,
-        zero,
-        zero,
-        zero,
-        zero
+        _and,
+        _zero,
+        _zero,
+        _zero,
+        _zero,
+        _zero
     ),
     (
         :or,
-        or,
-        zero,
-        zero,
-        zero,
-        zero,
-        zero
+        _or,
+        _zero,
+        _zero,
+        _zero,
+        _zero,
+        _zero
     ),
 ]
 
 
-const f_base = [
+const _F_BASE = [
     (
         :(Base.sqrt),
         sqrt,

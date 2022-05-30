@@ -147,6 +147,7 @@ Hessian(d1::Gradient0{T},d2::Gradient2{T,F,F1,F2}, indexer = nothing) where {T,F
 Hessian(d1::Gradient2{T,F,F1,F2},d2::Gradient0, indexer = nothing) where {T,F,F1,F2} = HessianD20(Hessian(d1.d1,d2,indexer),Hessian(d1.d2,d2,indexer),ref1(d1),ref2(d1))
 Hessian(d1::Gradient2{T,F1,F11,F12},d2::Gradient2{T,F2,F21,F22}, indexer = nothing) where {T,F1,F11,F12,F2,F21,F22} = Hessian02(Hessian(d1.d1,d2.d1,indexer),Hessian(d1.d1,d2.d2,indexer),Hessian(d1.d2,d2.d1,indexer),Hessian(d1.d2,d2.d2,indexer),ref1(d1),ref2(d1),ref1(d2),ref2(d2))
 Hessian(e::Expression1{T,F,E},d, indexer = nothing) where {T,F,E} = Hessian11(e,d,indexer)
+Hessian(e::Expression1{T,F,E},d,indexer = nothing) where {T,F<:Union{typeof(+),typeof(-)},E} = Hessian11a(Hessian(e.e1,d.d1,indexer),ref(d))
 Hessian(e::Expression2{T,F,E1,E2},d,indexer = nothing) where {T,F,E1,E2} = Hessian22(e,d,indexer)
 Hessian(e::Expression2{T,F,E1,E2}, d,indexer = nothing) where {T,F,E1 <: Real,E2} = Hessian11F1(e,d,indexer)
 Hessian(e::Expression2{T,F,E1,E2}, d,indexer = nothing) where {T,F,E1,E2 <: Real} = Hessian11F2(e,d,indexer)

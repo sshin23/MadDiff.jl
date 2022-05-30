@@ -17,4 +17,6 @@ const _MULTIDICT = [eval(f) for f in MOI.Nonlinear.DEFAULT_MULTIVARIATE_OPERATOR
 
 include("moi_interface.jl")
 
+export MadDiffAD
+
 end # module

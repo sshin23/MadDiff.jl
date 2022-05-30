@@ -1,11 +1,13 @@
+"""
+    HessianNull{T} <: Hessian{T} end
+`Hessian` of linear expressions (e.g., Variable, Expression2{T, typeof(*), Int64, Variable{T}} where T)
+"""
 struct HessianNull{T} <: Hessian{T} end
-struct HessianD21{T,H1,H2} <: Hessian{T}
-    h1::H1
-    h2::H2
-    ref::RefValue{T}
-    ref1::RefValue{T}
-    ref2::RefValue{T}
-end
+
+"""
+    Hessian11{T,F,H1,H11} <: Hessian{T}
+`Hessian` of `Expression1`
+"""
 struct Hessian11{T,F,H1,H11} <: Hessian{T}
     h1::H1
     h11::H11
@@ -18,6 +20,11 @@ struct Hessian11{T,F,H1,H11} <: Hessian{T}
         return new{T,F,typeof(h1),typeof(h11)}(h1,h11,ref(e.e1),ref(d))
     end
 end
+
+"""
+    Hessian11F1{T,F,H1,H11,R} <: Hessian{T}
+`Hessian` of `Expression2` whose first argument is `<: Real`.
+"""
 struct Hessian11F1{T,F,H1,H11,R} <: Hessian{T}
     a::R
     h1::H1
@@ -30,6 +37,11 @@ struct Hessian11F1{T,F,H1,H11,R} <: Hessian{T}
         return new{T,F,typeof(h1),typeof(h11),typeof(e.e1)}(e.e1,h1,h11,ref(e.e2),ref(d))
     end
  end
+
+"""
+    Hessian11F2{T,F,H1,H11,R} <: Hessian{T}
+`Hessian` of `Expression2` whose second argument is `<: Real`.
+"""
 struct Hessian11F2{T,F,H1,H11,R} <: Hessian{T}
     a::R
     h1::H1
@@ -42,6 +54,11 @@ struct Hessian11F2{T,F,H1,H11,R} <: Hessian{T}
         return new{T,F,typeof(h1),typeof(h11),typeof(e.e2)}(e.e2,h1,h11,ref(e.e1),ref(d))
     end
 end
+
+"""
+    Hessian02{T,H11,H12,H21,H22} <: Hessian{T}
+`Hessian` of `
+"""
 struct Hessian02{T,H11,H12,H21,H22} <: Hessian{T}
     h11::H11
     h12::H12
@@ -83,18 +100,25 @@ struct HessianD00S{T} <: Hessian{T}
     index::Int
     islower::Bool
 end
+struct HessianD10{T,H <: Hessian{T}} <: Hessian{T}
+    h::H
+    ref::RefValue{T}
+end
 struct HessianD20{T,H1 <: Hessian{T},H2 <: Hessian{T}} <: Hessian{T}
     h1::H1
     h2::H2
     ref1::RefValue{T}
     ref2::RefValue{T}
 end
-struct HessianD10{T,H <: Hessian{T}} <: Hessian{T}
-    h::H
-    ref::RefValue{T}
-end
 struct HessianD11{T,H <: Hessian{T}} <: Hessian{T}
     h::H
+    ref1::RefValue{T}
+    ref2::RefValue{T}
+end
+struct HessianD21{T,H1,H2} <: Hessian{T}
+    h1::H1
+    h2::H2
+    ref::RefValue{T}
     ref1::RefValue{T}
     ref2::RefValue{T}
 end

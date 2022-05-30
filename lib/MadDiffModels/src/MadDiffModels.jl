@@ -26,4 +26,6 @@ import NLPModels: NLPModels, jac_structure!, hess_structure!, obj, cons!, grad!,
 include("model.jl")
 include("api.jl")
 
+export MadDiffModel, variable, constraint, objective, parameter, instantiate!, value, setvalue, set_lower_bound, set_upper_bound, lower_bound, upper_bound, set_lower_bound, set_upper_bound, lower_bound, upper_bound, dual
+
 end # module

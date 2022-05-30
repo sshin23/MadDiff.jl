@@ -12,6 +12,11 @@ struct Gradient0{T <: AbstractFloat} <: Gradient{T}
     index::Int
     offset::Int
 end
+
+"""
+    Gradient1{T <: AbstractFloat, F, D1 <: Gradient} <: Gradient{T}
+`Gradient` of `Expression1`.
+"""
 struct Gradient1{T <: AbstractFloat, F, D1 <: Gradient} <: Gradient{T}
     d1::D1
     fref1::RefValue{T}
@@ -21,6 +26,11 @@ struct Gradient1{T <: AbstractFloat, F, D1 <: Gradient} <: Gradient{T}
         return new{T,F,typeof(d1)}(d1,ref(e.e1),RefValue{T}(1.))
     end
 end
+
+"""
+    Gradient2F1{T <: AbstractFloat, F, D1 <: Gradient, R<: Real} <: Gradient{T}
+`Gradient` of `Expression2` whose first argument is `<: Real`.
+"""
 struct Gradient2F1{T <: AbstractFloat, F, D1 <: Gradient, R<: Real} <: Gradient{T}
     a::R
     d1::D1
@@ -31,6 +41,11 @@ struct Gradient2F1{T <: AbstractFloat, F, D1 <: Gradient, R<: Real} <: Gradient{
         return new{T,F,typeof(g1),typeof(e.e1)}(e.e1,g1,ref(e.e2),RefValue{T}(0.))
     end
 end
+
+"""
+    Gradient2F2{T <: AbstractFloat, F,D1 <: Gradient, R<: Real} <: Gradient{T}
+`Gradient` of `Expression2` whose second argument is `<: Real`.
+"""
 struct Gradient2F2{T <: AbstractFloat, F,D1 <: Gradient, R<: Real} <: Gradient{T}
     a::R
     d1::D1
@@ -41,6 +56,11 @@ struct Gradient2F2{T <: AbstractFloat, F,D1 <: Gradient, R<: Real} <: Gradient{T
         return new{T,F,typeof(g1),typeof(e.e2)}(e.e2,g1,ref(e.e1),RefValue{T}(0.))
     end
 end
+
+"""
+    Gradient2{T <: AbstractFloat, F,D1 <: Gradient,D2 <: Gradient} <: Gradient{T}
+`Gradient` of `Expression2`.
+"""
 struct Gradient2{T <: AbstractFloat, F,D1 <: Gradient,D2 <: Gradient} <: Gradient{T}
     d1::D1
     d2::D2
@@ -64,10 +84,20 @@ struct Gradient2{T <: AbstractFloat, F,D1 <: Gradient,D2 <: Gradient} <: Gradien
         return new{T,F,typeof(g1),typeof(g2)}(g1,g2,ref(e.e1),ref(e.e2),RefValue{T}(0.),RefValue{T}(0.))
     end
 end
+
+"""
+    GradientSum{T <: AbstractFloat,D <: Gradient{T},I} <: Gradient{T}
+`Gradient` of `ExpressionSum`.
+"""
 struct GradientSum{T <: AbstractFloat,D <: Gradient{T},I} <: Gradient{T}
     inner::I
     ds::Vector{D}
 end
+
+"""
+    GradientIfElse{T, G1, G2} <: Gradient{T}
+`Gradient` of `ExpressionIfElse`
+"""
 struct GradientIfElse{T, G1, G2} <: Gradient{T}
     d1::G1
     d2::G2
@@ -83,8 +113,10 @@ struct GradientIfElse{T, G1, G2} <: Gradient{T}
     end
 end
 
-
-
+"""
+    Gradient(e :: Expression{T}) where T
+Returns the `Gradient` of an absraction `e`.
+"""
 Gradient(e::V,(row,indexer)::Tuple{Int,Dict{Tuple{Int,Int},Int}}) where {T, V <: Variable{T}} = Gradient0{T}(index(e),set_indexer!(indexer,row,index(e)))
 Gradient(e::V,indexer=nothing) where {T, V <: Variable{T}} = Gradient0{T}(index(e),set_indexer!(indexer,index(e)) )
 Gradient(e::V,::Nothing) where {T, V <: Variable{T}} = Gradient0{T}(index(e),index(e))

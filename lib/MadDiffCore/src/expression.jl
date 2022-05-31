@@ -13,9 +13,15 @@ julia> non_caching_eval(e, [1.,2.,3.])
 1.0
 ```
 """
-struct Constant{T <: AbstractFloat} <: Expression{T}
-    x::T
+struct Constant{T <: AbstractFloat,R <: Real} <: Expression{T}
+    x::R
 end
+
+"""
+    Constant{T}(x::R) where {T <: AbstractFloat, R <: Real}
+Returns a `Constant{T,R}` whose value is `x`.
+"""
+Constant{T}(x::R) where {T <: AbstractFloat, R <: Real} = Constant{T,R}(x)
 
 """
     Variable{T <: AbstractFloat} <: Expression{T}

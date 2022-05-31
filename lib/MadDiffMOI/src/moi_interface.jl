@@ -32,8 +32,8 @@ function _convert_expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int; subex
                         ex1, j = _convert_expression(ex, j, i; subex=subex)
                         push!(exs,ex1)
                     end
-                    return node.index == 1 ? (sum(exs), j) :
-                        node.index == 3 ? (prod(exs), j) :
+                    return node.index == 1 ? (sum(e for e in exs), j) :
+                        node.index == 3 ? (prod(e for e in exs), j) :
                         (_get_multivariate_fun(node.index)(exs...), j)
                 else
                     return _get_multivariate_fun(node.index)(ex1,ex2,ex3,ex4), j
@@ -56,7 +56,8 @@ function _convert_expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int; subex
         return P[node.index], j
         
     elseif typ == MOI.Nonlinear.NODE_VALUE
-        return ex.values[node.index], j
+        v = ex.values[node.index]
+        return isinteger(v) ? Int(v) : v, j
         
     elseif typ == MOI.Nonlinear.NODE_SUBEXPRESSION
         return subex[node.index], j
@@ -243,7 +244,7 @@ function MOI.NLPBlockData(evaluator::MadDiffEvaluator)
     return MOI.NLPBlockData(
         evaluator.bounds,
         evaluator,
-        !(evaluator.backend.obj isa MadDiffCore.Constant && evaluator.backend.obj.ref.x == 0.), 
+        !(evaluator.backend.obj isa MadDiffCore.Constant && evaluator.backend.obj.x == 0.), 
     )
 end
 

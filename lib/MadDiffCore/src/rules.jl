@@ -10,17 +10,37 @@ for (f0,f,df1,df2,ddf11,ddf12,ddf22) in _F_NARGS_2
     @eval begin
         $f0(e1::E1,e2::E2) where {E1 <: Expression,E2 <: Expression} =
             Expression2($f,e1,e2)
-        $f0(e1::E1,e2::E2) where {E1 <: Expression,E2 <: Real} =
-            Expression2($f,e1,e2)
-        $f0(e1::E1,e2::E2) where {E1 <: Real,E2 <: Expression} =
-            Expression2($f,e1,e2)
+        if !($f0 in [+,-,*,^,/])
+            $f0(e1::E1,e2::E2) where {E1 <: Expression,E2 <: Real} =
+                Expression2($f,e1,e2)
+        end
+        if !($f0 in [+,*])
+            $f0(e1::E1,e2::E2) where {E1 <: Real,E2 <: Expression} =
+                Expression2($f,e1,e2)
+        end
     end
 end
 
-
+# special cases
+for (f0,id) in [
+    (:+,0),
+    (:-,0),
+    (:*,1),
+    (:/,1),
+    (:^,1)
+    ]
+    @eval $f0(e1::E1,e2::E2) where {E1 <: Expression, E2 <: Real} = e2 == $id ? e1 : Expression2($f0,e1,e2)
+end
+for (f0,id) in [
+    (:+,0),
+    (:*,1),
+    ]
+    @eval $f0(e1::E1,e2::E2) where {E1 <: Real, E2 <: Expression} = e1 == $id ? e2 : Expression2($f0,e1,e2)
+end
+        
 add_sum(e1::E,e2) where {T <: AbstractFloat, E <: Expression{T}} = add_sum(ExpressionSum([e1]),e2)
 add_sum(e1::ExpressionSum{T,E,I},e2) where {T,E,I} = _add_sum(e1,e2) ? e1 : ExpressionSum(e1,[e2])
-add_sum(e1::ExpressionSum{T,E,I},e2::R) where {T,E,I,R <: Real} = add_sum(e1,Constant(e2)) # this is an ad-hoc solution. need to be revised later.
+add_sum(e1::ExpressionSum{T,E,I},e2::R) where {T,E,I,R <: Real} = add_sum(e1,Constant{T}(e2)) # this is an ad-hoc solution. need to be revised later.
 function _add_sum(e1::ExpressionSum{T,E,I},e2) where {T,E,I}
     if e2 isa eltype(e1.es)
         push!(e1.es,e2)

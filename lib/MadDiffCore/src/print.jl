@@ -21,7 +21,7 @@ const printlist = [
     (:(Source{Variable{T}} where T),e->"x"),
     (:(Variable{T} where T),e-> "x[$(index(e))]"),
     (:(Parameter{T} where T),e-> "p[$(index(e))]"),
-    (:(Constant{T} where T),e-> "$(refval(e))"),
+    (:(Constant{T} where T),e-> "$(e.x)"),
     (:(Expression2{T,typeof(+),E1,E2} where {T,E1,E2}),e-> "$(string(e.e1)) + $(string(e.e2))"),
     (:(Expression2{T,typeof(-),E1,E2} where {T,E1,E2}),e-> "$(string(e.e1)) - $(string(e.e2))"),
     (:(Expression2{T,typeof(*),E1,E2} where {T,E1,E2}),e-> "$(string(e.e1))*$(string(e.e2))"),

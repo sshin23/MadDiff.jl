@@ -42,7 +42,7 @@ Creates an empty `MadDiffModel{T}`.
 `m = MadDiffModel{Float32}()`
 """
 MadDiffModel{T}() where T = MadDiffModel{T}(
-    MadDiffCore.Field{T}(), MadDiffCore.Constant(zero(T)),
+    MadDiffCore.Field{T}(), MadDiffCore.Constant{T}(zero(T)),
     0, 0, 0,
     T[], T[], T[], T[], T[], T[], T[], T[], T[], 
     false, NullNLPModelMeta{T,Vector{T}}(), NullNLPCore{T}(), NLPModels.Counters(),

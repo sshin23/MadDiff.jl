@@ -115,7 +115,7 @@ end
     end
 end
 
-results = pmap(benchmark_cute, cases[1:10])
+results = pmap(benchmark_cute, cases)
 
 t1s_jump = Float64[]
 t2s_jump = Float64[]

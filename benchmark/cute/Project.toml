@@ -1,0 +1,8 @@
+[deps]
+AmplNLWriter = "7c4d4715-977e-5154-bfe0-e096adeac482"
+BenchmarkProfiles = "ecbce9bc-3e5e-569d-9e29-55181f61f8d0"
+Ipopt_jll = "9cc047cb-c261-5740-88fc-0cf96f7bdcc7"
+JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
+MadDiffCore = "5ac3a7ac-a472-4f3e-93f4-0386471e765c"
+MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
+PGFPlotsX = "8314cec4-20b6-5062-9cdb-752b83310925"

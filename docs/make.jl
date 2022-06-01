@@ -1,15 +1,31 @@
-using Documenter, MadDiff
+using Documenter, MadDiff, Literate
 
 const _PAGES = [
     "Introduction" => "index.md",
     "Quick Start"=>"guide.md",
-    "How it works?" => "algorithms.md",
+    "How it Works" => "tutorial.md",
     "API Manual" => [
         "MadDiffCore" => "core.md",
         "MadDiffModels" => "models.md",
         "MadDiffMOI" => "moi.md",
     ]
 ]
+
+const _JL_FILENAMES = [
+    "guide.jl",
+    "tutorial.jl"
+]
+
+for jl_filename in _JL_FILENAMES
+
+    Literate.markdown(
+        joinpath(@__DIR__,"src", jl_filename),
+        joinpath(@__DIR__,"src");
+        documenter = true, 
+        execute = true, 
+    )
+
+end
 
 
 makedocs(

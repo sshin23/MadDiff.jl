@@ -1,4 +1,5 @@
-### Nonlinear Expressions
+# # Getting Started
+# Automatic 
 MadDiff.jl provides a flexible user-interface for writing nonlinear expressions and evaluating the expressions and functions. For example,
 ```julia
 using MadDiff

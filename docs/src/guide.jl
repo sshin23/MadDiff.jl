@@ -65,8 +65,8 @@ ij
 # MadDiff provides a built-in API for creating nonlinear prgogramming models and allows solving the created models using NLP solvers (in particular, those that are interfaced with `NLPModels`, such as [NLPModelsIpopt](https://github.com/JuliaSmoothOptimizers/NLPModelsIpopt.jl) and [MadNLP](https://github.com/MadNLP/MadNLP.jl)). We now use `MadDiff`'s bulit-in API to model the following nonlinear program:
 # ```math
 # \begin{aligned}
-# \min_{\{x_i\}_{i=0}^N} &\sum_{i=2}^N  100(x_{i-1}^2-x_i)^2+(x_{i-1}-1)^2
-# \text{s.t.} &  3x_{i+1}^3+2*x_{i+2}-5+sin(x_{i+1}-x_{i+2})sin(x_{i+1}+x_{i+2})+4x_{i+1}-x_i e^{x_i-x_{i+1}}-3 = 0
+# \min_{\{x_i\}_{i=0}^N} &\sum_{i=2}^N  100(x_{i-1}^2-x_i)^2+(x_{i-1}-1)^2\\
+# \text{s.t.} &  3x_{i+1}^3+2x_{i+2}-5+\sin(x_{i+1}-x_{i+2})\sin(x_{i+1}+x_{i+2})+4x_{i+1}-x_i e^{x_i-x_{i+1}}-3 = 0
 # \end{aligned}
 # ```
 # We model the problem with:
@@ -76,7 +76,7 @@ N = 10000
 m = MadDiffModel() 
 
 # The variables can be created as follows:
-x = [variable(m; start=mod(i,2)==1 ? -1.2 : 1.) for i=1:N];
+x = [variable(m; start = mod(i,2)==1 ? -1.2 : 1.) for i=1:N];
 
 # The objective can be set as follows:
 objective(m, sum(100(x[i-1]^2-x[i])^2+(x[i-1]-1)^2 for i=2:N));

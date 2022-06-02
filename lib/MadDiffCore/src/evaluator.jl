@@ -1,7 +1,7 @@
 for fname in [:default_eval]
     @eval begin
-        @inline $fname(e::Variable{T},x,p=nothing) where {T <: Real} = setrefval(e,getindex(x,index(e)))
-        @inline $fname(e::Parameter{T},x,p=nothing) where {T <: AbstractFloat} = setrefval(e,getindex(p,index(e)))
+        @inline $fname(e::V,x,p=nothing) where {V <: AbstractVariable} = setrefval(e,getindex(x,index(e)))
+        @inline $fname(e::P,x,p=nothing) where {P <: AbstractParameter} = setrefval(e,getindex(p,index(e)))
         @inline $fname(e::E, x, p = nothing) where {E <: ExpressionIfElse} =
             setrefval(e,setbrefval(e,non_caching_eval(e.e0,x,p)) ? $fname(e.e1,x,p) : $fname(e.e2,x,p))
     end
@@ -50,8 +50,8 @@ end
 
 for fname in [:non_caching_eval]
     @eval begin
-        @inline $fname(e::Variable{T},x,p=nothing) where {T <: AbstractFloat}  = @inbounds getindex(x,index(e))
-        @inline $fname(e::Parameter{T},x,p=nothing) where {T <: AbstractFloat} = @inbounds getindex(p,index(e))
+        @inline $fname(e::V,x,p=nothing) where {V <: AbstractVariable}  = @inbounds getindex(x,index(e))
+        @inline $fname(e::P,x,p=nothing) where {P <: AbstractParameter} = @inbounds getindex(p,index(e))
         @inline $fname(laghess::LagrangianHessian,z,x,p,l,s) = $fname(laghess.f,z,x,p,l,s)
         @inline $fname(h::H,z,x,p,l,s) where H <: Hessian = $fname(h,z,x,p,s)
         @inline $fname(lagentry::LagrangianEntry{T,E},z,x,p,l) where {T,E} = $fname(lagentry.e,z,x,p,l[index(lagentry)])
@@ -261,67 +261,110 @@ end
     return res
 end
 
+struct Evaluator{E}
+    e::E
+end
+@inline (ev::Evaluator{E})(x,p=nothing) where E = non_caching_eval(ev.e,x,p)
 
-function_evaluator(f::E) where E <: Expression = @inline (x,p=nothing) -> non_caching_eval(f,x,p)
-field_evaluator(f::F) where F <: Field = @inline (y,x,p=nothing) -> non_caching_eval(f,y,x,p)
+struct FieldEvaluator{F}
+    f::F
+end
+@inline (ev::FieldEvaluator{F})(y,x,p=nothing) where F = non_caching_eval(ev.f,y,x,p)
 
-function gradient_evaluator(f::Expression{T}) where T <: AbstractFloat
-    d = Gradient(f)
-    @inline function (y,x,p=nothing)
-        y.=0
-        default_eval(f,x,p)
-        non_caching_eval(d,y,x,p)
+struct GradientEvaluator{E,D}
+    e::E
+    d::D
+    function GradientEvaluator(e)
+        d = Gradient(e)
+        new{typeof(e),typeof(d)}(e,d)
     end
 end
-function sparse_gradient_evaluator(f::Expression{T}) where T <: AbstractFloat
-    d,sparsity = SparseGradient(f)
-    (@inline function (y,x,p=nothing)
-        y.=0
-        default_eval(f,x,p)
-        non_caching_eval(d,y,x,p)
-    end), sparsity
+@inline function (ev::GradientEvaluator{E,D})(y,x,p=nothing) where {E, D}
+    y.=0
+    default_eval(ev.e,x,p)
+    non_caching_eval(ev.d,y,x,p)
 end
-function hessian_evaluator(f::Expression{T}) where T <: AbstractFloat
-    d = Gradient(f)
-    h = Hessian(f,d)
 
-    @inline function (z,x,p=nothing)
-        z.=0
-        default_eval(f,x,p)
-        default_eval(d,DUMMY,x,p)
-        non_caching_eval(h,z,x,p)
+struct SparseGradientEvaluator{E,D}
+    e::E
+    d::D
+    sparsity::Vector{Int}
+    function SparseGradientEvaluator(e)
+        d,sparsity = SparseGradient(e)
+        new{typeof(e),typeof(d)}(e,d,sparsity)
     end
 end
-function sparse_hessian_evaluator(f::Expression{T}) where T <: AbstractFloat
-    d = Gradient(f)
-    h,sparsity = SparseHessian(f,d)
+@inline function (ev::SparseGradientEvaluator{E,D})(y,x,p=nothing) where {E,D}
+    y.=0
+    default_eval(ev.e,x,p)
+    non_caching_eval(ev.d,y,x,p)
+end
 
-    (@inline function (z,x,p=nothing)
-        z.=0
-         default_eval(f,x,p)
-         default_eval(d,DUMMY,x,p)
-         non_caching_eval(h,z,x,p)
-    end), sparsity
-end
-function sparse_jacobian_evaluator(f::Field)
-    jac,sparsity = SparseJacobian(f)
-    
-    (@inline function (y,x,p=nothing)
-        y.=0
-        default_eval(f,DUMMY,x,p)
-        non_caching_eval(jac,y,x,p)
-    end), sparsity
-end
-function jacobian_evaluator(f::Field)
-    jac = Jacobian(f)
-    
-    @inline function (y,x,p=nothing)
-        y.=0
-        default_eval(f,DUMMY,x,p)
-        non_caching_eval(jac,y,x,p)
+struct HessianEvaluator{E,D,H}
+    e::E
+    d::D
+    h::H
+    function HessianEvaluator(e)
+        d = Gradient(e)
+        h = Hessian(e,d)
+        new{typeof(e),typeof(d),typeof(h)}(e,d,h)
     end
 end
+@inline function (ev::HessianEvaluator{E,D,H})(z,x,p=nothing) where {E,D,H}
+    z.=0
+    default_eval(ev.e,x,p)
+    default_eval(ev.d,DUMMY,x,p)
+    non_caching_eval(ev.h,z,x,p)
+end
 
-field_evaluator(f::Sink) = field_evaluator(inner(f))
-jacobian_evaluator(f::Sink) = jacobian_evaluator(inner(f))
-sparse_jacobian_evaluator(f::Sink) = sparse_jacobian_evaluator(inner(f))
+
+struct SparseHessianEvaluator{E,D,H}
+    e::E
+    d::D
+    h::H
+    sparsity::Vector{Tuple{Int,Int}}
+    function SparseHessianEvaluator(e)
+        d = Gradient(e)
+        h,sparsity = SparseHessian(e,d)
+        new{typeof(e),typeof(d),typeof(h)}(e,d,h,sparsity)
+    end
+end
+@inline function (ev::SparseHessianEvaluator{E,D,H})(z,x,p=nothing) where {E,D,H}
+    z.=0
+    default_eval(ev.e,x,p)
+    default_eval(ev.d,DUMMY,x,p)
+    non_caching_eval(ev.h,z,x,p)
+end
+
+struct JacobianEvaluator{F,J}
+    f::F
+    j::J
+    function JacobianEvaluator(f)
+        j = Jacobian(f)
+        new{typeof(f),typeof(j)}(f)
+    end
+end
+@inline function (ev::JacobianEvaluator{F,J})(y,x,p=nothing) where {F,J}
+    y.=0
+    default_eval(ev.f,DUMMY,x,p)
+    non_caching_eval(ev.j,y,x,p)
+end
+
+struct SparseJacobianEvaluator{F,J}
+    f::F
+    j::J
+    sparsity::Vector{Tuple{Int,Int}}
+    function SparseJacobianEvaluator(f)
+        j,sparsity = SparseJacobian(f)
+        new{typeof(f),typeof(j)}(f,j,sparsity)
+    end
+end
+@inline function (ev::SparseJacobianEvaluator{F,J})(y,x,p=nothing) where {F,J}
+    y.=0
+    default_eval(ev.f,DUMMY,x,p)
+    non_caching_eval(ev.j,y,x,p)
+end
+
+FieldEvaluator(f::Sink) = FieldEvaluator(inner(f))
+JacobianEvaluator(f::Sink) = JacobianEvaluator(inner(f))
+SparseJacobianEvaluator(f::Sink) = SparseJacobianEvaluator(inner(f))

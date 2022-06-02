@@ -1,3 +1,5 @@
+abstract type AbstractConstant{T  <: AbstractFloat} <: Expression{T} end
+
 """
     Constant{T <: AbstractFloat} <: Expression{T}
 `Expression` for constants.
@@ -13,7 +15,7 @@ julia> non_caching_eval(e, [1.,2.,3.])
 1.0
 ```
 """
-struct Constant{T <: AbstractFloat,R <: Real} <: Expression{T}
+struct Constant{T <: AbstractFloat,R <: Real} <:  AbstractConstant{T}
     x::R
 end
 
@@ -23,11 +25,12 @@ Returns a `Constant{T,R}` whose value is `x`.
 """
 Constant{T}(x::R) where {T <: AbstractFloat, R <: Real} = Constant{T,R}(x)
 
+abstract type AbstractVariable{T  <: AbstractFloat} <: Expression{T}  end
 """
     Variable{T <: AbstractFloat} <: Expression{T}
 `Expression` for variables.
 """
-struct Variable{T <: AbstractFloat} <: Expression{T}
+struct Variable{T <: AbstractFloat} <:  AbstractVariable{T}
     index::Int
     ref::RefValue{T}
 end
@@ -52,11 +55,12 @@ julia> non_caching_eval(e, [1.,2.,3.])
 """
 Variable(n::Int) = Variable{Float64}(n)
 
+abstract type AbstractParameter{T  <: AbstractFloat} <: Expression{T}  end
 """
     Parameter{T <: AbstractFloat} <: Expression{T}
 `Expression` for parameters.
 """
-struct Parameter{T <: AbstractFloat} <: Expression{T}
+struct Parameter{T <: AbstractFloat} <: AbstractParameter{T}
     index::Int
     ref::RefValue{T}
 end

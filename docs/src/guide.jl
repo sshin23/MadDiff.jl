@@ -29,7 +29,7 @@ expr = x[1]^2 + exp(x[2]^p[1])/2 + log(x[2]*x[3]+p[2])
 
 # The function evaluator of the above expression can be created by using `MadDiff.function_evaluator` as follows:
 
-f = function_evaluator(expr)
+f = Evaluator(expr)
 
 # Now for a given variable and parameter values, the function can be evaluated as follows.
 x0 = [0.,0.5,1.5]
@@ -39,19 +39,19 @@ f(x0,p0)
 # The gradient evaluator can be created as follows:
 
 y0 = similar(x0)
-g = gradient_evaluator(expr)
+g = GradientEvaluator(expr)
 g(y0,x0,p0)
 y0
 
 # The Hessian evaluator can be created as follows:
 z0 = zeros(3,3)
-h = hessian_evaluator(expr)
+h = HessianEvaluator(expr)
 h(z0,x0,p0)
 z0
 # Note that only lower-triangular entries are evaluated.
 
 # The evaluator can be constructed in a sparse format:
-sh,ij = sparse_hessian_evaluator(expr);
+sh,ij = SparseHessianEvaluator(expr);
 z1 = zeros(length(ij))
 sh(z1,x0,p0)
 z1

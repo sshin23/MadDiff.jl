@@ -117,12 +117,12 @@ end
     Gradient(e :: Expression{T}) where T
 Returns the `Gradient` of an absraction `e`.
 """
-Gradient(e::V,(row,indexer)::Tuple{Int,Dict{Tuple{Int,Int},Int}}) where {T, V <: Variable{T}} = Gradient0{T}(index(e),set_indexer!(indexer,row,index(e)))
-Gradient(e::V,indexer=nothing) where {T, V <: Variable{T}} = Gradient0{T}(index(e),set_indexer!(indexer,index(e)) )
-Gradient(e::V,::Nothing) where {T, V <: Variable{T}} = Gradient0{T}(index(e),index(e))
-Gradient(e::V,::Tuple{Int,Nothing}) where {T, V <: Variable{T}} = Gradient0{T}(index(e),index(e))
-Gradient(e::P,::N) where {T, P<:Parameter{T}, N} = GradientNull{T}()
-Gradient(e::C, indexer = nothing ) where {T, C<:Constant{T}} = GradientNull{T}()
+Gradient(e::V,(row,indexer)::Tuple{Int,Dict{Tuple{Int,Int},Int}}) where {T, V <: AbstractVariable{T}} = Gradient0{T}(index(e),set_indexer!(indexer,row,index(e)))
+Gradient(e::V,indexer=nothing) where {T, V <: AbstractVariable{T}} = Gradient0{T}(index(e),set_indexer!(indexer,index(e)) )
+Gradient(e::V,::Nothing) where {T, V <: AbstractVariable{T}} = Gradient0{T}(index(e),index(e))
+Gradient(e::V,::Tuple{Int,Nothing}) where {T, V <: AbstractVariable{T}} = Gradient0{T}(index(e),index(e))
+Gradient(e::P,::N) where {T, P<:AbstractParameter{T}, N} = GradientNull{T}()
+Gradient(e::C, indexer = nothing ) where {T, C<:AbstractConstant{T}} = GradientNull{T}()
 Gradient(e::ExpressionSum{T,E,I},indexer = nothing) where {T,E,I} = GradientSum(Gradient(inner(e),indexer),[Gradient(ee,indexer) for ee in e.es])
 Gradient(e::ExpressionSum{T,E,Nothing},indexer = nothing) where {T,E,I} = GradientSum(nothing,[Gradient(ee,indexer) for ee in e.es])
 Gradient(e::Expression1{T,F,E}, indexer = nothing) where {T,F,E} = Gradient1(e,indexer)

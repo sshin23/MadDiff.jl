@@ -36,7 +36,7 @@ end
 # NLPCore
 abstract type AbstractNLPCore{T <: AbstractFloat} end
 
-struct DenseNLPCore{T <: AbstractFloat} <: AbstractNLPCore{T}
+struct NLPCore{T <: AbstractFloat} <: AbstractNLPCore{T}
     obj::Expression{T}
     con::Field{T}
     grad::Gradient{T}
@@ -54,12 +54,12 @@ struct SparseNLPCore{T <: AbstractFloat} <: AbstractNLPCore{T}
     hess_sparsity::Vector{Tuple{Int,Int}}
 end
 
-DenseNLPCore(obj::Expression,con::Sink) = DenseNLPCore(obj,con.inner)
-function DenseNLPCore(obj::Expression,con::Field)
+NLPCore(obj::Expression,con::Sink) = NLPCore(obj,con.inner)
+function NLPCore(obj::Expression,con::Field)
     grad = Gradient(obj)
     jac = Jacobian(con)
     hess = LagrangianHessian(obj,grad,con,jac)
-    return DenseNLPCore(obj,con,grad,jac,hess)
+    return NLPCore(obj,con,grad,jac,hess)
 end
 
 SparseNLPCore(obj::Real,con::Sink{F}) where {T,F <: Field{T}} = SparseNLPCore(Constant{T}(obj),con)

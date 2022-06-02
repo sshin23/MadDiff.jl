@@ -70,33 +70,26 @@ struct Constraint
 end
 
 """
-    ModelComponent
-A model component (eitehr a variable or a parameter) of MadDiffModel.
+    ModelVariable{T <: AbstractFloat} <: MadDiffCore.AbstractVariable{T}
+A model variable of MadDiffModel.
 """
-struct ModelComponent{C <: Union{MadDiffCore.Variable,MadDiffCore.Parameter}}
-    parent::MadDiffModel
-    inner::C
+struct ModelVariable{T <: AbstractFloat} <: MadDiffCore.AbstractVariable{T}
+    parent::MadDiffModel{T}
+    index::Int
+    ref::RefValue{T}
+    ModelVariable(m::MadDiffModel{T},index) where T = new{T}(m,index,RefValue{T}())
 end
 
-for (f0,f,df,ddf) in MadDiffCore._F_NARGS_1
-    @eval MadDiffCore.$f0(e1::T) where T <: ModelComponent = MadDiffCore.$f0(e1.inner) 
+"""
+    ModelParameter{T <: AbstractFloat} <: MadDiffCore.AbstractParameter{T}
+A model parameter of MadDiffModel.
+"""
+struct ModelParameter{T <: AbstractFloat} <: MadDiffCore.AbstractParameter{T}
+    parent::MadDiffModel{T}
+    index::Int
+    ref::RefValue{T}
+    ModelParameter(m::MadDiffModel{T},index) where T = new{T}(m,index,RefValue{T}())
 end
-for (f0,f,df,ddf) in MadDiffCore._F_BASE
-    @eval $f0(e1::T) where T <: ModelComponent = $f0(e1.inner) 
-end
-for (f0,f,df1,df2,ddf1,ddf12,ddf22) in MadDiffCore._F_NARGS_2
-    @eval MadDiffCore.$f0(e1::T1,e2::T2) where {T1 <: ModelComponent,T2 <: ModelComponent} =
-        $f0(e1.inner,e2.inner)
-    @eval MadDiffCore.$f0(e1::T,e2) where T <: ModelComponent = MadDiffCore.$f0(e1.inner,e2)
-    @eval MadDiffCore.$f0(e1,e2::T) where T <: ModelComponent = MadDiffCore.$f0(e1,e2.inner)
-end
-add_sum(a::E,b::ModelComponent{C}) where {C,E<:MadDiffCore.ExpressionSum} = add_sum(a,b.inner)
-add_sum(a::ModelComponent{C},b::E) where {C,E<:MadDiffCore.ExpressionSum} = add_sum(a.inner,b)
-add_sum(a::ModelComponent{C},b::ModelComponent{C}) where C = add_sum(a.inner,b.inner)
-convert(::Type{MadDiffCore.Expression},e::ModelComponent{C}) where C = e
-
-getindex(m::MadDiffModel,idx::Symbol) = m.ext[idx]
-setindex!(m::MadDiffModel,val,idx::Symbol) = setindex!(m.ext,val,idx)
 
 """
     variable(m::MadDiffModel{T}; lb=-Inf, ub=Inf, start=0.)
@@ -117,7 +110,7 @@ function variable(m::MadDiffModel{T}; lb=-Inf, ub=Inf, start=0.) where T
     push!(m.xu,ub)
     push!(m.zl,1.)
     push!(m.zu,1.)
-    ModelComponent(m,MadDiffCore.Variable{T}(m.n))
+    ModelVariable(m,m.n)
 end
 
 """
@@ -135,7 +128,7 @@ function parameter(m::MadDiffModel{T}, val) where T
     m.instantiated = false
     m.q += 1
     push!(m.p,val)
-    ModelComponent(m,MadDiffCore.Parameter{T}(m.q))
+    ModelParameter(m,m.q)
 end
 
 """

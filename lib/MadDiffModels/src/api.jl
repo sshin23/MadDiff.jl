@@ -1,50 +1,50 @@
 """
-    value(x::ModelComponent{V}) where V <: MadDiffCore.Variable
+    value(x::ModelVariable{T}) where T
 Return the value of variable `x`.
 """
-value(x::ModelComponent{V}) where V <: MadDiffCore.Variable = x.parent.x[x.inner.index]
+value(x::ModelVariable{T}) where T = x.parent.x[x.inner.index]
 
 """
-    value(p::ModelComponent{P}) where P <: MadDiffCore.Parameter
+    value(p::ModelParameter{T}) where T
 Return the value of parameter `p`.
 """
-value(p::ModelComponent{P}) where P <: MadDiffCore.Parameter= p.parent.p[p.inner.index]
+value(p::ModelParameter{T}) where T= p.parent.p[p.inner.index]
 
 """
-    setvalue(x::ModelComponent{V},val) where V <: MadDiffCore.Variable
+    setvalue(x::ModelVariable{T},val) where T
 Set the value of variable 'x' to `val`.
 """
-setvalue(x::ModelComponent{V},val) where V <: MadDiffCore.Variable = x.parent.x[x.inner.index] = val
+setvalue(x::ModelVariable{T},val) where T = x.parent.x[x.inner.index] = val
 
 """
-    setvalue(p::ModelComponent{P},val) where P <: MadDiffCore.Parameter
+    setvalue(p::ModelParameter{T},val) where T
 Set the value of parameter 'p' to `val`.
 """
-setvalue(p::ModelComponent{P},val) where P <: MadDiffCore.Parameter = p.parent.p[p.inner.index] = val
+setvalue(p::ModelParameter{T},val) where T = p.parent.p[p.inner.index] = val
 
 """
-    set_lower_bound(x::ModelComponent{V},val) where V <: MadDiffCore.Variable
+    set_lower_bound(x::ModelVariable{T},val) where T
 Set the lower bound of variable 'x' to `val`.
 """
-set_lower_bound(x::ModelComponent{V},val) where V <: MadDiffCore.Variable = x.parent.xl[x.inner.index] = val
+set_lower_bound(x::ModelVariable{T},val) where T = x.parent.xl[x.inner.index] = val
 
 """
-    set_upper_bound(x::ModelComponent{V},val) where V <: MadDiffCore.Variable
+    set_upper_bound(x::ModelVariable{T},val) where T
 Set the upper bound of variable 'x' to `val`.
 """
-set_upper_bound(x::ModelComponent{V},val) where V <: MadDiffCore.Variable = x.parent.xu[x.inner.index] = val
+set_upper_bound(x::ModelVariable{T},val) where T = x.parent.xu[x.inner.index] = val
 
 """
-    lower_bound(x::ModelComponent{V}) where V <: MadDiffCore.Variable
+    lower_bound(x::ModelVariable{T}) where T
 Retrun the lower bound of variable `x`.
 """
-lower_bound(x::ModelComponent{V}) where V <: MadDiffCore.Variable = x.parent.xl[x.inner.index]
+lower_bound(x::ModelVariable{T}) where T = x.parent.xl[x.inner.index]
 
 """
-    upper_bound(x::ModelComponent{V}) where V <: MadDiffCore.Variable
+    upper_bound(x::ModelVariable{T}) where T
 Retrun the upper bound of variable `x`.
 """
-upper_bound(x::ModelComponent{V}) where V <: MadDiffCore.Variable = x.parent.xu[x.inner.index]
+upper_bound(x::ModelVariable{T}) where T = x.parent.xu[x.inner.index]
 
 """
     set_lower_bound(c::Constraint,val)

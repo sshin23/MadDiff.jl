@@ -72,18 +72,18 @@ const test_list_2 = [
 
 function test_function_1(forig,name,xpoints,ppoints)
     ff = forig(MadDiffCore.Variable(),MadDiffCore.Parameter())
-    f  = MadDiffCore.function_evaluator(ff)
+    f  = MadDiffCore.Evaluator(ff)
     
-    g! = MadDiffCore.gradient_evaluator(ff)
-    sg!,gsparsity = MadDiffCore.sparse_gradient_evaluator(ff)
+    g! = MadDiffCore.GradientEvaluator(ff)
+    sg! = MadDiffCore.SparseGradientEvaluator(ff)
     
-    h! = MadDiffCore.hessian_evaluator(ff)
-    sh!,hsparsity = MadDiffCore.sparse_hessian_evaluator(ff)
+    h! = MadDiffCore.HessianEvaluator(ff)
+    sh! = MadDiffCore.SparseHessianEvaluator(ff)
     
     gorig!  = get_gorig!(forig)
-    sgorig! = get_sgorig!(forig,gsparsity)
+    sgorig! = get_sgorig!(forig,sg!.sparsity)
     horig!  = get_horig!(forig)
-    shorig!  = get_shorig!(forig,hsparsity)
+    shorig!  = get_shorig!(forig,sh!.sparsity)
 
     @testset "$name" begin
         @test compare(forig,f,xpoints,ppoints)
@@ -98,10 +98,10 @@ function test_function_2(forig,name,xpoints,ppoints)
     ff = MadDiffCore.Field()
     forig(ff,MadDiffCore.Variable(),MadDiffCore.Parameter())
     
-    f  = MadDiffCore.field_evaluator(ff)
+    f  = MadDiffCore.FieldEvaluator(ff)
     
-    j! = MadDiffCore.jacobian_evaluator(ff)
-    sj!,jsparsity = MadDiffCore.sparse_jacobian_evaluator(ff)
+    j! = MadDiffCore.JacobianEvaluator(ff)
+    sj!,jsparsity = MadDiffCore.SparseJacobianEvaluator(ff)
     
     jorig!  = get_jorig!(forig)
     sjorig! = get_sjorig!(forig,jsparsity)

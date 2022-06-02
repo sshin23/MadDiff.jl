@@ -19,8 +19,8 @@ end
 const printlist = [
     (:(Source{Parameter{T}} where T),e->"p"),
     (:(Source{Variable{T}} where T),e->"x"),
-    (:(Variable{T} where T),e-> "x[$(index(e))]"),
-    (:(Parameter{T} where T),e-> "p[$(index(e))]"),
+    (:(AbstractVariable{T} where T),e-> "x[$(index(e))]"),
+    (:(AbstractParameter{T} where T),e-> "p[$(index(e))]"),
     (:(Constant{T} where T),e-> "$(e.x)"),
     (:(Expression2{T,typeof(+),E1,E2} where {T,E1,E2}),e-> "$(string(e.e1)) + $(string(e.e2))"),
     (:(Expression2{T,typeof(-),E1,E2} where {T,E1,E2}),e-> "$(string(e.e1)) - $(string(e.e2))"),
@@ -67,6 +67,19 @@ for (T,f) in printlist
         show(io::IO,e::$T) = print(io,$f(e))
     end
 end
+
+for fname in [:Evaluator, :GradientEvaluator, :SparseGradientEvaluator, :HessianEvaluator, :SparseHessianEvaluator]
+    @eval begin
+        function show(io::IO,e::T) where T <: $fname
+            println(io,"$(string(nameof(T))):")
+            show(io,e.e)
+        end
+    end
+end
+
+# for [:FieldEvaluator, :JacobianEvaluator, :SparseJacobianEvaluator]
+    
+# end
 
 
 # (:(Model),e-> "NLP model with $(m.n) variables and $(m.m) constraints"

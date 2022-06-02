@@ -153,9 +153,7 @@ end
 
 Hessian(e::ExpressionSum{T,E,I1},d::GradientSum{T,D,I2},indexer = nothing) where {T,E,D,I1,I2} = HessianSum(Hessian(inner(e),inner(d),indexer),[Hessian(e,d,indexer) for (e,d) in zip(e.es,d.ds)])
 Hessian(e::ExpressionSum{T,E,Nothing},d::GradientSum{T,D,Nothing},indexer = nothing) where {T,E,D} = HessianSum(nothing,[Hessian(e,d,indexer) for (e,d) in zip(e.es,d.ds)])
-Hessian(e::Variable{T},::G,indexer)  where {T <: AbstractFloat, G <: Gradient} = HessianNull{T}()
-Hessian(e::Parameter{T},::G,indexer) where {T <: AbstractFloat, G <: Gradient} = HessianNull{T}()
-Hessian(e::Constant{T},::G,indexer) where {T <: AbstractFloat, G <: Gradient} = HessianNull{T}()
+Hessian(e::V,::G,indexer)  where {T <: AbstractFloat, G <: Gradient{T}, V <: Union{AbstractConstant,AbstractVariable,AbstractParameter}} = HessianNull{T}()
 Hessian(d1::G,d2::GradientNull{T},indexer) where {T,G <: Gradient} = HessianNull{T}()
 Hessian(d1::GradientNull{T},d2::G,indexer) where {T,G <: Gradient} = HessianNull{T}()
 Hessian(d1::GradientNull{T},d2::GradientSum,indexer) where {T,G <: Gradient} = HessianNull{T}()

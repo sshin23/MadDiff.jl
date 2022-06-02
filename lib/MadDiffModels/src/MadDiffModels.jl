@@ -19,8 +19,8 @@ The model is constructed as an `NLPModel` (see https://github.com/JuliaSmoothOpt
 """
 module MadDiffModels
 
-import Base: show, add_sum, getindex, setindex!
-import MadDiffCore
+import Base: show, add_sum, getindex, setindex!, RefValue
+import MadDiffCore: MadDiffCore, index
 import NLPModels: NLPModels, jac_structure!, hess_structure!, obj, cons!, grad!, jac_coord!, hess_coord!
 
 include("model.jl")

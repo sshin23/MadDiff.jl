@@ -32,9 +32,9 @@ abstract type AbstractVariable{T } <: Expression{T}  end
     Variable{T} <: Expression{T}
 `Expression` for variables.
 """
-struct Variable{T} <:  AbstractVariable{T}
+struct Variable{T,RT <: Ref{T}} <:  AbstractVariable{T}
     index::Int
-    ref::RefValue{T}
+    ref::RT
 end
 
 """
@@ -62,9 +62,9 @@ abstract type AbstractParameter{T } <: Expression{T}  end
     Parameter{T} <: Expression{T}
 `Expression` for parameters.
 """
-struct Parameter{T} <: AbstractParameter{T}
+struct Parameter{T,RT <: Ref{T}} <: AbstractParameter{T}
     index::Int
-    ref::RefValue{T}
+    ref::RT
 end
 
 
@@ -92,9 +92,9 @@ Parameter(n::Int) = Parameter{Float64}(n)
     Expression1{T, F <: Function ,E <: Expression{T}}  <: Expression{T}
 `Expression` for univariate function
 """
-struct Expression1{T, F <: Function ,E <: Expression{T}}  <: Expression{T}
+struct Expression1{T, RT <: Ref{T}, F <: Function ,E <: Expression{T}}  <: Expression{T}
     e1::E
-    ref::RefValue{T}
+    ref::RT
 end
 Expression1(f::F,e1::E) where {T, F <: Function, E <: Expression{T}} =  Expression1{T,F,E}(e1,RefValue{T}())
 
@@ -102,10 +102,10 @@ Expression1(f::F,e1::E) where {T, F <: Function, E <: Expression{T}} =  Expressi
     Expression2{T, F <: Function,E1, E2} <: Expression{T}
 `Expression` for bivariate function
 """
-struct Expression2{T, F <: Function,E1, E2} <: Expression{T}
+struct Expression2{T, RT <: Ref{T}, F <: Function,E1, E2} <: Expression{T}
     e1::E1
     e2::E2
-    ref::RefValue{T}
+    ref::RT
 end
 Expression2(f::F,e1::E1, e2::E2) where {T, F, E1 <: Union{Expression{T},Real}, E2 <: Union{Expression{T},Real}} = Expression2{T,F,E1,E2}(e1,e2,RefValue{T}())
 
@@ -114,12 +114,12 @@ Expression2(f::F,e1::E1, e2::E2) where {T, F, E1 <: Union{Expression{T},Real}, E
     ExpressionIfElse{T,E0 <: Expression{T}, E1, E2} <: Expression{T}
 `Expression` for `ifelse`
 """
-struct ExpressionIfElse{T,E0 <: Expression{T}, E1, E2} <: Expression{T}
+struct ExpressionIfElse{T, RT <: Ref{T},RB <: Ref{Bool}, E0 <: Expression{T}, E1, E2} <: Expression{T}
     e0::E0
     e1::E1
     e2::E2
-    ref::RefValue{T}
-    bref::RefValue{Bool}
+    ref::RT
+    bref::RB
 end
 ExpressionIfElse(e0::E0,e1::E1,e2::E2) where {T, E0 <: Expression{T}, E1, E2} = ExpressionIfElse{T,E0,E1,E2}(e0,e1,e2,RefValue{T}(),RefValue{Bool}(true))
 
@@ -127,10 +127,10 @@ ExpressionIfElse(e0::E0,e1::E1,e2::E2) where {T, E0 <: Expression{T}, E1, E2} = 
     ExpressionSum{T, E <: Expression{T}, I} <: Expression{T}
 `Expression` for a summation of `Expression`s
 """
-struct ExpressionSum{T, E <: Expression{T}, I} <: Expression{T}
+struct ExpressionSum{T,RT <: Ref{T}, E <: Expression{T}, I} <: Expression{T}
     inner::I
     es::Vector{E}
-    ref::RefValue{T}
+    ref::RT
 end
 ExpressionSum(es::Vector{E}) where {T, E <: Expression{T}} = ExpressionSum{T,eltype(es),Nothing}(nothing,es,RefValue{T}())
 ExpressionSum(inner::E,es) where {T, E <: ExpressionSum{T}} = ExpressionSum{T,eltype(es),typeof(inner)}(inner,es,ref(inner))

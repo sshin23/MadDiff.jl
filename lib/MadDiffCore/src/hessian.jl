@@ -8,11 +8,11 @@ struct HessianNull{T} <: Hessian{T} end
     Hessian11{T,F,H1,H11} <: Hessian{T}
 `Hessian` of `Expression1`
 """
-struct Hessian11{T,F,H1,H11} <: Hessian{T}
+struct Hessian11{T, RT <: Ref{T},F,H1,H11} <: Hessian{T}
     h1::H1
     h11::H11
-    fref::RefValue{T}
-    ref::RefValue{T}
+    fref::RT
+    ref::RT
 
     function Hessian11(e::Expression1{T,F,E},d, indexer = nothing) where {T,F,E}
         h1 = Hessian(e.e1,d.d1,indexer)
@@ -25,12 +25,12 @@ end
     Hessian11F1{T,F,H1,H11,R} <: Hessian{T}
 `Hessian` of `Expression2` whose first argument is `<: Real`.
 """
-struct Hessian11F1{T,F,H1,H11,R} <: Hessian{T}
+struct Hessian11F1{T, RT <: Ref{T},F,H1,H11,R} <: Hessian{T}
     a::R
     h1::H1
     h11::H11
-    fref::RefValue{T}
-    ref::RefValue{T}
+    fref::RT
+    ref::RT
     function Hessian11F1(e::Expression2{T,F,E1,E2}, d,indexer = nothing) where {T,F,E1 <: Real,E2} 
         h1 = Hessian(e.e2,d.d1,indexer)
         h11= Hessian(d.d1,d.d1,indexer)
@@ -42,12 +42,12 @@ struct Hessian11F1{T,F,H1,H11,R} <: Hessian{T}
     Hessian11F2{T,F,H1,H11,R} <: Hessian{T}
 `Hessian` of `Expression2` whose second argument is `<: Real`.
 """
-struct Hessian11F2{T,F,H1,H11,R} <: Hessian{T}
+struct Hessian11F2{T, RT <: Ref{T},F,H1,H11,R} <: Hessian{T}
     a::R
     h1::H1
     h11::H11
-    fref::RefValue{T}
-    ref::RefValue{T}
+    fref::RT
+    ref::RT
     function Hessian11F2(e::Expression2{T,F,E1,E2}, d,indexer = nothing) where {T,F,E1,E2 <: Real}
         h1 = Hessian(e.e1,d.d1,indexer)
         h11= Hessian(d.d1,d.d1,indexer)
@@ -59,27 +59,27 @@ end
     Hessian02{T,H11,H12,H21,H22} <: Hessian{T}
 `Hessian` of `
 """
-struct Hessian02{T,H11,H12,H21,H22} <: Hessian{T}
+struct Hessian02{T, RT <: Ref{T},H11,H12,H21,H22} <: Hessian{T}
     h11::H11
     h12::H12
     h21::H21
     h22::H22
-    ref11::RefValue{T}
-    ref12::RefValue{T}
-    ref21::RefValue{T}
-    ref22::RefValue{T}
+    ref11::RT
+    ref12::RT
+    ref21::RT
+    ref22::RT
 end
-struct Hessian22{T,F,H1,H2,H11,H12,H21,H22} <: Hessian{T}
+struct Hessian22{T, RT <: Ref{T},F,H1,H2,H11,H12,H21,H22} <: Hessian{T}
     h1::H1
     h2::H2
     h11::H11
     h12::H12
     h21::H21
     h22::H22
-    fref1::RefValue{T}
-    fref2::RefValue{T}
-    ref1::RefValue{T}
-    ref2::RefValue{T}
+    fref1::RT
+    fref2::RT
+    ref1::RT
+    ref2::RT
 
     function Hessian22(e::Expression2{T,F,E1,E2},d,indexer = nothing) where {T,F,E1,E2}
         h1 = Hessian(e.e1,d.d1,indexer)
@@ -100,51 +100,51 @@ struct HessianD00S{T} <: Hessian{T}
     index::Int
     islower::Bool
 end
-struct HessianD10{T,H <: Hessian{T}} <: Hessian{T}
+struct HessianD10{T, RT <: Ref{T},H <: Hessian{T}} <: Hessian{T}
     h::H
-    ref::RefValue{T}
+    ref::RT
 end
-struct HessianD20{T,H1 <: Hessian{T},H2 <: Hessian{T}} <: Hessian{T}
+struct HessianD20{T, RT <: Ref{T},H1 <: Hessian{T},H2 <: Hessian{T}} <: Hessian{T}
     h1::H1
     h2::H2
-    ref1::RefValue{T}
-    ref2::RefValue{T}
+    ref1::RT
+    ref2::RT
 end
-struct HessianD11{T,H <: Hessian{T}} <: Hessian{T}
+struct HessianD11{T, RT <: Ref{T},H <: Hessian{T}} <: Hessian{T}
     h::H
-    ref1::RefValue{T}
-    ref2::RefValue{T}
+    ref1::RT
+    ref2::RT
 end
-struct HessianD21{T,H1,H2} <: Hessian{T}
+struct HessianD21{T, RT <: Ref{T},H1,H2} <: Hessian{T}
     h1::H1
     h2::H2
-    ref::RefValue{T}
-    ref1::RefValue{T}
-    ref2::RefValue{T}
+    ref::RT
+    ref1::RT
+    ref2::RT
 end
-struct Hessian22a{T,H1 <: Hessian{T},H2 <: Hessian{T}} <: Hessian{T}
+struct Hessian22a{T, RT <: Ref{T},H1 <: Hessian{T},H2 <: Hessian{T}} <: Hessian{T}
     h1::H1
     h2::H2
-    ref1::RefValue{T}
-    ref2::RefValue{T}
+    ref1::RT
+    ref2::RT
 end
-Hessian22a(::HessianNull{T},::HessianNull{T},::RefValue{T},::RefValue{T}) where T = HessianNull{T}()
-Hessian22a(::HessianNull{T},h2::H,::RefValue{T},ref2::RefValue{T}) where {T,H<:Hessian} = Hessian11a(h2,ref2)
-Hessian22a(h1::H,::HessianNull{T},ref1::RefValue{T},::RefValue{T}) where {T,H<:Hessian} = Hessian11a(h1,ref1)
+Hessian22a(::HessianNull{T},::HessianNull{T},ref1,ref2) where T = HessianNull{T}()
+Hessian22a(::HessianNull{T},h2::H,ref1,ref2) where {T,H<:Hessian} = Hessian11a(h2,ref2)
+Hessian22a(h1::H,::HessianNull{T},ref1,ref2) where {T,H<:Hessian} = Hessian11a(h1,ref1)
 
 struct Hessian22m{T,H1 <: Hessian{T},H2 <: Hessian{T},H12,H21} <: Hessian{T}
     h1::H1
     h2::H2
     h12::H12
     h21::H21
-    ref1::RefValue{T}
-    ref2::RefValue{T}
+    ref1::RT
+    ref2::RT
 end
 struct Hessian11a{T,H <: Hessian{T}} <: Hessian{T}
     h1::H
-    ref::RefValue{T}
+    ref::RT
 end
-Hessian11a(::HessianNull{T},::RefValue{T}) where T = HessianNull{T}()
+Hessian11a(::HessianNull{T},::RT) where T = HessianNull{T}()
 
 struct HessianSum{T,I,H <: Hessian{T}} <: Hessian{T}
     inner::I

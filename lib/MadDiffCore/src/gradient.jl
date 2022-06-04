@@ -17,10 +17,10 @@ end
     Gradient1{T, F, D1 <: Gradient} <: Gradient{T}
 `Gradient` of `Expression1`.
 """
-struct Gradient1{T, F, D1 <: Gradient} <: Gradient{T}
+struct Gradient1{T, RT <: Ref{T}, F, D1 <: Gradient} <: Gradient{T}
     d1::D1
-    fref1::RefValue{T}
-    ref::RefValue{T}
+    fref1::RT
+    ref::RT
     function Gradient1(e::Expression1{T,F,E1}, indexer = nothing) where {T,F,E1 <: Expression{T}}
         d1 = Gradient(e.e1,indexer)
         return new{T,F,typeof(d1)}(d1,ref(e.e1),RefValue{T}())
@@ -31,11 +31,11 @@ end
     Gradient2F1{T, F, D1 <: Gradient, R<: Real} <: Gradient{T}
 `Gradient` of `Expression2` whose first argument is `<: Real`.
 """
-struct Gradient2F1{T, F, D1 <: Gradient, R<: Real} <: Gradient{T}
+struct Gradient2F1{T, RT <: Ref{T}, F, D1 <: Gradient, R<: Real} <: Gradient{T}
     a::R
     d1::D1
-    fref1::RefValue{T}
-    ref::RefValue{T}
+    fref1::RT
+    ref::RT
     function Gradient2F1(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1<:Real,E2 <: Expression{T}}
         g1 = Gradient(e.e2,indexer)
         return new{T,F,typeof(g1),typeof(e.e1)}(e.e1,g1,ref(e.e2),RefValue{T}())
@@ -46,11 +46,11 @@ end
     Gradient2F2{T, F,D1 <: Gradient, R<: Real} <: Gradient{T}
 `Gradient` of `Expression2` whose second argument is `<: Real`.
 """
-struct Gradient2F2{T, F,D1 <: Gradient, R<: Real} <: Gradient{T}
+struct Gradient2F2{T, RT <: Ref{T}, F,D1 <: Gradient, R<: Real} <: Gradient{T}
     a::R
     d1::D1
-    fref1::RefValue{T}
-    ref::RefValue{T}
+    fref1::RT
+    ref::RT
     function Gradient2F2(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1 <: Expression{T},E2<:Real}
         g1 = Gradient(e.e1,indexer)
         return new{T,F,typeof(g1),typeof(e.e2)}(e.e2,g1,ref(e.e1),RefValue{T}())
@@ -61,13 +61,13 @@ end
     Gradient2{T, F,D1 <: Gradient,D2 <: Gradient} <: Gradient{T}
 `Gradient` of `Expression2`.
 """
-struct Gradient2{T, F,D1 <: Gradient,D2 <: Gradient} <: Gradient{T}
+struct Gradient2{T, RT <: Ref{T}, F,D1 <: Gradient,D2 <: Gradient} <: Gradient{T}
     d1::D1
     d2::D2
-    fref1::RefValue{T}
-    fref2::RefValue{T}
-    ref1::RefValue{T}
-    ref2::RefValue{T}
+    fref1::RT
+    fref2::RT
+    ref1::RT
+    ref2::RT
 end
 for (T1,T2) in [(:Expression,:Expression),(:Expression,:Real),(:Real,:Expression)]
     @eval function Gradient2(e::Expression2{T,F,E1,E2}, indexer = nothing) where {T,F,E1 <: $T1,E2 <: $T2}

@@ -6,7 +6,7 @@ Create a `MadDiff.Expression` from `MOI.Expression`.
 """
 MadDiffCore.Expression(ex::MOI.Nonlinear.Expression; subex = nothing) =
     _convert_expression(ex::MOI.Nonlinear.Expression, 1, -1; subex=subex)[1]
-MadDiffCore.Expression(::Nothing; subex = nothing) = MadDiffCore.Constant(0.)
+MadDiffCore.Expression(::Nothing; subex = nothing) = MadDiffCore.ExpressionNull()
 
 
 function _convert_expression(ex::MOI.Nonlinear.Expression, i::Int, p::Int; subex = nothing)
@@ -244,7 +244,7 @@ function MOI.NLPBlockData(evaluator::MadDiffEvaluator)
     return MOI.NLPBlockData(
         evaluator.bounds,
         evaluator,
-        !(evaluator.backend.obj isa MadDiffCore.Constant && evaluator.backend.obj.x == 0.), 
+        !(evaluator.backend.obj isa MadDiffCore.ExpressionNull), 
     )
 end
 

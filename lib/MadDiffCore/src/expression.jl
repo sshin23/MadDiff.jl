@@ -26,6 +26,7 @@
 # Constant{T}(x::R) where {T, R <: Real} = Constant{T,R}(x)
 
 struct ExpressionNull{T} <: Expression{T} end
+ExpressionNull() = ExpressionNull{Float64}()
 
 abstract type AbstractVariable{T } <: Expression{T}  end
 """

@@ -1,10 +1,9 @@
 # MadDiff.jl
 
 
-| **Documentation** | **Build Status** |
-|:-----------------:|:----------------:|
-| [![doc](https://img.shields.io/badge/docs-dev-blue.svg)](https://sshin23.github.io/MadDiff.jl/dev) | [![build](https://github.com/sshin23/MadDiff.jl/actions/workflows/test.yml/badge.svg)](https://github.com/sshin23/MadDiff.jl/actions/workflows/test.yml) 
-[![codecov](https://codecov.io/gh/sshin23/MadDiff.jl/branch/main/graph/badge.svg?token=U6NMMW0IT5)](https://codecov.io/gh/sshin23/MadDiff.jl) |
+| **Documentation** | **Build Status** | **Coverage** |
+|:-----------------:|:----------------:|:----------------:|
+| [![doc](https://img.shields.io/badge/docs-dev-blue.svg)](https://sshin23.github.io/MadDiff.jl/dev) | [![build](https://github.com/sshin23/MadDiff.jl/actions/workflows/test.yml/badge.svg)](https://github.com/sshin23/MadDiff.jl/actions/workflows/test.yml) | [![codecov](https://codecov.io/gh/sshin23/MadDiff.jl/branch/main/graph/badge.svg?token=U6NMMW0IT5)](https://codecov.io/gh/sshin23/MadDiff.jl) |
 
 
 

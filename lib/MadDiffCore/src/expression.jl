@@ -41,7 +41,7 @@ end
     Variable{T}(n::Int) where T
 Returns a `Variable{T}` whose index is `n`.
 """
-Variable{T}(n::Int) where T = Variable{T}(n,RefValue{T}())
+Variable{T,RT}(n::Int) where {T,RT} = Variable{T,RT}(n,RT())
 
 """
     Variable(n::Int) 
@@ -55,7 +55,7 @@ julia> non_caching_eval(e, [1.,2.,3.])
 2.0
 ```
 """
-Variable(n::Int) = Variable{Float64}(n)
+Variable(n::Int) = Variable{Float64,RefValue{Float64}}(n)
 
 abstract type AbstractParameter{T,RT} <: Expression{T,RT}  end
 """
@@ -72,7 +72,7 @@ end
     Parameter{T}(n::Int) where T
 Returns a `Parameter{T}` whose index is `n`.
 """
-Parameter{T}(n::Int) where T= Parameter{T,RefValue{T}}(n,RefValue{T}())
+Parameter{T,RT}(n::Int) where {T,RT} = Parameter{T,RT}(n,RT())
 
 """
     Parameter(n::Int) 
@@ -86,7 +86,7 @@ julia> non_caching_eval(e, [1.,2.,3.], [4.,5.,6.])
 6.0
 ```
 """
-Parameter(n::Int) = Parameter{Float64}(n)
+Parameter(n::Int) = Parameter{Float64,RefValue{Float64}}(n)
 
 """
     Expression1{T, F <: Function ,E <: Expression{T,RT}}  <: Expression{T,RT}
@@ -132,6 +132,6 @@ struct ExpressionSum{T,RT <: Ref{T}, E <: Expression{T,RT}, I} <: Expression{T,R
     es::Vector{E}
     ref::RT
 end
-ExpressionSum(es::Vector{E}) where {T, RT, E <: Expression{T,RT}} = ExpressionSum{T,eltype(es),Nothing}(nothing,es,RefValue{T}())
-ExpressionSum(inner::E,es) where {T, RT, E <: ExpressionSum{T,RT}} = ExpressionSum{T,eltype(es),typeof(inner)}(inner,es,ref(inner))
+ExpressionSum(es::Vector{E}) where {T, RT, E <: Expression{T,RT}} = ExpressionSum{T,RT,eltype(es),Nothing}(nothing,es,RefValue{T}())
+ExpressionSum(inner::E,es) where {T, RT, E <: ExpressionSum{T,RT}} = ExpressionSum{T,RT,eltype(es),typeof(inner)}(inner,es,ref(inner))
 

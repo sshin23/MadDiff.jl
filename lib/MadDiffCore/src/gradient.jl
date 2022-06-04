@@ -109,7 +109,7 @@ end
     Gradient(e :: Expression{T,RT}) where T
 Returns the `Gradient` of an absraction `e`.
 """
-Gradient(e::Real,indexer=nothing) = GradientNull{typeof(float(e))}()
+Gradient(e::Real,indexer=nothing) = GradientNull{typeof(float(e)),RefValue{typeof(float(e))}}()
 Gradient(e::V,(row,indexer)::Tuple{Int,Dict{Tuple{Int,Int},Int}}) where {T, RT, V <: AbstractVariable{T,RT}} = Gradient0{T,RT}(index(e),set_indexer!(indexer,row,index(e)))
 Gradient(e::V,indexer=nothing) where {T, RT, V <: AbstractVariable{T,RT}} = Gradient0{T,RT}(index(e),set_indexer!(indexer,index(e)) )
 Gradient(e::V,::Nothing) where {T, RT, V <: AbstractVariable{T,RT}} = Gradient0{T,RT}(index(e),index(e))

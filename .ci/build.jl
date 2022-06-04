@@ -13,6 +13,7 @@ pkgs = [
     PackageSpec(path = joinpath(root_directory, "lib", "MadDiffSpecialFunctions")),
     PackageSpec(path = joinpath(root_directory, "lib", "MadDiffModels")),
     PackageSpec(path = joinpath(root_directory, "lib", "MadDiffMOI")),
+    PackageSpec(path = joinpath(root_directory, "lib", "MadDiffTests")),
     PackageSpec(path = joinpath(root_directory))
 ]
 

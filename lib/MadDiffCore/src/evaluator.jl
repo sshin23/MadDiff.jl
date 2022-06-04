@@ -20,48 +20,48 @@ for fname in [:non_caching_eval]
 
 
         @inline $fname(::HessianNull{T},z,x,p=nothing,h0=1) where T = nothing
-        @inline function $fname(h::HessianD00{T},z,x,p=nothing,h0 = 1) where T
+        @inline function $fname(h::H,z,x,p=nothing,h0 = 1) where H <: HessianD00
             islower(h) && @inbounds z[index1(h)::Int,index2(h)::Int] += h0
             return 
         end
-        @inline function $fname(h::HessianD00S{T},z,x,p=nothing,h0 = 1) where T
+        @inline function $fname(h::H,z,x,p=nothing,h0 = 1) where H <: HessianD00S
             islower(h) && @inbounds z[index(h)::Int] += h0
             return 
         end
-        @inline function $fname(h::HessianD10{T,H},z,x,p=nothing,h0 = 1) where {T,H}
+        @inline function $fname(h::H,z,x,p=nothing,h0 = 1) where H <: HessianD10
             $fname(h.h,z,x,p,h0*refval(h))
             return
         end
-        @inline function $fname(h::HessianD11{T,H},z,x,p=nothing,h0 = 1) where {T,H}
+        @inline function $fname(h::H,z,x,p=nothing,h0 = 1) where H <: HessianD11
             $fname(h.h,z,x,p,h0*refval1(h)*refval2(h))
             return
         end
-        @inline function $fname(h::HessianD21{T,H1,H2},z,x,p=nothing,h0=1) where {T,H1,H2}
+        @inline function $fname(h::H,z,x,p=nothing,h0=1) where H <: HessianD21
             $fname(h.h1,z,x,p,h0*refval(h)*refval1(h))
             $fname(h.h2,z,x,p,h0*refval(h)*refval2(h))
             return
         end
-        @inline function $fname(h::HessianD20{T,H1,H2},z,x,p=nothing,h0=1) where {T,H1,H2}
+        @inline function $fname(h::H,z,x,p=nothing,h0=1) where H <: HessianD20
             $fname(h.h1,z,x,p,h0*refval1(h))
             $fname(h.h2,z,x,p,h0*refval2(h))
         end
-        @inline function $fname(h::Hessian02{T,H11,H12,H21,H22},z,x,p=nothing,h0=1) where {T,H11,H12,H21,H22}
+        @inline function $fname(h::H,z,x,p=nothing,h0=1) where H <: Hessian02
             $fname(h.h11,z,x,p,h0*refval11(h)*refval21(h))
             $fname(h.h12,z,x,p,h0*refval11(h)*refval22(h)) 
             $fname(h.h21,z,x,p,h0*refval12(h)*refval21(h)) 
             $fname(h.h22,z,x,p,h0*refval12(h)*refval22(h))
             return
         end
-        @inline function $fname(h::Hessian11a{T,H},z,x,p=nothing,h0=1) where {T,H}
+        @inline function $fname(h::H,z,x,p=nothing,h0=1) where H <: Hessian11a
             $fname(h.h1,z,x,p,h0*refval(h))
             return
         end
-        @inline function $fname(h::Hessian22a{T,H1,H2},z,x,p=nothing,h0=1) where {T,H1,H2}
+        @inline function $fname(h::H,z,x,p=nothing,h0=1) where H <: Hessian22a
             $fname(h.h1,z,x,p,h0*refval1(h))
             $fname(h.h2,z,x,p,h0*refval2(h))
             return
         end
-        @inline function $fname(h::Hessian22m{T,H1,H2,H12},z,x,p=nothing,h0=1) where {T,H1,H2,H12}
+        @inline function $fname(h::H,z,x,p=nothing,h0=1) where H <: Hessian22m
             $fname(h.h1,z,x,p,h0*refval1(h))
             $fname(h.h2,z,x,p,h0*refval2(h))
             $fname(h.h12,z,x,p,h0)

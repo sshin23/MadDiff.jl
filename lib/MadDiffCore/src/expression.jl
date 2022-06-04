@@ -25,14 +25,14 @@
 # """
 # Constant{T}(x::R) where {T, R <: Real} = Constant{T,R}(x)
 
-struct ExpressionNull{T} <: Expression{T} end
+struct ExpressionNull{T,RT} <: Expression{T,RT} end
 
-abstract type AbstractVariable{T } <: Expression{T}  end
+abstract type AbstractVariable{T,RT}  <: Expression{T,RT}  end
 """
     Variable{T} <: Expression{T}
 `Expression` for variables.
 """
-struct Variable{T,RT <: Ref{T}} <:  AbstractVariable{T}
+struct Variable{T,RT <: Ref{T}} <:  AbstractVariable{T,RT}
     index::Int
     ref::RT
 end
@@ -107,7 +107,7 @@ struct Expression2{T, RT <: Ref{T}, F <: Function,E1, E2} <: Expression{T}
     e2::E2
     ref::RT
 end
-Expression2(f::F,e1::E1, e2::E2) where {T, F, E1 <: Union{Expression{T},Real}, E2 <: Union{Expression{T},Real}} = Expression2{T,F,E1,E2}(e1,e2,RefValue{T}())
+Expression2(f::F,e1::E1, e2::E2) where {T, RT, F, E1 <: Union{Expression{T},Real}, E2 <: Union{Expression{T},Real}} = Expression2{T,F,E1,E2}(e1,e2,RT)
 
 
 """
@@ -127,9 +127,9 @@ ExpressionIfElse(e0::E0,e1::E1,e2::E2) where {T, E0 <: Expression{T}, E1, E2} = 
     ExpressionSum{T, E <: Expression{T}, I} <: Expression{T}
 `Expression` for a summation of `Expression`s
 """
-struct ExpressionSum{T,RT <: Ref{T}, E <: Expression{T}, I} <: Expression{T}
+struct ExpressionSum{T,RT <: Ref{T}, E <: Expression{T}, VE <: AbstractVector{E} I} <: Expression{T}
     inner::I
-    es::Vector{E}
+    es::VE
     ref::RT
 end
 ExpressionSum(es::Vector{E}) where {T, E <: Expression{T}} = ExpressionSum{T,eltype(es),Nothing}(nothing,es,RefValue{T}())

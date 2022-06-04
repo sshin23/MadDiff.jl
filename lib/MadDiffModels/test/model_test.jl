@@ -92,11 +92,8 @@ setvalue(p,4)
 
 objective(m,sum([p,x,y]))
 
-m[:test] = "test"
-
 instantiate!(m)
 
-@test x.inner.index == 1
 @test value(x) == 3 
 @test lower_bound(x) == -1 
 @test upper_bound(x) == 1
@@ -105,7 +102,6 @@ instantiate!(m)
 @test value(p) == 4
 @test get_nvar(m) == 2
 @test get_ncon(m) == 9
-@test m[:test] == "test"
 
 for (optimizer,opt) in [(ipopt,[:print_level=>0]),
                         (madnlp,[:print_level=>MadNLP.ERROR])]

@@ -1,0 +1,11 @@
+name = "MadDiffCUDA"
+uuid = "4c0fd160-50ab-46ac-a656-92583ad56c15"
+authors = ["Sungho Shin <sshin@anl.gov>"]
+version = "0.1.0"
+
+[deps]
+MadDiffCore = "5ac3a7ac-a472-4f3e-93f4-0386471e765c"
+
+[compat]
+MadDiffCore = "0.1.0"
+MathOptInterface = "1.2"

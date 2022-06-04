@@ -2,7 +2,7 @@
 
 Welcome to the documentation of [MadDiff.jl](https://github.com/sshin23/MadDiff.jl)
 
-!!! note
+!!! warning
 	This documentation page is under construction.
 	
 !!! note

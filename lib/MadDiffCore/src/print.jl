@@ -21,7 +21,7 @@ const printlist = [
     (:(Source{Variable{T}} where T),e->"x"),
     (:(AbstractVariable{T} where T),e-> "x[$(index(e))]"),
     (:(AbstractParameter{T} where T),e-> "p[$(index(e))]"),
-    (:(Constant{T} where T),e-> "$(e.x)"),
+    # (:(Constant{T} where T),e-> "$(e.x)"),
     (:(Expression2{T,typeof(+),E1,E2} where {T,E1,E2}),e-> "$(string(e.e1)) + $(string(e.e2))"),
     (:(Expression2{T,typeof(-),E1,E2} where {T,E1,E2}),e-> "$(string(e.e1)) - $(string(e.e2))"),
     (:(Expression2{T,typeof(*),E1,E2} where {T,E1,E2}),e-> "$(string(e.e1))*$(string(e.e2))"),
@@ -48,19 +48,8 @@ const printlist = [
     (:(ExpressionSum{T,E,I} where {T,E,I}),stringsum),
 ]
 
-
-for (f0,f,df,ddf) in _F_NARGS_1
-    @eval begin
-        push!(printlist,(:(Expression1{T,$(typeof($f)),E} where {T,E}),e->"$(string($f))($(string(e.e1)))"))
-    end
-end
-
-for (f0,f,df1,df2,ddf11,ddf12,ddf22) in _F_NARGS_2
-    f0 in [:+,:-,:*,:^,:/,:(<=),:(==),:(>=)] && continue
-    @eval begin
-        push!(printlist,(:(Expression2{T,$(typeof($f)),E1,E2} where {T,E1,E2}),e->"$(string($f))($(string(e.e1)),$(string(e.e2)))"))
-    end
-end
+show(io::IO,e::E) where {T, F, E <: Expression1{T,F}} = print(io,"$(string(F.instance))($(string(e.e1)))")
+show(io::IO,e::E) where {T, F, E <: Expression2{T,F}} = print(io,"$(string(F.instance))($(string(e.e1)),$(string(e.e2)))")
 
 for (T,f) in printlist
     @eval begin
@@ -76,10 +65,3 @@ for fname in [:Evaluator, :GradientEvaluator, :SparseGradientEvaluator, :Hessian
         end
     end
 end
-
-# for [:FieldEvaluator, :JacobianEvaluator, :SparseJacobianEvaluator]
-    
-# end
-
-
-# (:(Model),e-> "NLP model with $(m.n) variables and $(m.m) constraints"

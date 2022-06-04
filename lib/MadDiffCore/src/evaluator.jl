@@ -5,46 +5,6 @@ for fname in [:default_eval]
         @inline $fname(e::E, x, p = nothing) where {E <: ExpressionIfElse} =
             setrefval(e,setbrefval(e,non_caching_eval(e.e0,x,p)) ? $fname(e.e1,x,p) : $fname(e.e2,x,p))
     end
-
-
-    for (f0,f,df,ddf) in _F_NARGS_1
-        @eval begin
-            @inline $fname(e::Expression1{T,typeof($f),E},x,p=nothing) where {T,E} = setrefval(e,$f($fname(e.e1,x,p)))
-            
-            @inline function $fname(d::Gradient1{T,typeof($f),F1},y,x,p=nothing,d0=1.) where {T,F1}
-                setrefval(d,$df(frefval1(d)))
-                $fname(d.d1,y,x,p,d0*refval(d))
-                return 
-            end
-            
-        end
-    end
-
-    for (f0,f,df1,df2,ddf11,ddf12,ddf22) in _F_NARGS_2
-        @eval begin
-            @inline $fname(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1,F2} = setrefval(e,$f($fname(e.e1,x,p),$fname(e.e2,x,p)))
-            @inline $fname(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1<:Real,F2} = setrefval(e,$f(e.e1,$fname(e.e2,x,p)))
-            @inline $fname(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1,F2<:Real} = setrefval(e,$f($fname(e.e1,x,p),e.e2))
-
-            @inline function $fname(d::Gradient2F1{T,typeof($f),F1,R},y,x,p=nothing,d0=1.) where {T,F1,R}
-                setrefval(d,$df2(d.a,frefval1(d)))
-                $fname(d.d1,y,x,p,d0*refval(d))
-                return 
-            end
-            @inline function $fname(d::Gradient2F2{T,typeof($f),F1,R},y,x,p=nothing,d0=1.) where {T,F1,R}
-                setrefval(d,$df1(frefval1(d),d.a))
-                $fname(d.d1,y,x,p,d0*refval(d))
-                return 
-            end
-            @inline function $fname(d::Gradient2{T,typeof($f),D1,D2},y,x,p=nothing,d0 = 1) where {T,D1,D2}
-                setrefval1(d,$df1(frefval1(d),frefval2(d)))
-                setrefval2(d,$df2(frefval1(d),frefval2(d)))
-                $fname(d.d1,y,x,p,d0*refval1(d))
-                $fname(d.d2,y,x,p,d0*refval2(d))
-                return
-            end
-        end
-    end
 end
 
 
@@ -110,73 +70,13 @@ for fname in [:non_caching_eval]
         end
         @inline $fname(h::H,z,x,p=nothing,h0=1.) where {H <: HessianIfElse } = brefval(h) ? $fname(h.h1,z,x,p,h0) : $fname(h.h2,z,x,p,h0)
     end
-
-    for (f0,f,df,ddf) in _F_NARGS_1
-        @eval begin
-            @inline $fname(e::Expression1{T,typeof($f),E},x,p=nothing) where {T,E} = $f($fname(e.e1,x,p))
-            @inline function $fname(d::Gradient1{T,typeof($f),D1},y,x,p=nothing,d0=1.)  where {T,D1}
-                $fname(d.d1,y,x,p,d0*$df(frefval1(d)))
-                return 
-            end
-            @inline function $fname(h::Hessian11{T,typeof($f),H1,H11},z,x,p=nothing,h0=1) where {T,H1,H11}
-                $fname(h.h1,z,x,p,h0*refval(h))
-                $fname(h.h11,z,x,p,h0*$ddf(frefval(h)))
-                return
-            end
-
-        end
-    end
-
-
-    for (f0,f,df1,df2,ddf11,ddf12,ddf22) in _F_NARGS_2
-        @eval begin
-            @inline $fname(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1,F2} = $f($fname(e.e1,x,p),$fname(e.e2,x,p))
-            @inline $fname(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1<:Real,F2} = $f(e.e1,$fname(e.e2,x,p))
-            @inline $fname(e::Expression2{T,typeof($f),F1,F2},x,p=nothing) where {T,F1,F2<:Real} = $f($fname(e.e1,x,p),e.e2)
-            
-            @inline function $fname(d::Gradient2F1{T,typeof($f),D1,R},y,x,p=nothing,d0=1.) where {T,D1,R}
-                $fname(d.d1,y,x,p,d0*$df2(d.a,frefval1(d)))
-                return 
-            end
-            @inline function $fname(d::Gradient2F2{T,typeof($f),D1,R},y,x,p=nothing,d0=1.) where {T,D1,R}
-                $fname(d.d1,y,x,p,d0*$df1(frefval1(d),d.a))
-                return 
-            end
-            @inline function $fname(d::Gradient2{T,typeof($f),D1,D2},y,x,p=nothing,d0 = 1) where {T,D1,D2}
-                $fname(d.d1,y,x,p,d0*$df1(frefval1(d),frefval2(d)))
-                $fname(d.d2,y,x,p,d0*$df2(frefval1(d),frefval2(d)))
-                return
-            end
-            @inline function $fname(h::Hessian11F1{T,typeof($f),H1,H11,R},z,x,p=nothing,h0=1) where {T,H1,H11,R}
-                $fname(h.h1,z,x,p,h0*refval(h))
-                $fname(h.h11,z,x,p,h0*$ddf22(h.a,frefval(h)))
-                return
-            end
-            @inline function $fname(h::Hessian11F2{T,typeof($f),H1,H11,R},z,x,p=nothing,h0=1) where {T,H1,H11,R}
-                $fname(h.h1,z,x,p,h0*refval(h))
-                $fname(h.h11,z,x,p,h0*$ddf11(frefval(h),h.a))
-                return
-            end
-            @inline function $fname(h::Hessian22{T,typeof($f),H1,H2,H11,H12,H22},z,x,p=nothing,h0=1) where {T,H1,H2,H11,H12,H22}
-                ddf12 = $ddf12(frefval1(h),frefval2(h))
-                $fname(h.h1,z,x,p,h0*refval1(h))
-                $fname(h.h2,z,x,p,h0*refval2(h))
-                $fname(h.h11,z,x,p,h0*$ddf11(frefval1(h),frefval2(h)))
-                $fname(h.h12,z,x,p,h0*ddf12)
-                $fname(h.h21,z,x,p,h0*ddf12)
-                $fname(h.h22,z,x,p,h0*$ddf22(frefval1(h),frefval2(h)))
-                return
-            end
-
-        end
-    end
-
 end
 
 
 for fname in [:default_eval, :non_caching_eval]
-    @eval begin 
-        @inline $fname(e::Constant{T},x,p=nothing) where {T <: AbstractFloat}  = e.x
+    @eval begin
+        @inline $fname(a::Real,x,p=nothing) = a
+        @inline $fname(e::ExpressionNull{T},x,p=nothing) where T = 0.
         @inline $fname(::GradientNull{T},z,x,p=nothing,d0=1) where T = nothing
         @inline $fname(d::Gradient0{T},y,x,p=nothing,d0=1) where T = (@inbounds y[d.offset] += d0; nothing)
         @inline $fname(d::Gradient0{T},(j,y)::Tuple{Int,M},x,p=nothing,d0=1) where {T, M <: AbstractMatrix} = (@inbounds y[j,d.offset] += d0; nothing)
@@ -341,7 +241,7 @@ struct JacobianEvaluator{F,J}
     j::J
     function JacobianEvaluator(f)
         j = Jacobian(f)
-        new{typeof(f),typeof(j)}(f)
+        new{typeof(f),typeof(j)}(f,j)
     end
 end
 @inline function (ev::JacobianEvaluator{F,J})(y,x,p=nothing) where {F,J}

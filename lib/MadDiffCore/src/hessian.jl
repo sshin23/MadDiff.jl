@@ -128,6 +128,10 @@ struct Hessian22a{T,H1 <: Hessian{T},H2 <: Hessian{T}} <: Hessian{T}
     ref1::RefValue{T}
     ref2::RefValue{T}
 end
+Hessian22a(::HessianNull{T},::HessianNull{T},::RefValue{T},::RefValue{T}) where T = HessianNull{T}()
+Hessian22a(::HessianNull{T},h2::H,::RefValue{T},ref2::RefValue{T}) where {T,H<:Hessian} = Hessian11a(h2,ref2)
+Hessian22a(h1::H,::HessianNull{T},ref1::RefValue{T},::RefValue{T}) where {T,H<:Hessian} = Hessian11a(h1,ref1)
+
 struct Hessian22m{T,H1 <: Hessian{T},H2 <: Hessian{T},H12,H21} <: Hessian{T}
     h1::H1
     h2::H2
@@ -140,6 +144,8 @@ struct Hessian11a{T,H <: Hessian{T}} <: Hessian{T}
     h1::H
     ref::RefValue{T}
 end
+Hessian11a(::HessianNull{T},::RefValue{T}) where T = HessianNull{T}()
+
 struct HessianSum{T,I,H <: Hessian{T}} <: Hessian{T}
     inner::I
     hs::Vector{H}
@@ -151,14 +157,12 @@ struct HessianIfElse{T,H1 <: Hessian{T},H2 <: Hessian{T}} <: Hessian{T}
 end
 
 
-Hessian(e::ExpressionSum{T,E,I1},d::GradientSum{T,D,I2},indexer = nothing) where {T,E,D,I1,I2} = HessianSum(Hessian(inner(e),inner(d),indexer),[Hessian(e,d,indexer) for (e,d) in zip(e.es,d.ds)])
-Hessian(e::ExpressionSum{T,E,Nothing},d::GradientSum{T,D,Nothing},indexer = nothing) where {T,E,D} = HessianSum(nothing,[Hessian(e,d,indexer) for (e,d) in zip(e.es,d.ds)])
-Hessian(e::V,::G,indexer)  where {T <: AbstractFloat, G <: Gradient{T}, V <: Union{AbstractConstant,AbstractVariable,AbstractParameter}} = HessianNull{T}()
-Hessian(d1::G,d2::GradientNull{T},indexer) where {T,G <: Gradient} = HessianNull{T}()
-Hessian(d1::GradientNull{T},d2::G,indexer) where {T,G <: Gradient} = HessianNull{T}()
-Hessian(d1::GradientNull{T},d2::GradientSum,indexer) where {T,G <: Gradient} = HessianNull{T}()
-Hessian(d1::GradientNull{T},d2::GradientNull{T},indexer) where T = HessianNull{T}()
-Hessian(d1::Gradient0{T},d2::Gradient0{T},indexer) where T = HessianD00S{T}(index(d1)>=index(d2) ? set_indexer!(indexer,index(d1),index(d2)) : 0,index(d1) >= index(d2))
+Hessian(e::Real,d::GradientNull{T},indexer = nothing) where T = HessianNull{T}()
+for (T1,T2) in [(:(GradientNull{T}),:(GradientNull{T})), (:(GradientNull{T}),:(Gradient{T})), (:(Gradient{T}),:(GradientNull{T}))]
+    @eval Hessian(d1::G1,d2::G2,indexer = nothing) where {T, G1 <: $T1, G2 <: $T2} = HessianNull{T}()
+end
+Hessian(e::V,::G,indexer = nothing)  where {T, G <: Gradient{T}, V <: Union{ExpressionNull, AbstractVariable,AbstractParameter}} = HessianNull{T}()
+Hessian(d1::Gradient0{T},d2::Gradient0{T},indexer = nothing) where T = HessianD00S{T}(index(d1)>=index(d2) ? set_indexer!(indexer,index(d1),index(d2)) : 0,index(d1) >= index(d2))
 Hessian(d1::Gradient0{T},d2::Gradient0{T},::Nothing) where T = HessianD00{T}(index(d1),index(d2),index(d1) >= index(d2))
 Hessian(d1::Gradient0{T},d2::G1, indexer = nothing) where {T, G1 <: Union{Gradient1,Gradient2F1,Gradient2F2}} = HessianD10(Hessian(d1,d2.d1,indexer),ref(d2))
 Hessian(d1::G1,d2::Gradient0{T}, indexer = nothing) where {T, G1 <: Union{Gradient1,Gradient2F1,Gradient2F2}} = HessianD10(Hessian(d1.d1,d2,indexer),ref(d1))
@@ -169,18 +173,17 @@ Hessian(d1::Gradient0{T},d2::Gradient2{T,F,F1,F2}, indexer = nothing) where {T,F
 Hessian(d1::Gradient2{T,F,F1,F2},d2::Gradient0, indexer = nothing) where {T,F,F1,F2} = HessianD20(Hessian(d1.d1,d2,indexer),Hessian(d1.d2,d2,indexer),ref1(d1),ref2(d1))
 Hessian(d1::Gradient2{T,F1,F11,F12},d2::Gradient2{T,F2,F21,F22}, indexer = nothing) where {T,F1,F11,F12,F2,F21,F22} = Hessian02(Hessian(d1.d1,d2.d1,indexer),Hessian(d1.d1,d2.d2,indexer),Hessian(d1.d2,d2.d1,indexer),Hessian(d1.d2,d2.d2,indexer),ref1(d1),ref2(d1),ref1(d2),ref2(d2))
 Hessian(e::Expression1{T,F,E},d, indexer = nothing) where {T,F,E} = Hessian11(e,d,indexer)
-Hessian(e::Expression1{T,F,E},d,indexer = nothing) where {T,F<:Union{typeof(+),typeof(-)},E} = Hessian11a(Hessian(e.e1,d.d1,indexer),ref(d))
-Hessian(e::Expression2{T,F,E1,E2},d,indexer = nothing) where {T,F,E1,E2} = Hessian22(e,d,indexer)
-Hessian(e::Expression2{T,F,E1,E2}, d,indexer = nothing) where {T,F,E1 <: Real,E2} = Hessian11F1(e,d,indexer)
-Hessian(e::Expression2{T,F,E1,E2}, d,indexer = nothing) where {T,F,E1,E2 <: Real} = Hessian11F2(e,d,indexer)
+Hessian(e::Expression1{T,F,E},d, indexer = nothing) where {T,F<:Union{typeof(+),typeof(-)},E} = Hessian11a(Hessian(e.e1,d.d1,indexer),ref(d))
+Hessian(e::Expression2{T,F,E1,E2}, d, indexer = nothing) where {T,F,E1,E2} = Hessian22(e,d,indexer)
+Hessian(e::Expression2{T,F,E1,E2}, d, indexer = nothing) where {T,F,E1 <: Real,E2} = Hessian11F1(e,d,indexer)
+Hessian(e::Expression2{T,F,E1,E2}, d, indexer = nothing) where {T,F,E1,E2 <: Real} = Hessian11F2(e,d,indexer)
 Hessian(e::Expression2{T,typeof(*),E1,E2},d,indexer = nothing) where {T,E1,E2} = Hessian22m(Hessian(e.e1,d.d1,indexer),Hessian(e.e2,d.d2,indexer),Hessian(d.d1,d.d2,indexer),Hessian(d.d2,d.d1,indexer),ref1(d),ref2(d))
 Hessian(e::Expression2{T,F,E1,E2},d,indexer = nothing) where {T,F<:Union{typeof(+),typeof(-)},E1,E2} = Hessian22a(Hessian(e.e1,d.d1,indexer),Hessian(e.e2,d.d2,indexer),ref1(d),ref2(d))
 Hessian(e::Expression2{T,F,E1,E2}, d,indexer = nothing) where {T,F<:Union{typeof(+),typeof(-),typeof(*)},E1 <: Real,E2 <: Expression} = Hessian11a(Hessian(e.e2,d.d1,indexer),ref(d))
 Hessian(e::Expression2{T,F,E1,E2}, d,indexer = nothing) where {T,F<:Union{typeof(+),typeof(-),typeof(*),typeof(/)},E1 <: Expression,E2 <: Real} = Hessian11a(Hessian(e.e1,d.d1,indexer),ref(d))
-Hessian11a(::HessianNull{T},::RefValue{T}) where T = HessianNull{T}()
-Hessian22a(::HessianNull{T},::HessianNull{T},::RefValue{T},::RefValue{T}) where T = HessianNull{T}()
-Hessian22a(::HessianNull{T},h2::H,::RefValue{T},ref2::RefValue{T}) where {T,H<:Hessian} = Hessian11a(h2,ref2)
-Hessian22a(h1::H,::HessianNull{T},ref1::RefValue{T},::RefValue{T}) where {T,H<:Hessian} = Hessian11a(h1,ref1)
+Hessian(e::ExpressionSum{T,E,I1},d::GradientSum{T,D,I2},indexer = nothing) where {T,E,D,I1,I2} = HessianSum(Hessian(inner(e),inner(d),indexer),[Hessian(e,d,indexer) for (e,d) in zip(e.es,d.ds)])
+Hessian(e::ExpressionSum{T,E,Nothing},d::GradientSum{T,D,Nothing},indexer = nothing) where {T,E,D} = HessianSum(nothing,[Hessian(e,d,indexer) for (e,d) in zip(e.es,d.ds)])
+
 
 function Hessian(d1::GradientSum{T,D1,I1},d2::GradientSum{T,D2,I2},indexer = nothing) where {T,D1,D2,I1,I2}
     hinner = Hessian(inner(d1),d2,indexer)

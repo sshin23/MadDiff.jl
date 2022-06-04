@@ -1,45 +1,47 @@
-abstract type AbstractConstant{T  <: AbstractFloat} <: Expression{T} end
+# abstract type AbstractConstant{T } <: Expression{T} end
 
-"""
-    Constant{T <: AbstractFloat} <: Expression{T}
-`Expression` for constants.
+# """
+#     Constant{T} <: Expression{T}
+# `Expression` for constants.
 
-    Constant(x::T) where T <: AbstractFloat
-Returns a `Constant` with value `x`.
-# Example
+#     Constant(x::T) where T
+# Returns a `Constant` with value `x`.
+# # Example
 
-```julia-repl
-julia> e = Constant(1.)
-1.0
-julia> non_caching_eval(e, [1.,2.,3.])
-1.0
-```
-"""
-struct Constant{T <: AbstractFloat,R <: Real} <:  AbstractConstant{T}
-    x::R
-end
+# ```julia-repl
+# julia> e = Constant(1.)
+# 1.0
+# julia> non_caching_eval(e, [1.,2.,3.])
+# 1.0
+# ```
+# """
+# struct Constant{T,R <: Real} <:  AbstractConstant{T}
+#     x::R
+# end
 
-"""
-    Constant{T}(x::R) where {T <: AbstractFloat, R <: Real}
-Returns a `Constant{T,R}` whose value is `x`.
-"""
-Constant{T}(x::R) where {T <: AbstractFloat, R <: Real} = Constant{T,R}(x)
+# """
+#     Constant{T}(x::R) where {T, R <: Real}
+# Returns a `Constant{T,R}` whose value is `x`.
+# """
+# Constant{T}(x::R) where {T, R <: Real} = Constant{T,R}(x)
 
-abstract type AbstractVariable{T  <: AbstractFloat} <: Expression{T}  end
+struct ExpressionNull{T} <: Expression{T} end
+
+abstract type AbstractVariable{T } <: Expression{T}  end
 """
-    Variable{T <: AbstractFloat} <: Expression{T}
+    Variable{T} <: Expression{T}
 `Expression` for variables.
 """
-struct Variable{T <: AbstractFloat} <:  AbstractVariable{T}
+struct Variable{T} <:  AbstractVariable{T}
     index::Int
     ref::RefValue{T}
 end
 
 """
-    Variable{T}(n::Int) where T <: AbstractFloat
+    Variable{T}(n::Int) where T
 Returns a `Variable{T}` whose index is `n`.
 """
-Variable{T}(n::Int) where T <: AbstractFloat = Variable{T}(n,RefValue{T}(0.))
+Variable{T}(n::Int) where T = Variable{T}(n,RefValue{T}())
 
 """
     Variable(n::Int) 
@@ -55,22 +57,22 @@ julia> non_caching_eval(e, [1.,2.,3.])
 """
 Variable(n::Int) = Variable{Float64}(n)
 
-abstract type AbstractParameter{T  <: AbstractFloat} <: Expression{T}  end
+abstract type AbstractParameter{T } <: Expression{T}  end
 """
-    Parameter{T <: AbstractFloat} <: Expression{T}
+    Parameter{T} <: Expression{T}
 `Expression` for parameters.
 """
-struct Parameter{T <: AbstractFloat} <: AbstractParameter{T}
+struct Parameter{T} <: AbstractParameter{T}
     index::Int
     ref::RefValue{T}
 end
 
 
 """
-    Parameter{T}(n::Int) where T <: AbstractFloat
+    Parameter{T}(n::Int) where T
 Returns a `Parameter{T}` whose index is `n`.
 """
-Parameter{T}(n::Int) where T <: AbstractFloat= Parameter{T}(n,RefValue{T}(0.))
+Parameter{T}(n::Int) where T= Parameter{T}(n,RefValue{T}())
 
 """
     Parameter(n::Int) 
@@ -87,39 +89,26 @@ julia> non_caching_eval(e, [1.,2.,3.], [4.,5.,6.])
 Parameter(n::Int) = Parameter{Float64}(n)
 
 """
-    Expression1{T <: AbstractFloat, F <: Function ,E <: Expression{T}}  <: Expression{T}
+    Expression1{T, F <: Function ,E <: Expression{T}}  <: Expression{T}
 `Expression` for univariate function
 """
-struct Expression1{T <: AbstractFloat, F <: Function ,E <: Expression{T}}  <: Expression{T}
+struct Expression1{T, F <: Function ,E <: Expression{T}}  <: Expression{T}
     e1::E
     ref::RefValue{T}
-    Expression1(f::F,e1::E) where {T <: AbstractFloat, F <: Function, E <: Expression{T}} =
-        new{T,F,E}(e1,RefValue{T}(0.))
 end
+Expression1(f::F,e1::E) where {T, F <: Function, E <: Expression{T}} =  Expression1{T,F,E}(e1,RefValue{T}())
 
 """
-    Expression2{T <: AbstractFloat, F <: Function,E1, E2} <: Expression{T}
+    Expression2{T, F <: Function,E1, E2} <: Expression{T}
 `Expression` for bivariate function
 """
-struct Expression2{T <: AbstractFloat, F <: Function,E1, E2} <: Expression{T}
+struct Expression2{T, F <: Function,E1, E2} <: Expression{T}
     e1::E1
     e2::E2
     ref::RefValue{T}
-    Expression2(f::F,e1::E1,e2::E2) where {T <: AbstractFloat, F, E1 <: Expression{T}, E2 <: Expression{T}} =
-        new{T,F,E1,E2}(e1,e2,RefValue{T}(0.))
-    Expression2(f::F,e1::E1,e2::E2) where {
-        T <: AbstractFloat,
-        F,
-        E1,
-        E2 <: Expression{T}
-    } = new{T,F,E1,E2}(e1,e2,RefValue{T}(0.))
-    Expression2(f::F,e1::E1,e2::E2) where {
-        T <: AbstractFloat,
-        F,
-        E1 <: Expression{T},
-        E2
-    } = new{T,F,E1,E2}(e1,e2,RefValue{T}(0.))
 end
+Expression2(f::F,e1::E1, e2::E2) where {T, F, E1 <: Union{Expression{T},Real}, E2 <: Union{Expression{T},Real}} = Expression2{T,F,E1,E2}(e1,e2,RefValue{T}())
+
 
 """
     ExpressionIfElse{T,E0 <: Expression{T}, E1, E2} <: Expression{T}
@@ -131,18 +120,18 @@ struct ExpressionIfElse{T,E0 <: Expression{T}, E1, E2} <: Expression{T}
     e2::E2
     ref::RefValue{T}
     bref::RefValue{Bool}
-    ExpressionIfElse(e0::E0,e1::E1,e2::E2) where {T, E0 <: Expression{T}, E1, E2} = new{T,E0,E1,E2}(e0,e1,e2,RefValue{T}(0.),RefValue{Bool}(true))
 end
+ExpressionIfElse(e0::E0,e1::E1,e2::E2) where {T, E0 <: Expression{T}, E1, E2} = ExpressionIfElse{T,E0,E1,E2}(e0,e1,e2,RefValue{T}(),RefValue{Bool}(true))
 
 """
-    ExpressionSum{T <: AbstractFloat, E <: Expression{T}, I} <: Expression{T}
+    ExpressionSum{T, E <: Expression{T}, I} <: Expression{T}
 `Expression` for a summation of `Expression`s
 """
-struct ExpressionSum{T <: AbstractFloat, E <: Expression{T}, I} <: Expression{T}
+struct ExpressionSum{T, E <: Expression{T}, I} <: Expression{T}
     inner::I
     es::Vector{E}
     ref::RefValue{T}
-    ExpressionSum(es::Vector{E}) where {T <: AbstractFloat, E <: Expression{T}} = new{T,eltype(es),Nothing}(nothing,es,RefValue{T}(0.))
-    ExpressionSum(inner::E,es) where {T <: AbstractFloat, E <: ExpressionSum{T}} = new{T,eltype(es),typeof(inner)}(inner,es,ref(inner))
 end
+ExpressionSum(es::Vector{E}) where {T, E <: Expression{T}} = ExpressionSum{T,eltype(es),Nothing}(nothing,es,RefValue{T}())
+ExpressionSum(inner::E,es) where {T, E <: ExpressionSum{T}} = ExpressionSum{T,eltype(es),typeof(inner)}(inner,es,ref(inner))
 

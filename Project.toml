@@ -6,19 +6,14 @@ version = "0.1.0"
 [deps]
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 MadDiffCore = "5ac3a7ac-a472-4f3e-93f4-0386471e765c"
+MadDiffSpecialFunctions = "3763b5ab-634f-483a-8111-05308bc17e04"
 MadDiffModels = "3a0fffed-42e2-400f-bc9f-183fc4b91caf"
 MadDiffMOI = "703d8b96-412a-4415-8fe9-74f341fe3283"
 
 [compat]
 Reexport = "1"
 MadDiffCore = "0.1"
+MadDiffSpecialFunctions = "0.1"
 MadDiffModels = "0.1"
 MadDiffMOI = "0.1"
 julia = "1.6"
-
-[extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Pkg  = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-
-[targets]
-test = ["Test", "Pkg"]

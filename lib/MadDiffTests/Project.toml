@@ -1,0 +1,15 @@
+name = "MadDiffTests"
+uuid = "4198c91c-5b51-4914-988a-3ed4053bc195"
+authors = ["Sungho Shin <sshin@anl.gov>"]
+version = "0.1.0"
+
+[deps]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+MadDiffCore = "5ac3a7ac-a472-4f3e-93f4-0386471e765c"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+
+[compat]
+ForwardDiff = "0.10"
+MadDiffCore = "0.1"
+julia = "1.6"
+

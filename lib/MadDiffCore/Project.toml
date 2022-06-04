@@ -4,19 +4,17 @@ authors = ["Sungho Shin"]
 version = "0.1.0"
 
 [deps]
-SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 NaNMath = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 
 [compat]
-SpecialFunctions = "1, 2"
 NaNMath = "1"
+MadDiffTests = "0.1"
 julia = "1.6"
 
 [extras]
-Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
-SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+MadDiffTests = "4198c91c-5b51-4914-988a-3ed4053bc195"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [targets]
-test = ["Test", "Random", "ForwardDiff", "SpecialFunctions"]
+test = ["Test", "Random", "MadDiffTests"]

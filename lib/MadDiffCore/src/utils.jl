@@ -1,8 +1,8 @@
 struct Dummy end
 const DUMMY = Dummy()
-getindex(::Dummy,key::Int) = 0.
-    getindex(::Tuple{Int,Dummy},key::Int) = 0.
-    setindex!(::Dummy,val,key) = nothing
+getindex(::Dummy,key::Int) = 0
+getindex(::Tuple{Int,Dummy},key::Int) = 0
+setindex!(::Dummy,val,key) = nothing
 setindex!(::Tuple{Int,Dummy},val,key) = nothing
 
 index(e) = e.index
@@ -30,5 +30,19 @@ setbrefval(e,val) = e.bref[] = val
 addrefval(e,val) = ref(e)[] += val
 islower(h) = h.islower
 
+@inline _mone(x)=-one(x) 
+@inline _one(x1,x2)=one(x1)
+@inline _zero(x1,x2)=zero(x1)
+@inline _mone(x1,x2)=-one(x1)
+@inline _x1(x1,x2)=x1
+@inline _x2(x1,x2)=x2
+@inline _and(x::Bool,y::Bool) = x && y
+@inline _or(x::Bool,y::Bool) = x || y
+@inline _and(x,y::Bool) = x==1 && y
+@inline _or(x,y::Bool) = x==1 || y
+@inline _and(x::Bool,y) = x && y==1
+@inline _or(x::Bool,y) = x || y==1
+@inline _and(x,y) = x==1 && y==1
+@inline _or(x,y) = x==1 || y==1
 
 

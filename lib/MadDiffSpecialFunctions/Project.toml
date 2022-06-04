@@ -1,0 +1,23 @@
+name = "MadDiffSpecialFunctions"
+uuid = "3763b5ab-634f-483a-8111-05308bc17e04"
+authors = ["Sungho Shin <sshin@anl.gov>"]
+version = "0.1.0"
+
+[deps]
+MadDiffCore = "5ac3a7ac-a472-4f3e-93f4-0386471e765c"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+
+[compat]
+MadDiffCore = "0.1.0"
+SpecialFunctions = "1, 2"
+MadDiffTests = "0.1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+MadDiffTests = "4198c91c-5b51-4914-988a-3ed4053bc195"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+
+[targets]
+test = ["Test", "Random", "MadDiffTests", "SpecialFunctions"]
+

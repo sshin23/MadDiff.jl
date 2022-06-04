@@ -2,6 +2,6 @@ module MadDiff
 
 using Reexport
 
-@reexport using MadDiffCore, MadDiffModels, MadDiffMOI
+@reexport using MadDiffCore, MadDiffSpecialFunctions, MadDiffModels, MadDiffMOI
 
 end # module

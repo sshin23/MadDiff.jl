@@ -6,6 +6,7 @@ const _PAGES = [
     "How it Works" => "tutorial.md",
     "API Manual" => [
         "MadDiffCore" => "core.md",
+        "MadDiffSpecialFunctions" => "special.md",
         "MadDiffModels" => "models.md",
         "MadDiffMOI" => "moi.md",
     ]

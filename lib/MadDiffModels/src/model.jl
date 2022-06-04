@@ -42,7 +42,7 @@ Creates an empty `MadDiffModel{T}`.
 `m = MadDiffModel{Float32}()`
 """
 MadDiffModel{T}() where T = MadDiffModel{T}(
-    MadDiffCore.Field{T}(), MadDiffCore.Constant{T}(zero(T)),
+    MadDiffCore.Field{T}(), MadDiffCore.ExpressionNull{T}(),
     0, 0, 0,
     T[], T[], T[], T[], T[], T[], T[], T[], T[], 
     false, NullNLPModelMeta{T,Vector{T}}(), NullNLPCore{T}(), NLPModels.Counters(),
@@ -253,7 +253,7 @@ end
 Evaluate the structure of the constraints Jacobian and store the result in `I` and `J` in sparse coordinate format.
 """
 @inline function NLPModels.jac_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T}) where T
-    fill_sparsity!(I,J,m.nlpcore.jac_sparsity)
+    _fill_sparsity!(I,J,m.nlpcore.jac_sparsity)
     return 
 end
 
@@ -262,7 +262,7 @@ end
 Evaluate the structure of the Lagrangian Hessian and store the result in `I` and `J` in sparse coordinate format.
 """
 @inline function NLPModels.hess_structure!(m::MadDiffModel,I::AbstractVector{T},J::AbstractVector{T}) where T
-    fill_sparsity!(I,J,m.nlpcore.hess_sparsity)
+    _fill_sparsity!(I,J,m.nlpcore.hess_sparsity)
     return 
 end
 
@@ -315,7 +315,7 @@ Evaluate the Lagrangian Hessian of `m` at primal `x`, dual `lag`, and objective 
     return 
 end
 
-@inline function fill_sparsity!(I,J,tuples)
+@inline function _fill_sparsity!(I,J,tuples)
     @simd for l in eachindex(tuples)
         (i,j) = tuples[l]
         @inbounds I[l] = i

@@ -2,49 +2,49 @@
     value(x::ModelVariable{T}) where T
 Return the value of variable `x`.
 """
-value(x::ModelVariable{T}) where T = x.parent.x[x.inner.index]
+value(x::ModelVariable{T}) where T = x.parent.x[x.index]
 
 """
     value(p::ModelParameter{T}) where T
 Return the value of parameter `p`.
 """
-value(p::ModelParameter{T}) where T= p.parent.p[p.inner.index]
+value(p::ModelParameter{T}) where T= p.parent.p[p.index]
 
 """
     setvalue(x::ModelVariable{T},val) where T
 Set the value of variable 'x' to `val`.
 """
-setvalue(x::ModelVariable{T},val) where T = x.parent.x[x.inner.index] = val
+setvalue(x::ModelVariable{T},val) where T = x.parent.x[x.index] = val
 
 """
     setvalue(p::ModelParameter{T},val) where T
 Set the value of parameter 'p' to `val`.
 """
-setvalue(p::ModelParameter{T},val) where T = p.parent.p[p.inner.index] = val
+setvalue(p::ModelParameter{T},val) where T = p.parent.p[p.index] = val
 
 """
     set_lower_bound(x::ModelVariable{T},val) where T
 Set the lower bound of variable 'x' to `val`.
 """
-set_lower_bound(x::ModelVariable{T},val) where T = x.parent.xl[x.inner.index] = val
+set_lower_bound(x::ModelVariable{T},val) where T = x.parent.xl[x.index] = val
 
 """
     set_upper_bound(x::ModelVariable{T},val) where T
 Set the upper bound of variable 'x' to `val`.
 """
-set_upper_bound(x::ModelVariable{T},val) where T = x.parent.xu[x.inner.index] = val
+set_upper_bound(x::ModelVariable{T},val) where T = x.parent.xu[x.index] = val
 
 """
     lower_bound(x::ModelVariable{T}) where T
 Retrun the lower bound of variable `x`.
 """
-lower_bound(x::ModelVariable{T}) where T = x.parent.xl[x.inner.index]
+lower_bound(x::ModelVariable{T}) where T = x.parent.xl[x.index]
 
 """
     upper_bound(x::ModelVariable{T}) where T
 Retrun the upper bound of variable `x`.
 """
-upper_bound(x::ModelVariable{T}) where T = x.parent.xu[x.inner.index]
+upper_bound(x::ModelVariable{T}) where T = x.parent.xu[x.index]
 
 """
     set_lower_bound(c::Constraint,val)

@@ -1,7 +1,7 @@
-# abstract type AbstractConstant{T } <: Expression{T} end
+# abstract type AbstractConstant{T } <: Expression{T,RT} end
 
 # """
-#     Constant{T} <: Expression{T}
+#     Constant{T} <: Expression{T,RT}
 # `Expression` for constants.
 
 #     Constant(x::T) where T
@@ -29,7 +29,7 @@ struct ExpressionNull{T,RT} <: Expression{T,RT} end
 
 abstract type AbstractVariable{T,RT}  <: Expression{T,RT}  end
 """
-    Variable{T} <: Expression{T}
+    Variable{T} <: Expression{T,RT}
 `Expression` for variables.
 """
 struct Variable{T,RT <: Ref{T}} <:  AbstractVariable{T,RT}
@@ -57,12 +57,12 @@ julia> non_caching_eval(e, [1.,2.,3.])
 """
 Variable(n::Int) = Variable{Float64}(n)
 
-abstract type AbstractParameter{T } <: Expression{T}  end
+abstract type AbstractParameter{T,RT} <: Expression{T,RT}  end
 """
-    Parameter{T} <: Expression{T}
+    Parameter{T} <: Expression{T,RT}
 `Expression` for parameters.
 """
-struct Parameter{T,RT <: Ref{T}} <: AbstractParameter{T}
+struct Parameter{T,RT <: Ref{T}} <: AbstractParameter{T,RT}
     index::Int
     ref::RT
 end
@@ -72,7 +72,7 @@ end
     Parameter{T}(n::Int) where T
 Returns a `Parameter{T}` whose index is `n`.
 """
-Parameter{T}(n::Int) where T= Parameter{T}(n,RefValue{T}())
+Parameter{T}(n::Int) where T= Parameter{T,RefValue{T}}(n,RefValue{T}())
 
 """
     Parameter(n::Int) 
@@ -89,49 +89,49 @@ julia> non_caching_eval(e, [1.,2.,3.], [4.,5.,6.])
 Parameter(n::Int) = Parameter{Float64}(n)
 
 """
-    Expression1{T, F <: Function ,E <: Expression{T}}  <: Expression{T}
+    Expression1{T, F <: Function ,E <: Expression{T,RT}}  <: Expression{T,RT}
 `Expression` for univariate function
 """
-struct Expression1{T, RT <: Ref{T}, F <: Function ,E <: Expression{T}}  <: Expression{T}
+struct Expression1{T, RT <: Ref{T}, F <: Function ,E <: Expression{T,RT}}  <: Expression{T,RT}
     e1::E
     ref::RT
 end
-Expression1(f::F,e1::E) where {T, F <: Function, E <: Expression{T}} =  Expression1{T,F,E}(e1,RefValue{T}())
+Expression1(f::F,e1::E) where {T, RT, F <: Function, E <: Expression{T,RT}} =  Expression1{T,RT,F,E}(e1,RT())
 
 """
-    Expression2{T, F <: Function,E1, E2} <: Expression{T}
+    Expression2{T, F <: Function,E1, E2} <: Expression{T,RT}
 `Expression` for bivariate function
 """
-struct Expression2{T, RT <: Ref{T}, F <: Function,E1, E2} <: Expression{T}
+struct Expression2{T, RT <: Ref{T}, F <: Function,E1, E2} <: Expression{T,RT}
     e1::E1
     e2::E2
     ref::RT
 end
-Expression2(f::F,e1::E1, e2::E2) where {T, RT, F, E1 <: Union{Expression{T},Real}, E2 <: Union{Expression{T},Real}} = Expression2{T,F,E1,E2}(e1,e2,RT)
+Expression2(f::F,e1::E1, e2::E2) where {T, RT, F, E1 <: Union{Expression{T,RT},Real}, E2 <: Union{Expression{T,RT},Real}} = Expression2{T,RT,F,E1,E2}(e1,e2,RT())
 
 
 """
-    ExpressionIfElse{T,E0 <: Expression{T}, E1, E2} <: Expression{T}
+    ExpressionIfElse{T,E0 <: Expression{T,RT}, E1, E2} <: Expression{T,RT}
 `Expression` for `ifelse`
 """
-struct ExpressionIfElse{T, RT <: Ref{T},RB <: Ref{Bool}, E0 <: Expression{T}, E1, E2} <: Expression{T}
+struct ExpressionIfElse{T, RT <: Ref{T}, E0 <: Expression{T,RT}, E1, E2} <: Expression{T,RT}
     e0::E0
     e1::E1
     e2::E2
     ref::RT
-    bref::RB
+    bref::RefValue{Bool}
 end
-ExpressionIfElse(e0::E0,e1::E1,e2::E2) where {T, E0 <: Expression{T}, E1, E2} = ExpressionIfElse{T,E0,E1,E2}(e0,e1,e2,RefValue{T}(),RefValue{Bool}(true))
+ExpressionIfElse(e0::E0,e1::E1,e2::E2) where {T, RT, E0 <: Expression{T,RT}, E1, E2} = ExpressionIfElse{T,E0,E1,E2}(e0,e1,e2,RT(),RefValue{Bool}(true))
 
 """
-    ExpressionSum{T, E <: Expression{T}, I} <: Expression{T}
+    ExpressionSum{T, E <: Expression{T,RT}, I} <: Expression{T,RT}
 `Expression` for a summation of `Expression`s
 """
-struct ExpressionSum{T,RT <: Ref{T}, E <: Expression{T}, VE <: AbstractVector{E} I} <: Expression{T}
+struct ExpressionSum{T,RT <: Ref{T}, E <: Expression{T,RT}, I} <: Expression{T,RT}
     inner::I
-    es::VE
+    es::Vector{E}
     ref::RT
 end
-ExpressionSum(es::Vector{E}) where {T, E <: Expression{T}} = ExpressionSum{T,eltype(es),Nothing}(nothing,es,RefValue{T}())
-ExpressionSum(inner::E,es) where {T, E <: ExpressionSum{T}} = ExpressionSum{T,eltype(es),typeof(inner)}(inner,es,ref(inner))
+ExpressionSum(es::Vector{E}) where {T, RT, E <: Expression{T,RT}} = ExpressionSum{T,eltype(es),Nothing}(nothing,es,RefValue{T}())
+ExpressionSum(inner::E,es) where {T, RT, E <: ExpressionSum{T,RT}} = ExpressionSum{T,eltype(es),typeof(inner)}(inner,es,ref(inner))
 

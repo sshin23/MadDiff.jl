@@ -1,55 +1,46 @@
-# Jacobian
-struct JacobianEntry{T,E <: Gradient{T}} <: Entry{T}
-    index::Int
-    e::E
-end
-Jacobian(f::Field1{T,G,I},indexer = nothing) where {T,G,I} = Field1(Jacobian(inner(f),indexer),[JacobianEntry(index(ie),Gradient(ie.e,(index(ie),indexer))) for ie in f.es])
-Jacobian(f::Field1{T,G,Nothing},indexer = nothing) where {T,G} = Field1(nothing,[JacobianEntry(index(ie),Gradient(ie.e,(index(ie),indexer))) for ie in f.es])
-Jacobian(::MadDiffCore.FieldNull{T}) where T = FieldNull{T}()
-
 # Lagrangian Hessian
-struct LagrangianEntry{T,E <: Hessian{T}} <: Entry{T}
+struct LagrangianEntry{T,RT,E <: Hessian{T,RT}} <: Entry{T,RT}
     index::Int
     e::E
 end
 Field1(inner,::Vector{LagrangianEntry{HessianNull{T}}}) where T = inner
 
-struct LagrangianHessian{T,F <: AbstractExpression{T}}
+struct LagrangianHessian{T,RT,F <: AbstractExpression{T,RT}}
     f::F
 end
 
 LagrangianHessian(obj,grad,con,jac,indexer=nothing) = LagrangianHessian(_LagrangianHessian(obj,grad,con,jac,indexer))
 
-function _LagrangianHessian(obj,grad,con::Field1{T,E1,I1},jac::Field1{T,E2,I2},indexer = nothing) where {T,E1,E2,I1,I2}
+function _LagrangianHessian(obj,grad,con::Field1{T,RT,E1,I1},jac::Field1{T,RT,E2,I2},indexer = nothing) where {T,RT,E1,E2,I1,I2}
     Field1(_LagrangianHessian(obj,grad,inner(con),inner(jac),indexer),
            [LagrangianEntry(index(con.es[i]),Hessian(con.es[i].e,jac.es[i].e,indexer)) for i in eachindex(con.es)])
 end
 
-function _LagrangianHessian(obj,grad,con::Field1{T,E1,Nothing},jac::Field1{T,E2,Nothing},indexer = nothing) where {T,E1,E2}
+function _LagrangianHessian(obj,grad,con::Field1{T,RT,E1,Nothing},jac::Field1{T,RT,E2,Nothing},indexer = nothing) where {T,RT,E1,E2}
     Field1(Hessian(obj,grad,indexer),[LagrangianEntry(index(con.es[i]),Hessian(con.es[i].e,jac.es[i].e,indexer)) for i in eachindex(con.es)])
 end
 
-function _LagrangianHessian(obj,grad,con::FieldNull{T},jac::FieldNull{T},indexer = nothing) where {T,E1,E2}
+function _LagrangianHessian(obj,grad,con::FieldNull{T,RT},jac::FieldNull{T,RT},indexer = nothing) where {T,RT,E1,E2}
     Hessian(obj,grad,indexer)
 end
 
 # NLPCore
-abstract type AbstractNLPCore{T <: AbstractFloat} end
+abstract type AbstractNLPCore{T <: AbstractFloat, RT <: Ref{T}} end
 
-struct NLPCore{T <: AbstractFloat} <: AbstractNLPCore{T}
-    obj::Expression{T}
-    con::Field{T}
-    grad::Gradient{T}
-    jac::Field{T}
-    hess::LagrangianHessian{T}
+struct NLPCore{T <: AbstractFloat, RT <: Ref{T}} <: AbstractNLPCore{T,RT}
+    obj::Expression{T,RT}
+    con::Field{T,RT}
+    grad::Gradient{T,RT}
+    jac::Field{T,RT}
+    hess::LagrangianHessian{T,RT}
 end
 
-struct SparseNLPCore{T <: AbstractFloat} <: AbstractNLPCore{T}
-    obj::Expression{T}
-    con::Field{T}
-    grad::Gradient{T}
-    jac::Field{T}
-    hess::LagrangianHessian{T}
+struct SparseNLPCore{T <: AbstractFloat, RT <: Ref{T}} <: AbstractNLPCore{T,RT}
+    obj::Expression{T,RT}
+    con::Field{T,RT}
+    grad::Gradient{T,RT}
+    jac::Field{T,RT}
+    hess::LagrangianHessian{T,RT}
     jac_sparsity::Vector{Tuple{Int,Int}}
     hess_sparsity::Vector{Tuple{Int,Int}}
 end
@@ -62,8 +53,8 @@ function NLPCore(obj::Expression,con::Field)
     return NLPCore(obj,con,grad,jac,hess)
 end
 
-SparseNLPCore(obj::Real,con::Sink{F}) where {T,F <: Field{T}} = SparseNLPCore(Constant{T}(obj),con)
-SparseNLPCore(obj::Expression,con::Sink{F})  where {T,F <: Field{T}} = SparseNLPCore(obj,con.inner)
+SparseNLPCore(obj::Real,con::Sink{F}) where {T,RT,F <: Field{T}} = SparseNLPCore(Constant{T}(obj),con)
+SparseNLPCore(obj::Expression,con::Sink{F})  where {T,RT,F <: Field{T}} = SparseNLPCore(obj,con.inner)
 function SparseNLPCore(obj::Expression,con::Field)
     grad = Gradient(obj)
     jac,jac_sparsity = SparseJacobian(con)

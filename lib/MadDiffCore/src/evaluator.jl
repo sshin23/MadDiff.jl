@@ -14,12 +14,12 @@ for fname in [:non_caching_eval]
         @inline $fname(e::P,x,p=nothing) where {P <: AbstractParameter} = @inbounds getindex(p,index(e))
         @inline $fname(laghess::LagrangianHessian,z,x,p,l,s) = $fname(laghess.f,z,x,p,l,s)
         @inline $fname(h::H,z,x,p,l,s) where H <: Hessian = $fname(h,z,x,p,s)
-        @inline $fname(lagentry::LagrangianEntry{T,E},z,x,p,l) where {T,E} = $fname(lagentry.e,z,x,p,l[index(lagentry)])
+        @inline $fname(lagentry::LagrangianEntry{T,RT,E},z,x,p,l) where {T,RT,E} = $fname(lagentry.e,z,x,p,l[index(lagentry)])
         @inline $fname(e::E, x, p = nothing) where {E <: ExpressionIfElse} =
             non_caching_eval(e.e0,x,p) ? $fname(e.e1,x,p) : $fname(e.e2,x,p)
 
 
-        @inline $fname(::HessianNull{T},z,x,p=nothing,h0=1) where T = nothing
+        @inline $fname(::HessianNull{T,RT},z,x,p=nothing,h0=1) where {T,RT} = nothing
         @inline function $fname(h::H,z,x,p=nothing,h0 = 1) where H <: HessianD00
             islower(h) && @inbounds z[index1(h)::Int,index2(h)::Int] += h0
             return 
@@ -76,35 +76,35 @@ end
 for fname in [:default_eval, :non_caching_eval]
     @eval begin
         @inline $fname(a::Real,x,p=nothing) = a
-        @inline $fname(e::ExpressionNull{T},x,p=nothing) where T = 0.
-        @inline $fname(::GradientNull{T},z,x,p=nothing,d0=1) where T = nothing
-        @inline $fname(d::Gradient0{T},y,x,p=nothing,d0=1) where T = (@inbounds y[d.offset] += d0; nothing)
-        @inline $fname(d::Gradient0{T},(j,y)::Tuple{Int,M},x,p=nothing,d0=1) where {T, M <: AbstractMatrix} = (@inbounds y[j,d.offset] += d0; nothing)
-        @inline $fname(d::Gradient0{T},(j,y)::Tuple{Int,M},x,p=nothing,d0=1) where {T, M <: AbstractVector} = (@inbounds y[d.offset] += d0; nothing)
+        @inline $fname(e::ExpressionNull{T,RT},x,p=nothing) where {T, RT} = 0.
+        @inline $fname(::GradientNull{T,RT},z,x,p=nothing,d0=1) where {T, RT} = nothing
+        @inline $fname(d::Gradient0{T,RT},y,x,p=nothing,d0=1) where {T, RT} = (@inbounds y[d.offset] += d0; nothing)
+        @inline $fname(d::Gradient0{T,RT},(j,y)::Tuple{Int,M},x,p=nothing,d0=1) where {T, RT, M <: AbstractMatrix} = (@inbounds y[j,d.offset] += d0; nothing)
+        @inline $fname(d::Gradient0{T,RT},(j,y)::Tuple{Int,M},x,p=nothing,d0=1) where {T, RT, M <: AbstractVector} = (@inbounds y[d.offset] += d0; nothing)
         @inline $fname(d::G,y,x,p=nothing,d0=1.) where {G <: GradientIfElse} = brefval(d) ? $fname(d.d1,y,x,p,d0) : $fname(d.d2,y,x,p,d0)
         
-        @inline $fname(e::FieldNull{T},y,x,p=nothing) where T = nothing
-        @inline $fname(e::JacobianEntry{T,E},y,x,p=nothing) where {T,E} = $fname(e.e,(index(e),y),x,p)
-        @inline $fname(e::IndexedExpression{T,E},y,x,p=nothing) where {T,E} = (y[e.index] = $fname(e.e,x,p))
-        @inline function $fname(d::GradientSum{T,D,I},y,x,p=nothing,d0=1) where {T,D,I}
+        @inline $fname(e::FieldNull{T,RT},y,x,p=nothing) where {T,RT} = nothing
+        @inline $fname(e::JacobianEntry{T,RT,E},y,x,p=nothing) where {T,RT,E} = $fname(e.e,(index(e),y),x,p)
+        @inline $fname(e::IndexedExpression{T,RT,E},y,x,p=nothing) where {T,RT,E} = (y[e.index] = $fname(e.e,x,p))
+        @inline function $fname(d::GradientSum{T,RT,D,I},y,x,p=nothing,d0=1) where {T,RT,D,I}
             $fname(inner(d),y,x,p,d0)
             @simd for i in eachindex(d.ds)
                 $fname(d.ds[i],y,x,p,d0)
             end
         end
-        @inline function $fname(d::GradientSum{T,D,Nothing},y,x,p=nothing,d0=1)  where {T,D}
+        @inline function $fname(d::GradientSum{T,RT,D,Nothing},y,x,p=nothing,d0=1)  where {T,RT,D}
             @simd for i in eachindex(d.ds)
                 $fname(d.ds[i],y,x,p,d0)
             end
         end
-        @inline $fname(f::Sink{Field{T}},y,x,p=nothing) where T = inner(f)(y,x,p)
-        @inline function $fname(f::Field1{T,E,I},y,x,p=nothing) where {T,E,I}
+        @inline $fname(f::Sink{Field{T,RT}},y,x,p=nothing) where {T,RT} = inner(f)(y,x,p)
+        @inline function $fname(f::Field1{T,RT,E,I},y,x,p=nothing) where {T,RT,E,I}
             $fname(inner(f),y,x,p)
             @simd for i in eachindex(f.es)
                 $fname(f.es[i],y,x,p)
             end
         end
-        @inline function $fname(f::Field1{T,E,Nothing},y,x,p=nothing) where {T,E}
+        @inline function $fname(f::Field1{T,RT,E,Nothing},y,x,p=nothing) where {T,RT,E}
             @simd for i in eachindex(f.es)
                 $fname(f.es[i],y,x,p)
             end
@@ -115,45 +115,45 @@ end
 
 
 
-@inline function non_caching_eval(f::Field1{T,E,I},z,x,p,l,s) where {T,E,I}
+@inline function non_caching_eval(f::Field1{T,RT,E,I},z,x,p,l,s) where {T,RT,E,I}
     non_caching_eval(inner(f),z,x,p,l,s)
     @simd for i in eachindex(f.es)
         non_caching_eval(f.es[i],z,x,p,l)
     end
 end
-@inline function non_caching_eval(h::HessianSum{T,I,H},z,x,p=nothing,h0=1) where {T,I,H} 
+@inline function non_caching_eval(h::HessianSum{T,RT,I,H},z,x,p=nothing,h0=1) where {T,RT,I,H} 
     non_caching_eval(inner(h),z,x,p,h0)
     @simd for i in eachindex(h.hs)
         @inbounds non_caching_eval(h.hs[i],z,x,p,h0)
     end
 end
-@inline function non_caching_eval(h::HessianSum{T,Nothing,H},z,x,p=nothing,h0=1) where {T,H}
+@inline function non_caching_eval(h::HessianSum{T,RT,Nothing,H},z,x,p=nothing,h0=1) where {T,RT,H}
     @simd for i in eachindex(h.hs)
         @inbounds non_caching_eval(h.hs[i],z,x,p,h0)
     end
 end
-@inline function default_eval(e::ExpressionSum{T,E,Nothing},x,p=nothing) where {T,E}
+@inline function default_eval(e::ExpressionSum{T,RT,E,Nothing},x,p=nothing) where {T,RT,E}
     setrefval(e,.0)
     @simd for i in eachindex(e.es)
         @inbounds addrefval(e,default_eval(e.es[i],x,p))
     end
     return refval(e)
 end
-@inline function non_caching_eval(e::ExpressionSum{T,E,Nothing},x,p=nothing) where {T,E}
+@inline function non_caching_eval(e::ExpressionSum{T,RT,E,Nothing},x,p=nothing) where {T,RT,E}
     res = non_caching_eval(e.es[1],x,p)
     @simd for i in 2:length(e.es)
         @inbounds res = add_sum(res,non_caching_eval(e.es[i],x,p))
     end
     return res
 end
-@inline function default_eval(e::ExpressionSum{T,E,I},x,p=nothing) where {T,E,I}
+@inline function default_eval(e::ExpressionSum{T,RT,E,I},x,p=nothing) where {T,RT,E,I}
     default_eval(inner(e),x,p)
     @simd for i in eachindex(e.es)
         @inbounds addrefval(e,default_eval(e.es[i],x,p))
     end
     return refval(e)
 end
-@inline function non_caching_eval(e::ExpressionSum{T,E,I},x,p=nothing) where {T,E,I}
+@inline function non_caching_eval(e::ExpressionSum{T,RT,E,I},x,p=nothing) where {T,RT,E,I}
     res = non_caching_eval(e.inner,x,p)
     @simd for i in eachindex(e.es)
         @inbounds res = add_sum(res,non_caching_eval(e.es[i],x,p))

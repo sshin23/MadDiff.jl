@@ -12,37 +12,37 @@ import NaNMath: NaNMath, sin, cos, tan, asin, acos, acosh, atanh, log, log2, log
     AbstractExpression{T <: AbstractFloat}
 Abstract type for expression, gradient, hessian, entry, and field evaluators.
 """
-abstract type AbstractExpression{T <: AbstractFloat} end
+abstract type AbstractExpression{T <: AbstractFloat, RT <: Ref{T}} end
 
 """
     Expression{T <: AbstractFloat}
 Abstract type for expression evaluators.
 """
-abstract type Expression{T <: AbstractFloat} <: AbstractExpression{T} end
+abstract type Expression{T <: AbstractFloat, RT <: Ref{T}} <: AbstractExpression{T, RT} end
 
 """
-    Gradient{T <: AbstractFloat}
+    Gradient{T <: AbstractFloat, RT <: Ref{T}}
 Abstract type for gradient evaluators.
 """
-abstract type Gradient{T <: AbstractFloat} <: AbstractExpression{T} end
+abstract type Gradient{T <: AbstractFloat, RT <: Ref{T}} <: AbstractExpression{T, RT} end
 
 """
-    Hessian{T <: AbstractFloat}
+    Hessian{T <: AbstractFloat, RT <: Ref{T}}
 Abstract type for hessian evaluators.
 """
-abstract type Hessian{T <: AbstractFloat} <: AbstractExpression{T} end
+abstract type Hessian{T <: AbstractFloat, RT <: Ref{T}} <: AbstractExpression{T, RT} end
 
 """
-    Entry{T <: AbstractFloat}
+    Entry{T <: AbstractFloat, RT <: Ref{T}}
 Abstract type for entry evaluators.
 """
-abstract type Entry{T <: AbstractFloat} <: AbstractExpression{T} end
+abstract type Entry{T <: AbstractFloat, RT <: Ref{T}} <: AbstractExpression{T, RT} end
 
 """
-    Field{T <: AbstractFloat}
+    Field{T <: AbstractFloat, RT <: Ref{T}}
 Abstract type for field evaluators.
 """
-abstract type Field{T <: AbstractFloat} <: AbstractExpression{T} end
+abstract type Field{T <: AbstractFloat, RT <: Ref{T}} <: AbstractExpression{T, RT} end
 
 include("utils.jl")
 include("expression.jl")

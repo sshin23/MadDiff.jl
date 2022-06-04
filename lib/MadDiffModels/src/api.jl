@@ -1,50 +1,50 @@
 """
-    value(x::ModelVariable{T}) where T
+    value(x::ModelVariable{T,RT}) where {T,RT}
 Return the value of variable `x`.
 """
-value(x::ModelVariable{T}) where T = x.parent.x[x.index]
+value(x::ModelVariable{T,RT}) where {T,RT} = x.parent.x[x.index]
 
 """
-    value(p::ModelParameter{T}) where T
+    value(p::ModelParameter{T,RT}) where {T,RT}
 Return the value of parameter `p`.
 """
-value(p::ModelParameter{T}) where T= p.parent.p[p.index]
+value(p::ModelParameter{T,RT}) where {T,RT}= p.parent.p[p.index]
 
 """
-    setvalue(x::ModelVariable{T},val) where T
+    setvalue(x::ModelVariable{T,RT},val) where {T,RT}
 Set the value of variable 'x' to `val`.
 """
-setvalue(x::ModelVariable{T},val) where T = x.parent.x[x.index] = val
+setvalue(x::ModelVariable{T,RT},val) where {T,RT} = x.parent.x[x.index] = val
 
 """
-    setvalue(p::ModelParameter{T},val) where T
+    setvalue(p::ModelParameter{T,RT},val) where {T,RT}
 Set the value of parameter 'p' to `val`.
 """
-setvalue(p::ModelParameter{T},val) where T = p.parent.p[p.index] = val
+setvalue(p::ModelParameter{T,RT},val) where {T,RT} = p.parent.p[p.index] = val
 
 """
-    set_lower_bound(x::ModelVariable{T},val) where T
+    set_lower_bound(x::ModelVariable{T,RT},val) where {T,RT}
 Set the lower bound of variable 'x' to `val`.
 """
-set_lower_bound(x::ModelVariable{T},val) where T = x.parent.xl[x.index] = val
+set_lower_bound(x::ModelVariable{T,RT},val) where {T,RT} = x.parent.xl[x.index] = val
 
 """
-    set_upper_bound(x::ModelVariable{T},val) where T
+    set_upper_bound(x::ModelVariable{T,RT},val) where {T,RT}
 Set the upper bound of variable 'x' to `val`.
 """
-set_upper_bound(x::ModelVariable{T},val) where T = x.parent.xu[x.index] = val
+set_upper_bound(x::ModelVariable{T,RT},val) where {T,RT} = x.parent.xu[x.index] = val
 
 """
-    lower_bound(x::ModelVariable{T}) where T
+    lower_bound(x::ModelVariable{T,RT}) where {T,RT}
 Retrun the lower bound of variable `x`.
 """
-lower_bound(x::ModelVariable{T}) where T = x.parent.xl[x.index]
+lower_bound(x::ModelVariable{T,RT}) where {T,RT} = x.parent.xl[x.index]
 
 """
-    upper_bound(x::ModelVariable{T}) where T
+    upper_bound(x::ModelVariable{T,RT}) where {T,RT}
 Retrun the upper bound of variable `x`.
 """
-upper_bound(x::ModelVariable{T}) where T = x.parent.xu[x.index]
+upper_bound(x::ModelVariable{T,RT}) where {T,RT} = x.parent.xu[x.index]
 
 """
     set_lower_bound(c::Constraint,val)

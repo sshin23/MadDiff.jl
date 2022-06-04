@@ -36,11 +36,11 @@ end
 macro register_bivariate(f,df1,df2,ddf11,ddf12,ddf22)
     return esc(
         quote
-            $f(e1::E1,e2::E2) where {T, E1 <: MadDiffCore.Expression{T},E2 <: MadDiffCore.Expression{T}} =
+            $f(e1::E1,e2::E2) where {T, RT, E1 <: MadDiffCore.Expression{T,RT},E2 <: MadDiffCore.Expression{T,RT}} =
                 MadDiffCore.Expression2($f,e1,e2)
-            $f(e1::E1,e2::E2) where {T, E1 <: MadDiffCore.Expression{T},E2 <: Real} =
+            $f(e1::E1,e2::E2) where {T, RT, E1 <: MadDiffCore.Expression{T,RT},E2 <: Real} =
                 MadDiffCore.Expression2($f,e1,e2)
-            $f(e1::E1,e2::E2) where {T, E1 <: Real,E2 <: MadDiffCore.Expression{T}} =
+            $f(e1::E1,e2::E2) where {T, RT, E1 <: Real,E2 <: MadDiffCore.Expression{T,RT}} =
                 MadDiffCore.Expression2($f,e1,e2)
 
             @inline MadDiffCore.default_eval(e::MadDiffCore.Expression2{T,RT,typeof($f),F1,F2},x,p=nothing) where {T,RT,F1,F2} =

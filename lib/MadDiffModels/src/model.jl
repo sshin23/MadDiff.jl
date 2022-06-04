@@ -1,5 +1,5 @@
-struct NullNLPModelMeta{T,V <: Vector{T}} <: NLPModels.AbstractNLPModelMeta{T, V} end
-struct NullNLPCore{T} <: MadDiffCore.AbstractNLPCore{T} end 
+struct NullNLPModelMeta{T,V} <: NLPModels.AbstractNLPModelMeta{T, V} end
+struct NullNLPCore{T,RT} <: MadDiffCore.AbstractNLPCore{T,RT} end 
 getproperty(::NullNLPModelMeta,::Symbol) = error("The model is not instantiated yet.")
 
 """
@@ -7,7 +7,7 @@ getproperty(::NullNLPModelMeta,::Symbol) = error("The model is not instantiated 
 
 A mathematical model of a nonlinaer program.
 """
-mutable struct MadDiffModel{T <: AbstractFloat} <: NLPModels.AbstractNLPModel{T,Vector{T}}
+mutable struct MadDiffModel{T <: AbstractFloat, RT <: Ref{T}, VT <: Vector{T}} <: NLPModels.AbstractNLPModel{T,Vector{T}}
     con::MadDiffCore.Sink
     obj::MadDiffCore.Expression
 
@@ -15,18 +15,18 @@ mutable struct MadDiffModel{T <: AbstractFloat} <: NLPModels.AbstractNLPModel{T,
     q::Int # num pars
     m::Int # num cons
     
-    x::Vector{T}
-    p::Vector{T}
-    l::Vector{T}
-    zl::Vector{T}
-    zu::Vector{T}
-    xl::Vector{T}
-    xu::Vector{T}
-    gl::Vector{T}
-    gu::Vector{T}
+    x::VT
+    p::VT
+    l::VT
+    zl::VT
+    zu::VT
+    xl::VT
+    xu::VT
+    gl::VT
+    gu::VT
 
     instantiated::Bool
-    meta::NLPModels.AbstractNLPModelMeta{T, Vector{T}}
+    meta::NLPModels.AbstractNLPModelMeta{T, VT}
     nlpcore::MadDiffCore.AbstractNLPCore{T}
     counters::NLPModels.Counters
     
@@ -41,11 +41,11 @@ Creates an empty `MadDiffModel{T}`.
 **Example**
 `m = MadDiffModel{Float32}()`
 """
-MadDiffModel{T}() where T = MadDiffModel{T}(
-    MadDiffCore.Field{T}(), MadDiffCore.ExpressionNull{T}(),
+MadDiffModel{T,RT,VT}() where {T,RT,VT} = MadDiffModel{T,RT,VT}(
+    MadDiffCore.Field{T,RT}(), MadDiffCore.ExpressionNull{T,RT}(),
     0, 0, 0,
     T[], T[], T[], T[], T[], T[], T[], T[], T[], 
-    false, NullNLPModelMeta{T,Vector{T}}(), NullNLPCore{T}(), NLPModels.Counters(),
+    false, NullNLPModelMeta{T,VT}(), NullNLPCore{T,RT}(), NLPModels.Counters(),
     Dict{Symbol,Any}()
 )
 
@@ -57,7 +57,7 @@ Creates an empty `MadDiffModel{Float64}`.
 **Example**
 `m = MadDiffModel(linear_solver = "ma27")`
 """
-MadDiffModel()= MadDiffModel{Float64}()
+MadDiffModel()= MadDiffModel{Float64,RefValue{Float64},Vector{Float64}}()
 
 
 """
@@ -73,22 +73,22 @@ end
     ModelVariable{T <: AbstractFloat} <: MadDiffCore.AbstractVariable{T}
 A model variable of MadDiffModel.
 """
-struct ModelVariable{T <: AbstractFloat} <: MadDiffCore.AbstractVariable{T}
-    parent::MadDiffModel{T}
+struct ModelVariable{T <: AbstractFloat,RT} <: MadDiffCore.AbstractVariable{T,RT}
+    parent::MadDiffModel
     index::Int
-    ref::RefValue{T}
-    ModelVariable(m::MadDiffModel{T},index) where T = new{T}(m,index,RefValue{T}())
+    ref::RT
+    ModelVariable(m::MadDiffModel{T,RT,VT},index) where {T,RT,VT} = new{T,RT}(m,index,RT())
 end
 
 """
     ModelParameter{T <: AbstractFloat} <: MadDiffCore.AbstractParameter{T}
 A model parameter of MadDiffModel.
 """
-struct ModelParameter{T <: AbstractFloat} <: MadDiffCore.AbstractParameter{T}
-    parent::MadDiffModel{T}
+struct ModelParameter{T <: AbstractFloat,RT} <: MadDiffCore.AbstractParameter{T,RT}
+    parent::MadDiffModel
     index::Int
-    ref::RefValue{T}
-    ModelParameter(m::MadDiffModel{T},index) where T = new{T}(m,index,RefValue{T}())
+    ref::RT
+    ModelParameter(m::MadDiffModel{T,RT,VT},index) where {T,RT,VT} = new{T,RT}(m,index,RT())
 end
 
 """
@@ -102,7 +102,7 @@ m = MadDiffModel()
 x = variable(m; lb = -1, ub = 1, start = 0.5)
 ```
 """
-function variable(m::MadDiffModel{T}; lb=-Inf, ub=Inf, start=0.) where T
+function variable(m::MadDiffModel; lb=-Inf, ub=Inf, start=0.) where T
     m.instantiated = false
     m.n += 1
     push!(m.x,start)
@@ -124,7 +124,7 @@ m = MadDiffModel()
 p = parameter(m, 0.5)
 ```
 """
-function parameter(m::MadDiffModel{T}, val) where T
+function parameter(m::MadDiffModel, val) where T
     m.instantiated = false
     m.q += 1
     push!(m.p,val)
@@ -168,23 +168,23 @@ function constraint(m::MadDiffModel, e::MadDiffCore.Expression; lb=0., ub=0.)
     push!(m.gu,ub)
     Constraint(m,m.m)
 end
-constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,typeof(==),E1,E2}) where {T <: AbstractFloat, E1<:MadDiffCore.Expression, E2<:MadDiffCore.Expression} =
+constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,RT,typeof(==),E1,E2}) where {T,RT, E1<:MadDiffCore.Expression, E2<:MadDiffCore.Expression} =
     constraint(m,eq.e1-eq.e2)
-constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,typeof(<=),E1,E2}) where {T <: AbstractFloat, E1<:MadDiffCore.Expression, E2<:MadDiffCore.Expression} =
+constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,RT,typeof(<=),E1,E2}) where {T,RT, E1<:MadDiffCore.Expression, E2<:MadDiffCore.Expression} =
     constraint(m,eq.e1-eq.e2;ub=Inf)
-constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,typeof(>=),E1,E2}) where {T <: AbstractFloat, E1<:MadDiffCore.Expression, E2<:MadDiffCore.Expression} =
+constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,RT,typeof(>=),E1,E2}) where {T,RT, E1<:MadDiffCore.Expression, E2<:MadDiffCore.Expression} =
     constraint(m,eq.e1-eq.e2;lb=-Inf)
-constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,typeof(==),E1,E2}) where {T <: AbstractFloat, E1<:MadDiffCore.Expression, E2<:Real} =
+constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,RT,typeof(==),E1,E2}) where {T,RT, E1<:MadDiffCore.Expression, E2<:Real} =
     constraint(m,eq.e1; lb=eq.e2, ub=eq.e2)
-constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,typeof(<=),E1,E2}) where {T <: AbstractFloat, E1<:MadDiffCore.Expression, E2<:Real} =
+constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,RT,typeof(<=),E1,E2}) where {T,RT, E1<:MadDiffCore.Expression, E2<:Real} =
     constraint(m,eq.e1; lb=-Inf, ub=eq.e2)
-constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,typeof(>=),E1,E2}) where {T <: AbstractFloat, E1<:MadDiffCore.Expression, E2<:Real} =
+constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,RT,typeof(>=),E1,E2}) where {T,RT, E1<:MadDiffCore.Expression, E2<:Real} =
     constraint(m,eq.e1; lb=eq.e2, ub=Inf)
-constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,typeof(==),E1,E2}) where {T <: AbstractFloat, E1<:Real, E2<:MadDiffCore.Expression} =
+constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,RT,typeof(==),E1,E2}) where {T,RT, E1<:Real, E2<:MadDiffCore.Expression} =
     constraint(m,eq.e2; lb=eq.e1, ub=eq.e1)
-constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,typeof(<=),E1,E2}) where {T <: AbstractFloat, E1<:Real, E2<:MadDiffCore.Expression} =
+constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,RT,typeof(<=),E1,E2}) where {T,RT, E1<:Real, E2<:MadDiffCore.Expression} =
     constraint(m,eq.e2; lb=eq.e1, ub=Inf)
-constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,typeof(>=),E1,E2}) where {T <: AbstractFloat, E1<:Real, E2<:MadDiffCore.Expression} =
+constraint(m::MadDiffModel,eq::MadDiffCore.Expression2{T,RT,typeof(>=),E1,E2}) where {T,RT, E1<:Real, E2<:MadDiffCore.Expression} =
     constraint(m,eq.e2; lb=-Inf, ub=eq.e1)
 
 """
@@ -323,12 +323,12 @@ end
     end
 end
 
-function show(io::IO, m::MadDiffModel{T}) where T
+function show(io::IO, m::MadDiffModel{T,RT,VT}) where {T,RT,VT}
     if m.instantiated 
-        println(io, "MadDiffModel{$T} (instantiated).")
+        println(io, "MadDiffModel{$T,$RT,$VT} (instantiated).")
         show(io, m.meta)
         show(io, m.counters)
     else
-        println(io, "MadDiffModel{$T} (not instantiated).")
+        println(io, "MadDiffModel{$T,$RT,$VT} (not instantiated).")
     end
 end

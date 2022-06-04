@@ -2,11 +2,14 @@ module MadDiffTests
 
 using Test, MadDiffCore, ForwardDiff
 
-const eps = 1e-6
+const atol = 1e-6
+const rtol = 1e-6
 function compare(p1,p2)
     for i=1:length(p1)
         isequal(p1[i], NaN) && isequal(p2[i], NaN) && continue
-        abs(p1[i] .- p2[i]) > eps && return false
+        d = abs(p1[i] .- p2[i])
+        
+        d > atol && d / max(abs(p1[i]),abs(p2[i])) > rtol && return false
     end
     return true
 end

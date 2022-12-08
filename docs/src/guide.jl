@@ -94,8 +94,9 @@ instantiate!(m)
 
 # To solve the problem with `Ipopt`,
 using NLPModelsIpopt
-ipopt(m);
+sol = ipopt(m);
 
+# The solution `sol` contains the field `sol.solution` holding the optimized parameters.
 
 # ### MadDiff as an AD backend of JuMP
 # MadDiff can be used as an automatic differentiation backend of JuMP. The problem above can be modeled in `JuMP` and solved with `Ipopt` along with `MadDiff`
